@@ -14,7 +14,7 @@ export function ToastHost() {
   const { toasts, dismissToast } = useToastStore();
 
   return (
-    <div className="fixed right-4 top-4 z-[60] grid w-[min(360px,calc(100vw-32px))] gap-3">
+    <div className="fixed right-4 top-4 z-[60] grid w-[min(360px,calc(100vw-32px))] gap-3" aria-live="polite">
       {toasts.map((toast) => (
         <div key={toast.id} className="surface rounded-lg p-4">
           <div className="flex gap-3">
@@ -23,8 +23,7 @@ export function ToastHost() {
               <p className="font-medium">{toast.title}</p>
               {toast.message ? <p className="mt-1 text-sm text-muted">{toast.message}</p> : null}
             </div>
-            <Button variant="ghost" size="icon" onClick={() => dismissToast(toast.id)}>
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="icon" onClick={() => dismissToast(toast.id)} icon={<X className="h-4 w-4" />}>
               Dismiss
             </Button>
           </div>

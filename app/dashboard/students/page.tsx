@@ -64,13 +64,13 @@ function StatCard({
 }) {
   return (
     <div
-      className="relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between gap-4"
+      className="relative overflow-hidden rounded-xl p-4 flex items-center gap-4"
       style={{
         background: gradient,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
       }}
     >
-      {/* Decorative circle */}
+      {/* Decorative circles */}
       <div
         className="absolute -right-4 -top-4 h-24 w-24 rounded-full opacity-20"
         style={{ background: "rgba(255,255,255,0.4)" }}
@@ -80,26 +80,21 @@ function StatCard({
         style={{ background: "rgba(255,255,255,0.6)" }}
       />
 
-      <div className="relative flex items-center justify-between">
-        <div
-          className="grid h-11 w-11 place-items-center rounded-xl text-white"
-          style={{ background: "rgba(255,255,255,0.22)", backdropFilter: "blur(6px)" }}
-        >
-          {icon}
-        </div>
-        <div
-          className="rounded-lg px-2 py-1 text-xs font-semibold text-white"
-          style={{ background: "rgba(255,255,255,0.18)" }}
-        >
-          {label}
-        </div>
+      <div
+        className="relative grid h-12 w-12 shrink-0 place-items-center rounded-xl text-white"
+        style={{ background: "rgba(255,255,255,0.22)", backdropFilter: "blur(6px)" }}
+      >
+        {icon}
       </div>
 
-      <div className="relative">
+      <div className="relative flex flex-col min-w-0">
+        <div className="text-sm font-medium text-white/90">
+          {label}
+        </div>
         {loading ? (
-          <div className="h-9 w-20 animate-pulse rounded-lg bg-white/20" />
+          <div className="h-7 w-16 animate-pulse rounded bg-white/20 mt-1" />
         ) : (
-          <p className="text-4xl font-bold tracking-tight text-white">{value}</p>
+          <p className="text-2xl font-bold tracking-tight text-white leading-none mt-1">{value}</p>
         )}
       </div>
     </div>
@@ -131,7 +126,7 @@ function GenderBar({
           {value} <span className="text-xs font-normal opacity-60">({pct}%)</span>
         </span>
       </div>
-      <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: "var(--border)" }}>
+      <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: "var(--border)" }}>
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${pct}%`, background: color }}
@@ -171,12 +166,12 @@ function StudentRowCard({
 
   return (
     <div
-      className="group relative flex flex-col sm:flex-row sm:items-center gap-4 rounded-xl border border-border bg-panel p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-lg"
+      className="group relative flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-border bg-panel p-3 transition-all duration-200 hover:border-primary/30 hover:shadow-sm"
       style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
     >
       {/* Left accent bar */}
       <div
-        className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        className="absolute left-0 top-2.5 bottom-2.5 w-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         style={{ background: statusColor }}
       />
 
@@ -356,13 +351,13 @@ export default function StudentsPage() {
   return (
     <>
       {/* ── Page Header ─────────────────────────────────────────────────────── */}
-      <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--primary)" }}>
             Profiles
           </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Students</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">Students</h1>
+          <p className="mt-0.5 text-sm text-muted">
             Manage all student profiles, memberships and status
           </p>
         </div>
@@ -381,7 +376,7 @@ export default function StudentsPage() {
       </div>
 
       {/* ── Stat Cards ──────────────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-4">
         <StatCard
           label="Total"
           value={counts.data?.total ?? 0}
@@ -414,10 +409,10 @@ export default function StudentsPage() {
 
       {/* ── Gender Analytics ─────────────────────────────────────────────────── */}
       <div
-        className="mb-6 rounded-2xl border border-border p-6"
-        style={{ background: "var(--surface-sheen), var(--panel)", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}
+        className="mb-4 rounded-xl border border-border p-4"
+        style={{ background: "var(--surface-sheen), var(--panel)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}
       >
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="font-bold text-base">Gender Distribution</h2>
             <p className="text-xs text-muted mt-0.5">Based on student profile data</p>
@@ -431,7 +426,7 @@ export default function StudentsPage() {
         </div>
 
         {genderRows.length > 0 ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2.5">
             {genderRows.map((item) => (
               <GenderBar
                 key={item.label}
@@ -450,7 +445,7 @@ export default function StudentsPage() {
 
       {/* ── Filter Bar ────────────────────────────────────────────────────────── */}
       <div
-        className="mb-5 rounded-2xl border border-border p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end"
+        className="mb-4 rounded-xl border border-border p-3 flex flex-col sm:flex-row gap-2 items-stretch sm:items-end"
         style={{ background: "var(--panel)" }}
       >
         {/* Search */}

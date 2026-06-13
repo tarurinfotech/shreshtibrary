@@ -68,6 +68,7 @@ export function Select({
   // Close on outside click or Escape
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearch("");
       return;
     }

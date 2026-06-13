@@ -54,7 +54,7 @@ export function Modal({
     window.setTimeout(() => {
       const dialog = dialogRef.current;
       const firstFocusable = dialog?.querySelector<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable], details > summary',
       );
       (firstFocusable ?? dialog)?.focus();
     }, 0);
@@ -82,9 +82,9 @@ export function Modal({
 
     const focusable = Array.from(
       dialog.querySelectorAll<HTMLElement>(
-        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"]), [contenteditable], details > summary',
       ),
-    ).filter((element) => !element.hasAttribute("disabled"));
+    ).filter((element) => !element.hasAttribute("disabled") && element.tabIndex !== -1);
 
     if (!focusable.length) {
       event.preventDefault();
@@ -126,8 +126,7 @@ export function Modal({
             <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
             {description ? <p id={descriptionId} className="mt-1 text-sm text-muted">{description}</p> : null}
           </div>
-          <Button variant="secondary" size={iconOnlyClose ? "icon" : "sm"} onClick={onClose} type="button">
-            <X className="h-4 w-4" />
+          <Button variant="secondary" size={iconOnlyClose ? "icon" : "sm"} onClick={onClose} type="button" icon={<X className="h-4 w-4" />}>
             {closeLabel}
           </Button>
         </div>

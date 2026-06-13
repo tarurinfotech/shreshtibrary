@@ -79,7 +79,16 @@ class DashboardStatsView(APIView):
             payments_month = Payment.objects.filter(payment_date__year=today.year, payment_date__month=today.month, status="verified")
             seats = Seat.objects.all()
             data = {
-                "students": {"total": total_students, "live": StudentProfile.objects.filter(status="LIVE").count(), "expired": StudentProfile.objects.filter(status="EXPIRED").count(), "suspended": StudentProfile.objects.filter(status="SUSPENDED").count(), "new_this_month": StudentProfile.objects.filter(created_at__year=today.year, created_at__month=today.month).count()},
+                "students": {
+                    "total": total_students, 
+                    "live": StudentProfile.objects.filter(status="LIVE").count(), 
+                    "expired": StudentProfile.objects.filter(status="EXPIRED").count(), 
+                    "suspended": StudentProfile.objects.filter(status="SUSPENDED").count(), 
+                    "new_this_month": StudentProfile.objects.filter(created_at__year=today.year, created_at__month=today.month).count(),
+                    "girls": StudentProfile.objects.filter(gender__iexact="Female").count(),
+                    "boys": StudentProfile.objects.filter(gender__iexact="Male").count(),
+                    "other": StudentProfile.objects.exclude(gender__iexact="Female").exclude(gender__iexact="Male").count()
+                },
                 "attendance": {"today_present": present, "today_absent": max(total_students - present, 0), "today_total": total_students, "today_percentage": round((present / total_students * 100), 2) if total_students else 0},
                 "payments": {"today_amount": str(payments_today.aggregate(total=Sum("amount"))["total"] or 0), "today_count": payments_today.count(), "month_amount": str(payments_month.aggregate(total=Sum("amount"))["total"] or 0), "month_count": payments_month.count(), "pending_count": Payment.objects.filter(status="pending").count()},
                 "memberships": {"active": Membership.objects.filter(status="active").count(), "expiring_in_7_days": Membership.objects.filter(end_date__lte=today + datetime.timedelta(days=7), end_date__gte=today).count(), "expired_today": Membership.objects.filter(end_date=today).count()},

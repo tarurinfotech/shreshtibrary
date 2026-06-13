@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Plus, Save, Star, Trash2, Trophy } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/Dialog";
 import { FileInput } from "@/components/ui/FileInput";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
 import { Input, Textarea } from "@/components/ui/Input";
@@ -37,6 +38,8 @@ export default function LibraryPage() {
   const [achieverOpen, setAchieverOpen] = useState(false);
   const [achieverForm, setAchieverForm] = useState<Partial<Achiever>>(emptyAchiever);
   const [achieverPhoto, setAchieverPhoto] = useState<File | null>(null);
+  const [deleteFacilityTarget, setDeleteFacilityTarget] = useState<Facility | null>(null);
+  const [deleteAchieverTarget, setDeleteAchieverTarget] = useState<Achiever | null>(null);
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["library-info"] });
@@ -80,6 +83,7 @@ export default function LibraryPage() {
     mutationFn: (id: number) => endpoints.deleteFacility(id),
     onSuccess: () => {
       invalidate();
+      setDeleteFacilityTarget(null);
       pushToast({ kind: "success", title: "Facility deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
@@ -110,6 +114,7 @@ export default function LibraryPage() {
     mutationFn: (id: number) => endpoints.deleteAchiever(id),
     onSuccess: () => {
       invalidate();
+      setDeleteAchieverTarget(null);
       pushToast({ kind: "success", title: "Achiever deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
@@ -193,7 +198,7 @@ export default function LibraryPage() {
               </div>
               <div className="mt-4 flex gap-2">
                 <Button size="sm" variant="secondary" loading={toggleFacility.isPending} onClick={() => toggleFacility.mutate(facility)}>Toggle</Button>
-                <Button size="sm" variant="danger" loading={deleteFacility.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
+                <Button size="sm" variant="danger" loading={deleteFacility.isPending && deleteFacilityTarget?.id === facility.id} icon={<Trash2 className="h-4 w-4" />} onClick={() => setDeleteFacilityTarget(facility)}>Delete</Button>
               </div>
             </article>
           ))}
@@ -225,7 +230,7 @@ export default function LibraryPage() {
                 </div>
                 <div className="mt-4 flex gap-2">
                   <Button size="sm" variant="secondary" loading={toggleAchiever.isPending} onClick={() => toggleAchiever.mutate(achiever)}>Toggle</Button>
-                  <Button size="sm" variant="danger" loading={deleteAchiever.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteAchiever.mutate(achiever.id)}>Delete</Button>
+                  <Button size="sm" variant="danger" loading={deleteAchiever.isPending && deleteAchieverTarget?.id === achiever.id} icon={<Trash2 className="h-4 w-4" />} onClick={() => setDeleteAchieverTarget(achiever)}>Delete</Button>
                 </div>
               </article>
             );
@@ -292,6 +297,26 @@ export default function LibraryPage() {
           <FormActions><Button type="submit" loading={createAchiever.isPending} icon={<Plus className="h-4 w-4" />}>Add Achiever</Button></FormActions>
         </FormShell>
       </Modal>
+
+      <ConfirmDialog
+        open={Boolean(deleteFacilityTarget)}
+        title="Delete Facility"
+        message={deleteFacilityTarget ? `Are you sure you want to delete ${deleteFacilityTarget.name}?` : "Delete facility?"}
+        confirmLabel="Delete"
+        loading={deleteFacility.isPending}
+        onClose={() => setDeleteFacilityTarget(null)}
+        onConfirm={() => deleteFacilityTarget && deleteFacility.mutate(deleteFacilityTarget.id)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(deleteAchieverTarget)}
+        title="Delete Achiever"
+        message={deleteAchieverTarget ? `Are you sure you want to delete ${deleteAchieverTarget.name}?` : "Delete achiever?"}
+        confirmLabel="Delete"
+        loading={deleteAchiever.isPending}
+        onClose={() => setDeleteAchieverTarget(null)}
+        onConfirm={() => deleteAchieverTarget && deleteAchiever.mutate(deleteAchieverTarget.id)}
+      />
     </>
   );
 }

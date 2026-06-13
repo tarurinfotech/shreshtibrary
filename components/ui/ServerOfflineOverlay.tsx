@@ -11,6 +11,7 @@ export function ServerOfflineOverlay() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -23,6 +24,7 @@ export function ServerOfflineOverlay() {
         if (res.status !== 502 && res.status !== 503) {
           window.location.reload();
         }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (e) {
         // Still offline
       }
