@@ -33,8 +33,9 @@ export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expand
         </div>
       </div>
 
-      <nav className="grid gap-3">
-        {navItems
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar">
+        <div className="grid gap-3 pb-4">
+          {navItems
           .filter((item) => {
             if (item.superOnly && user.role !== "super_admin") return false;
             if (item.permissionKey && user.role !== "super_admin") {
@@ -72,9 +73,10 @@ export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expand
               </Link>
             );
           })}
+        </div>
       </nav>
 
-      <div className="mt-auto grid gap-2">
+      <div className="mt-auto grid shrink-0 gap-2 pt-4">
         <div className={clsx("flex h-11 items-center rounded-lg transition-all duration-300 ease-in-out overflow-hidden", expanded ? "w-[224px] px-2 hover:bg-[color:var(--hover)]" : "w-[44px] pl-[4px]")} title={expanded ? undefined : user.username}>
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[color:var(--primary-soft)] text-primary">
             <span className="text-sm font-bold uppercase">{user.username.slice(0, 1)}</span>

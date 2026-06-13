@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarPlus, CheckSquare, Eye, Plus, QrCode, RefreshCcw, TimerOff } from "lucide-react";
 import { AttendanceMatrix, MatrixOptionSelect } from "@/components/features/attendance/AttendanceMatrix";
@@ -23,21 +24,25 @@ import { formatDate, formatDateTime, fullName } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
 import type { AttendanceRecord, QRCodeRecord } from "@/types/api";
 
-function todayInputValue() {
+// --- Date Utils (Fixed for hydration) ---
+function getTodayDate() {
   const now = new Date();
   const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
-function dateKey(value: Date) {
-  const month = String(value.getMonth() + 1).padStart(2, "0");
-  const day = String(value.getDate()).padStart(2, "0");
-  return `${value.getFullYear()}-${month}-${day}`;
+function getMonthKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 }
 
-function monthKey(value = new Date()) {
-  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}`;
+function getCurrentWeekWindow() {
+  const day = new Date().getDate();
+  if (day <= 7) return "1-2";
+  if (day <= 14) return "2-3";
+  if (day <= 21) return "3-4";
+  return "4-5";
 }
 
 const weekWindows = [
@@ -47,15 +52,9 @@ const weekWindows = [
   { value: "4-5", label: "Week 4-5", startDay: 22 },
 ];
 
-function currentWeekWindow(value = new Date()) {
-  const day = value.getDate();
-  if (day <= 7) return "1-2";
-  if (day <= 14) return "2-3";
-  if (day <= 21) return "3-4";
-  return "4-5";
-}
-
 function buildAttendanceRange(selectedMonth: string, selectedWeek: string) {
+  if (!selectedMonth) return { from: "", to: "", days: [] };
+  
   const [year, month] = selectedMonth.split("-").map(Number);
   const monthIndex = month - 1;
   const window = weekWindows.find((item) => item.value === selectedWeek) ?? weekWindows[0];
@@ -64,83 +63,116 @@ function buildAttendanceRange(selectedMonth: string, selectedWeek: string) {
   const end = new Date(year, monthIndex, Math.min(window.startDay + 13, lastDay));
   const days: string[] = [];
   const cursor = new Date(start);
+  
   while (cursor <= end && days.length < 14) {
-    days.push(dateKey(cursor));
+    const m = String(cursor.getMonth() + 1).padStart(2, "0");
+    const d = String(cursor.getDate()).padStart(2, "0");
+    days.push(`${cursor.getFullYear()}-${m}-${d}`);
     cursor.setDate(cursor.getDate() + 1);
   }
+  
   return {
-    from: days[0] ?? todayInputValue(),
-    to: days[days.length - 1] ?? todayInputValue(),
+    from: days[0] ?? "",
+    to: days[days.length - 1] ?? "",
     days,
   };
 }
 
+type TabType = "qr" | "logs" | "summary";
+
 export default function AttendancePage() {
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
-  const [tab, setTab] = useState<"qr" | "logs" | "summary">("logs");
-  const [selectedMonth, setSelectedMonth] = useState(monthKey());
-  const [selectedWeek, setSelectedWeek] = useState(currentWeekWindow());
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // URL synced tab state (survives reload)
+  const tab = (searchParams.get("tab") as TabType) ?? "logs";
+
+  const setTab = (newTab: TabType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", newTab);
+    router.push(`?${params.toString()}`);
+  };
+
+  // Hydration safe state
+  const [mounted, setMounted] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedWeek, setSelectedWeek] = useState("");
   const [summaryDate, setSummaryDate] = useState("");
+  const [manualDate, setManualDate] = useState("");
+  const [holidayForm, setHolidayForm] = useState({ date: "", title: "", description: "" });
+
   const [manualOpen, setManualOpen] = useState(false);
-  const [manualDate, setManualDate] = useState(todayInputValue());
   const [manualSearch, setManualSearch] = useState("");
   const [manualOverrides, setManualOverrides] = useState<Record<number, boolean>>({});
   const [selectedQr, setSelectedQr] = useState<QRCodeRecord | null>(null);
   const [holidayOpen, setHolidayOpen] = useState(false);
-  const [holidayForm, setHolidayForm] = useState({ date: todayInputValue(), title: "", description: "" });
+
+  useEffect(() => {
+    setSelectedMonth(getMonthKey());
+    setSelectedWeek(getCurrentWeekWindow());
+    setSummaryDate(getTodayDate());
+    setManualDate(getTodayDate());
+    setHolidayForm(curr => ({ ...curr, date: getTodayDate() }));
+    setMounted(true);
+  }, []);
+
   const attendanceRange = useMemo(() => buildAttendanceRange(selectedMonth, selectedWeek), [selectedMonth, selectedWeek]);
 
-  const currentQr = useQuery({ queryKey: ["current-qr"], queryFn: endpoints.currentQr });
-  const qrHistory = useQuery({ queryKey: ["qr-history"], queryFn: () => endpoints.qrHistory({ page_size: 20 }) });
+  const currentQr = useQuery({ queryKey: ["current-qr"], queryFn: endpoints.currentQr, enabled: mounted && tab === "qr" });
+  const qrHistory = useQuery({ queryKey: ["qr-history"], queryFn: () => endpoints.qrHistory({ page_size: 20 }), enabled: mounted && tab === "qr" });
   const qrScans = useQuery({
     queryKey: ["qr-scans", selectedQr?.id],
     queryFn: () => endpoints.qrScans(selectedQr?.id ?? 0),
-    enabled: Boolean(selectedQr),
+    enabled: Boolean(selectedQr) && mounted,
   });
   const matrixStudents = useQuery({
     queryKey: ["attendance-matrix-students"],
     queryFn: () => endpoints.allStudents({ page_size: 100 }),
-    enabled: tab === "logs",
+    enabled: mounted && tab === "logs",
   });
   const attendanceMatrix = useQuery({
     queryKey: ["attendance-matrix", attendanceRange.from, attendanceRange.to],
     queryFn: () => endpoints.allAttendance({ from_date: attendanceRange.from, to_date: attendanceRange.to }),
-    enabled: tab === "logs",
+    enabled: mounted && tab === "logs" && Boolean(attendanceRange.from),
   });
   const holidays = useQuery({
     queryKey: ["holidays", attendanceRange.from, attendanceRange.to],
     queryFn: () => endpoints.holidays({ from_date: attendanceRange.from, to_date: attendanceRange.to, is_active: true }),
-    enabled: tab === "logs",
+    enabled: mounted && tab === "logs" && Boolean(attendanceRange.from),
   });
   const settings = useQuery({
     queryKey: ["settings"],
     queryFn: endpoints.settings,
-    enabled: tab === "logs",
+    enabled: mounted && tab === "logs",
   });
   const manualHoliday = useQuery({
     queryKey: ["manual-holiday", manualDate],
     queryFn: () => endpoints.holidays({ date: manualDate, is_active: true }),
-    enabled: manualOpen && Boolean(manualDate),
+    enabled: mounted && manualOpen && Boolean(manualDate),
   });
   const summary = useQuery({
     queryKey: ["attendance-summary", summaryDate],
     queryFn: () => endpoints.attendanceDailySummary(summaryDate || undefined),
+    enabled: mounted && tab === "summary"
   });
   const absentees = useQuery({
     queryKey: ["attendance-absentees", summaryDate],
     queryFn: () => endpoints.attendanceAbsentees(summaryDate || undefined),
+    enabled: mounted && tab === "summary"
   });
-  const streak = useQuery({ queryKey: ["attendance-streak"], queryFn: endpoints.attendanceStreak });
+  const streak = useQuery({ queryKey: ["attendance-streak"], queryFn: endpoints.attendanceStreak, enabled: mounted && tab === "summary" });
+  
   const manualStudents = useQuery({
     queryKey: ["manual-attendance-students"],
     queryFn: () => endpoints.allStudents(),
-    enabled: manualOpen,
+    enabled: mounted && manualOpen,
   });
   const manualRecords = useQuery({
     queryKey: ["manual-attendance-records", manualDate],
     queryFn: () => endpoints.allAttendance({ date: manualDate }),
-    enabled: manualOpen && Boolean(manualDate),
+    enabled: mounted && manualOpen && Boolean(manualDate),
   });
 
   const manualRecordsByStudent = useMemo(() => {
@@ -167,9 +199,7 @@ export default function AttendancePage() {
   const filteredManualStudents = useMemo(() => {
     const term = manualSearch.trim().toLowerCase();
     return (manualStudents.data ?? []).filter((student) => {
-      if (!term) {
-        return true;
-      }
+      if (!term) return true;
       return [
         student.student_id,
         student.username,
@@ -216,7 +246,7 @@ export default function AttendancePage() {
   };
 
   const openManualAttendance = () => {
-    setManualDate((current) => current || todayInputValue());
+    if (!manualDate) setManualDate(getTodayDate());
     setManualSearch("");
     setManualOverrides({});
     setManualOpen(true);
@@ -261,7 +291,7 @@ export default function AttendancePage() {
     onSuccess: () => {
       invalidate();
       setHolidayOpen(false);
-      setHolidayForm({ date: todayInputValue(), title: "", description: "" });
+      setHolidayForm({ date: getTodayDate(), title: "", description: "" });
       pushToast({ kind: "success", title: "Holiday saved" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Holiday failed", message: getErrorMessage(error) }),
@@ -294,78 +324,137 @@ export default function AttendancePage() {
     saveHoliday.mutate();
   };
 
+  // Prevent UI rendering weird states before hydration
+  if (!mounted) {
+    return <LoadingBlock label="Initializing..." />;
+  }
+
   const selectedManualCount = (manualStudents.data ?? []).filter((student) => getManualPresence(student.user_id)).length;
   const manualStudentCount = manualStudents.data?.length ?? 0;
   const selectedManualHoliday = (manualHoliday.data ?? [])[0];
 
   return (
-    <>
-      <PageHeader
-        title="Attendance"
-        eyebrow="QR and Logs"
-        actions={
-          <>
-            <Button variant="secondary" icon={<Plus className="h-4 w-4" />} onClick={openManualAttendance}>
-              Manual
-            </Button>
-            <Button loading={qrAction.isPending} icon={<QrCode className="h-4 w-4" />} onClick={() => qrAction.mutate("generate")}>
-              Generate QR
-            </Button>
-          </>
-        }
-      />
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between min-w-0">
+        <div className="min-w-0 shrink-0">
+          <PageHeader title="Attendance Management" eyebrow="QR and Logs" />
+        </div>
+        
+        {/* ARIA Accessible Tabs */}
+        <div 
+          role="tablist"
+          aria-label="Attendance Views"
+          className="flex max-w-full items-center gap-2 overflow-x-auto rounded-lg bg-[color:var(--field)] p-1 hide-scrollbar sm:max-w-md shrink-0"
+        >
+          <button 
+            type="button"
+            role="tab"
+            aria-selected={tab === "qr"}
+            aria-controls="tabpanel-qr"
+            id="tab-qr"
+            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "qr" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`} 
+            onClick={() => setTab("qr")}
+          >
+            QR Code
+          </button>
+          <button 
+            type="button"
+            role="tab"
+            aria-selected={tab === "logs"}
+            aria-controls="tabpanel-logs"
+            id="tab-logs"
+            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "logs" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`} 
+            onClick={() => setTab("logs")}
+          >
+            Matrix Logs
+          </button>
+          <button 
+            type="button"
+            role="tab"
+            aria-selected={tab === "summary"}
+            aria-controls="tabpanel-summary"
+            id="tab-summary"
+            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "summary" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`} 
+            onClick={() => setTab("summary")}
+          >
+            Summary
+          </button>
+        </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Button variant={tab === "qr" ? "primary" : "secondary"} onClick={() => setTab("qr")}>QR</Button>
-        <Button variant={tab === "logs" ? "primary" : "secondary"} onClick={() => setTab("logs")}>Logs</Button>
-        <Button variant={tab === "summary" ? "primary" : "secondary"} onClick={() => setTab("summary")}>Summary</Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <Button size="sm" variant="secondary" icon={<Plus className="h-3.5 w-3.5" />} onClick={openManualAttendance}>
+            Manual Entry
+          </Button>
+          <Button size="sm" loading={qrAction.isPending} icon={<QrCode className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("generate")}>
+            Generate QR
+          </Button>
+        </div>
       </div>
 
       {tab === "qr" ? (
-        <div className="grid gap-5 xl:grid-cols-[420px_1fr]">
-          <section className="surface rounded-lg p-5">
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 className="font-semibold">Current QR</h2>
-              <div className="flex gap-2">
-                <Button size="sm" variant="secondary" loading={qrAction.isPending} icon={<RefreshCcw className="h-4 w-4" />} onClick={() => qrAction.mutate("regenerate")}>Regenerate</Button>
-                <Button size="sm" variant="danger" loading={qrAction.isPending} icon={<TimerOff className="h-4 w-4" />} onClick={() => qrAction.mutate("expire")}>Expire</Button>
+        <div id="tabpanel-qr" role="tabpanel" aria-labelledby="tab-qr" className="grid items-start gap-4 xl:grid-cols-[380px_1fr]">
+          <section className="flex min-w-0 flex-col rounded-xl border border-border bg-panel p-4 shadow-sm">
+            <div className="mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
+              <h2 className="text-sm font-bold">Active QR Code</h2>
+              <div className="flex items-center gap-1.5">
+                <Button size="sm" variant="secondary" className="h-7 px-2.5 text-xs" loading={qrAction.isPending} icon={<RefreshCcw className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("regenerate")}>
+                  Regen
+                </Button>
+                <Button size="sm" variant="danger" className="h-7 px-2.5 text-xs" loading={qrAction.isPending} icon={<TimerOff className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("expire")}>
+                  Expire
+                </Button>
               </div>
             </div>
-            {currentQr.data ? <QRCodeDisplay qr={currentQr.data} /> : <EmptyState title="No active QR" />}
+            <div className="flex justify-center py-2">
+              {currentQr.isLoading ? <LoadingBlock label="Fetching QR..." /> : (currentQr.data ? <QRCodeDisplay qr={currentQr.data} /> : <EmptyState title="No active QR" />)}
+            </div>
           </section>
 
-          <section className="surface rounded-lg p-5">
-            <h2 className="mb-4 font-semibold">QR History</h2>
-            <TableShell className="rounded-none border-0 bg-transparent">
-              <Table>
-                <thead>
+          <section className="flex min-w-0 flex-col rounded-xl border border-border bg-panel p-4 shadow-sm">
+            <h2 className="mb-3 text-sm font-bold text-foreground">QR Scan History</h2>
+            {qrHistory.isLoading ? <LoadingBlock label="Loading History..." /> : (
+            <TableShell className="border-0 bg-transparent p-0 shadow-none">
+              <Table minWidth={400} className="w-full text-xs">
+                <thead className="bg-[color:var(--field-strong)]">
                   <tr>
-                    <Th>Date</Th>
-                    <Th>Status</Th>
-                    <Th>Expires</Th>
-                    <Th>Scans</Th>
+                    <Th className="whitespace-nowrap py-2 text-[10px]">Generation Date</Th>
+                    <Th className="whitespace-nowrap py-2 text-[10px]">Status</Th>
+                    <Th className="whitespace-nowrap py-2 text-[10px]">Expires At</Th>
+                    <Th className="whitespace-nowrap py-2 text-right text-[10px]">Actions</Th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-border">
                   {(qrHistory.data?.data ?? []).map((qr) => (
-                    <tr key={qr.id}>
-                      <Td>{formatDate(qr.valid_date)}</Td>
-                      <Td><Badge variant={qr.is_active ? "success" : "danger"}>{qr.is_active ? "Active" : "Expired"}</Badge></Td>
-                      <Td>{formatDateTime(qr.expires_at ?? qr.expiry_timestamp)}</Td>
-                      <Td>
-                        <Button size="sm" variant="secondary" icon={<Eye className="h-4 w-4" />} onClick={() => setSelectedQr(qr)}>Open</Button>
+                    <tr key={qr.id} className="group hover:bg-[color:var(--hover)]">
+                      <Td className="whitespace-nowrap py-2 font-medium">{formatDate(qr.valid_date)}</Td>
+                      <Td className="whitespace-nowrap py-2">
+                        <Badge variant={qr.is_active ? "success" : "danger"} className="text-[10px]">
+                          {qr.is_active ? "Active" : "Expired"}
+                        </Badge>
+                      </Td>
+                      <Td className="whitespace-nowrap py-2 text-muted">{formatDateTime(qr.expires_at ?? qr.expiry_timestamp)}</Td>
+                      <Td className="whitespace-nowrap py-2 text-right">
+                        <Button size="sm" variant="secondary" aria-label={`View scans for ${formatDate(qr.valid_date)}`} className="h-6 px-2 text-[10px]" icon={<Eye className="h-3 w-3" />} onClick={() => setSelectedQr(qr)}>
+                          View Scans
+                        </Button>
                       </Td>
                     </tr>
                   ))}
+                  {(qrHistory.data?.data?.length ?? 0) === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-8 text-center text-xs text-muted">No QR history found.</td>
+                    </tr>
+                  ) : null}
                 </tbody>
               </Table>
             </TableShell>
+            )}
           </section>
         </div>
       ) : null}
 
       {tab === "logs" ? (
-        <>
+        <div id="tabpanel-logs" role="tabpanel" aria-labelledby="tab-logs" className="min-w-0 h-[calc(100vh-220px)] min-h-[500px]">
           <AttendanceMatrix
             days={attendanceRange.days}
             students={matrixStudents.data ?? []}
@@ -405,15 +494,15 @@ export default function AttendancePage() {
               </div>
             }
           />
-        </>
+        </div>
       ) : null}
 
       {tab === "summary" ? (
-        <>
+        <div id="tabpanel-summary" role="tabpanel" aria-labelledby="tab-summary" className="grid gap-4">
           <div className="max-w-xs">
             <DateInput label="Date" value={summaryDate} onChange={(event) => setSummaryDate(event.target.value)} />
           </div>
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <MetricTile label="Present" value={summary.data?.present ?? 0} tone="green" />
             <MetricTile label="Pending" value={summary.data?.pending ?? 0} tone="amber" />
             <MetricTile label="Absent" value={summary.data?.absent ?? 0} tone="red" />
@@ -422,6 +511,7 @@ export default function AttendancePage() {
           <div className="grid gap-5 xl:grid-cols-2">
             <section className="surface rounded-lg p-5">
               <h2 className="mb-4 font-semibold">Absentees</h2>
+              {absentees.isLoading ? <LoadingBlock label="Loading absentees" /> : (
               <div className="grid gap-2">
                 {(absentees.data ?? []).slice(0, 12).map((student) => (
                   <EntityListItem 
@@ -435,18 +525,23 @@ export default function AttendancePage() {
                     } 
                   />
                 ))}
+                {(absentees.data?.length === 0) && <EmptyState title="No absentees found" />}
               </div>
+              )}
             </section>
             <section className="surface rounded-lg p-5">
               <h2 className="mb-4 font-semibold">Streaks</h2>
+              {streak.isLoading ? <LoadingBlock label="Loading streaks" /> : (
               <div className="grid gap-2">
                 {(streak.data ?? []).slice(0, 12).map((item) => (
-                  <EntityListItem key={item.student.user_id} title={fullName(item.student.first_name, item.student.last_name)} trailing={<Badge variant="info">{item.streak}</Badge>} />
+                  <EntityListItem key={item.student.user_id} title={fullName(item.student.first_name, item.student.last_name)} trailing={<Badge variant="info">{item.streak} days</Badge>} />
                 ))}
+                {(streak.data?.length === 0) && <EmptyState title="No streaks currently active" />}
               </div>
+              )}
             </section>
           </div>
-        </>
+        </div>
       ) : null}
 
       <Modal open={manualOpen} title="Manual Attendance" onClose={() => setManualOpen(false)} className="max-w-5xl">
@@ -492,69 +587,99 @@ export default function AttendancePage() {
           {manualStudents.isLoading || manualRecords.isLoading ? <LoadingBlock label="Loading students" /> : null}
           {manualStudents.error || manualRecords.error ? <ErrorState message="Unable to load manual attendance list." /> : null}
 
-          <TableShell className="max-h-[42vh] overflow-y-auto rounded-lg border border-border bg-transparent p-2 shadow-none">
-            <Table className="min-w-[720px]">
-              <thead>
-                <tr>
-                  <Th>Present</Th>
-                  <Th>Student</Th>
-                  <Th>Mobile</Th>
-                  <Th>Goal</Th>
-                  <Th>Current Record</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredManualStudents.map((student) => {
-                  const existing = manualRecordsByStudent.get(student.user_id);
-                  const checked = getManualPresence(student.user_id);
-                  return (
-                    <tr key={student.user_id}>
-                      <Td>
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            checked={checked}
-                            className="h-4 w-4 rounded border-border accent-[var(--primary)]"
-                            type="checkbox"
-                            onChange={(event) => setManualPresence(student.user_id, event.target.checked)}
-                          />
-                          <span className="text-xs text-muted">{checked ? "Present" : "Absent"}</span>
-                        </label>
-                      </Td>
-                      <Td>
-                        <div className="flex items-center gap-2.5 min-w-0">
-                          <ProfileAvatar
-                            src={student.profile_image ?? student.profile_photo}
-                            name={[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || student.username}
-                            size="sm"
-                            shape="circle"
-                            status={student.status}
-                            className="shrink-0"
-                          />
-                          <div className="min-w-0">
-                            <div className="font-medium truncate">
-                              {[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || fullName(student.first_name, student.last_name) || student.username}
+          {/* Fixed Responsiveness: Converts to Cards mentally/visually or allows controlled overflow */}
+          <div className="grid gap-3 sm:hidden mt-2 max-h-[50vh] overflow-y-auto pr-1">
+            {/* Mobile Card Layout Fallback */}
+            {filteredManualStudents.map((student) => {
+              const existing = manualRecordsByStudent.get(student.user_id);
+              const checked = getManualPresence(student.user_id);
+              return (
+                <div key={student.user_id} className="surface flex items-center justify-between p-3 rounded-xl">
+                  <div className="flex items-center gap-3">
+                     <ProfileAvatar src={student.profile_image} name={student.first_name} size="sm" />
+                     <div className="flex flex-col">
+                       <span className="text-sm font-medium">{fullName(student.first_name, student.last_name)}</span>
+                       <span className="text-xs text-muted">{student.student_id}</span>
+                     </div>
+                  </div>
+                  <input
+                      checked={checked}
+                      className="h-5 w-5 rounded border-border accent-[var(--primary)]"
+                      type="checkbox"
+                      aria-label={`Mark ${student.first_name} present`}
+                      onChange={(event) => setManualPresence(student.user_id, event.target.checked)}
+                    />
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden sm:block">
+            <TableShell className="max-h-[42vh] overflow-y-auto rounded-lg border border-border bg-transparent p-2 shadow-none">
+              <Table className="w-full min-w-full">
+                <thead>
+                  <tr>
+                    <Th>Present</Th>
+                    <Th>Student</Th>
+                    <Th>Mobile</Th>
+                    <Th>Goal</Th>
+                    <Th>Current Record</Th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredManualStudents.map((student) => {
+                    const existing = manualRecordsByStudent.get(student.user_id);
+                    const checked = getManualPresence(student.user_id);
+                    return (
+                      <tr key={student.user_id} className="hover:bg-[var(--hover)] transition-colors">
+                        <Td>
+                          <label className="inline-flex items-center gap-2 cursor-pointer focus-ring">
+                            <input
+                              checked={checked}
+                              className="h-4 w-4 rounded border-border accent-[var(--primary)] focus:ring-primary"
+                              type="checkbox"
+                              onChange={(event) => setManualPresence(student.user_id, event.target.checked)}
+                            />
+                            <span className="text-xs text-muted">{checked ? "Present" : "Absent"}</span>
+                          </label>
+                        </Td>
+                        <Td>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <ProfileAvatar
+                              src={student.profile_image ?? student.profile_photo}
+                              name={[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || student.username}
+                              size="sm"
+                              shape="circle"
+                              status={student.status}
+                              className="shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">
+                                {[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || fullName(student.first_name, student.last_name) || student.username}
+                              </div>
+                              <div className="text-xs text-muted">{student.student_id ?? student.username}</div>
                             </div>
-                            <div className="text-xs text-muted">{student.student_id ?? student.username}</div>
                           </div>
-                        </div>
-                      </Td>
-                      <Td>{student.mobile || "Not set"}</Td>
-                      <Td>{student.goal || "Not set"}</Td>
-                      <Td>
-                        {existing ? (
-                          <Badge variant={existing.is_present ? "success" : "danger"}>
-                            {existing.is_present ? "Present" : "Absent"}
-                          </Badge>
-                        ) : (
-                          <Badge variant="neutral">New</Badge>
-                        )}
-                      </Td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          </TableShell>
+                        </Td>
+                        <Td>{student.mobile || "Not set"}</Td>
+                        <Td>{student.goal || "Not set"}</Td>
+                        <Td>
+                          {existing ? (
+                            <Badge variant={existing.is_present ? "success" : "danger"}>
+                              {existing.is_present ? "Present" : "Absent"}
+                            </Badge>
+                          ) : (
+                            <Badge variant="neutral">New</Badge>
+                          )}
+                        </Td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </Table>
+            </TableShell>
+          </div>
 
           {!manualStudents.isLoading && filteredManualStudents.length === 0 ? <EmptyState title="No students found" /> : null}
 
@@ -604,8 +729,9 @@ export default function AttendancePage() {
           {(qrScans.data ?? []).map((scan) => (
             <EntityListItem key={scan.id} title={scan.student_name} trailing={<span className="text-xs text-muted">{formatDate(scan.date)}</span>} />
           ))}
+          {!qrScans.isLoading && (qrScans.data?.length === 0) && <EmptyState title="No scans recorded" />}
         </div>
       </Modal>
-    </>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Plus, Save, Star, Trash2, Trophy } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
+import { EntityCard } from "@/components/ui/EntityCard";
 import { Button } from "@/components/ui/Button";
 import { FileInput } from "@/components/ui/FileInput";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
@@ -129,6 +130,8 @@ export default function LibraryPage() {
       <PageHeader title="Library" eyebrow="Public Content" />
       {loading ? <LoadingBlock label="Loading library content" /> : null}
       {hasError ? <ErrorState message="Unable to load library content." /> : null}
+      {!loading && !hasError && (
+      <div className="space-y-6">
 
       <FormShell surface onSubmit={submitInfo}>
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
@@ -140,7 +143,7 @@ export default function LibraryPage() {
               <span className="sr-only">Library feature image</span>
             ) : (
               <div className="grid justify-items-center gap-2 text-sm">
-                <ImagePlus className="h-8 w-8" />
+                <ImagePlus className="h-8 w-8" aria-hidden="true" />
                 <span>No feature image</span>
               </div>
             )}
@@ -173,31 +176,37 @@ export default function LibraryPage() {
           <h2 className="font-semibold">Facilities</h2>
           <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setFacilityOpen(true)}>Add</Button>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {(facilities.data ?? []).map((facility) => (
-            <article key={facility.id} className="rounded-lg border border-border bg-panel-strong p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3">
+        {facilities.data?.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No facilities added yet.</div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {(facilities.data ?? []).map((facility) => (
+              <EntityCard
+                key={facility.id}
+                className="bg-panel-strong"
+                avatar={
                   <div
                     className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary/10 bg-cover bg-center text-primary"
                     style={facility.image ? { backgroundImage: `url(${mediaUrl(facility.image)})` } : undefined}
+                    role="img"
+                    aria-label={`${facility.name} icon`}
                   >
-                    {!facility.image && facility.icon_key ? <span className="text-xl font-bold">{facility.icon_key[0]}</span> : null}
+                    {!facility.image && facility.icon_key ? <span className="text-xl font-bold" aria-hidden="true">{facility.icon_key[0]}</span> : null}
                   </div>
-                  <div>
-                    <h3 className="font-medium">{facility.name}</h3>
-                    <p className="mt-1 text-sm text-muted">{facility.description || facility.icon_key || "No description"}</p>
-                  </div>
-                </div>
-                <Badge variant={statusVariant(facility.is_active ? "active" : "inactive")}>{facility.is_active ? "Active" : "Inactive"}</Badge>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <Button size="sm" variant="secondary" loading={toggleFacility.isPending} onClick={() => toggleFacility.mutate(facility)}>Toggle</Button>
-                <Button size="sm" variant="danger" loading={deleteFacility.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
-              </div>
-            </article>
-          ))}
-        </div>
+                }
+                title={facility.name}
+                subtitle={facility.description || facility.icon_key || "No description"}
+                badge={<Badge variant={statusVariant(facility.is_active ? "active" : "inactive")}>{facility.is_active ? "Active" : "Inactive"}</Badge>}
+                actions={
+                  <>
+                    <Button size="sm" variant="secondary" loading={toggleFacility.isPending} onClick={() => toggleFacility.mutate(facility)}>Toggle</Button>
+                    <Button size="sm" variant="danger" loading={deleteFacility.isPending} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
+                  </>
+                }
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       <section className="surface rounded-lg p-5">
@@ -205,32 +214,42 @@ export default function LibraryPage() {
           <h2 className="font-semibold">Achievers</h2>
           <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setAchieverOpen(true)}>Add</Button>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {(achievers.data ?? []).map((achiever) => {
-            const achieverImage = mediaUrl(achiever.photo);
-            return (
-              <article key={achiever.id} className="rounded-lg border border-border bg-panel-strong p-4">
-                <div className="flex items-start gap-3">
-                  <div
-                    className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-amber-500/15 bg-cover bg-center text-amber-300"
-                    style={achieverImage ? { backgroundImage: `url(${achieverImage})` } : undefined}
-                  >
-                    {achieverImage ? <span className="sr-only">{achiever.name}</span> : <Trophy className="h-5 w-5" />}
-                  </div>
-                  <div>
-                    <h3 className="font-medium">{achiever.name}</h3>
-                    <p className="mt-1 text-sm text-muted">{achiever.achievement}</p>
-                    <p className="mt-2 text-xs text-amber-300">{achiever.year} {achiever.goal ? `/ ${achiever.goal}` : ""}</p>
-                  </div>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <Button size="sm" variant="secondary" loading={toggleAchiever.isPending} onClick={() => toggleAchiever.mutate(achiever)}>Toggle</Button>
-                  <Button size="sm" variant="danger" loading={deleteAchiever.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteAchiever.mutate(achiever.id)}>Delete</Button>
-                </div>
-              </article>
-            );
-          })}
-        </div>
+        {achievers.data?.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No achievers added yet.</div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {(achievers.data ?? []).map((achiever) => {
+              const achieverImage = mediaUrl(achiever.photo);
+              return (
+                <EntityCard
+                  key={achiever.id}
+                  className="bg-panel-strong"
+                  avatar={
+                    <div
+                      className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-amber-500/15 bg-cover bg-center text-amber-300"
+                      style={achieverImage ? { backgroundImage: `url(${achieverImage})` } : undefined}
+                      role="img"
+                      aria-label={`${achiever.name} photo`}
+                    >
+                      {achieverImage ? <span className="sr-only">{achiever.name}</span> : <Trophy className="h-5 w-5" aria-hidden="true" />}
+                    </div>
+                  }
+                  title={achiever.name}
+                  subtitle={achiever.achievement}
+                  metadata={
+                    <span className="text-xs text-amber-300">{achiever.year} {achiever.goal ? `/ ${achiever.goal}` : ""}</span>
+                  }
+                  actions={
+                    <>
+                      <Button size="sm" variant="secondary" loading={toggleAchiever.isPending} onClick={() => toggleAchiever.mutate(achiever)}>Toggle</Button>
+                      <Button size="sm" variant="danger" loading={deleteAchiever.isPending} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteAchiever.mutate(achiever.id)}>Delete</Button>
+                    </>
+                  }
+                />
+              );
+            })}
+          </div>
+        )}
       </section>
 
       <section className="surface rounded-lg p-5">
@@ -238,25 +257,31 @@ export default function LibraryPage() {
           <h2 className="font-semibold">Public Reviews</h2>
           <Badge variant="success">{reviewSummary.data?.count ?? reviews.data?.length ?? 0}</Badge>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {(reviews.data ?? []).slice(0, 6).map((review) => (
-            <article key={review.id} className="rounded-lg border border-border bg-panel-strong p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h3 className="font-medium">{review.student_name}</h3>
-                  <p className="mt-1 text-xs text-muted">{formatDate(review.created_at)}</p>
+        {reviews.data?.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No public reviews available.</div>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {(reviews.data ?? []).slice(0, 6).map((review) => (
+              <article key={review.id} className="rounded-lg border border-border bg-panel-strong p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-medium">{review.student_name}</h3>
+                    <p className="mt-1 text-xs text-muted">{formatDate(review.created_at)}</p>
+                  </div>
+                  <div className="flex gap-1 text-amber-300" role="img" aria-label={`Rating: ${review.rating} out of 5 stars`}>
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <Star key={index} className={index < review.rating ? "h-4 w-4 fill-current" : "h-4 w-4 text-muted"} aria-hidden="true" />
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-1 text-amber-300">
-                  {Array.from({ length: 5 }).map((_, index) => (
-                    <Star key={index} className={index < review.rating ? "h-4 w-4 fill-current" : "h-4 w-4 text-muted"} />
-                  ))}
-                </div>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-foreground">{review.comment}</p>
-            </article>
-          ))}
-        </div>
+                <p className="mt-3 text-sm leading-6 text-foreground">{review.comment}</p>
+              </article>
+            ))}
+          </div>
+        )}
       </section>
+      </div>
+      )}
 
       <Modal open={facilityOpen} title="Add Facility" onClose={() => setFacilityOpen(false)}>
         <FormShell onSubmit={(event) => { event.preventDefault(); createFacility.mutate(); }}>

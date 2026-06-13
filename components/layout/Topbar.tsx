@@ -36,7 +36,7 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
   };
 
   return (
-    <header className="sticky top-0 z-20 flex h-24 items-center justify-between gap-4 bg-background/90 px-4 backdrop-blur md:px-8">
+    <header className="sticky top-0 z-50 flex h-24 items-center justify-between gap-4 bg-background/90 px-4 backdrop-blur md:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-4">
         <Button variant="ghost" size="icon" className="md:hidden" onClick={onMenu}>
           <Menu className="h-5 w-5" />

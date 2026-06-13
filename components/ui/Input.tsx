@@ -32,10 +32,14 @@ export function Input({
           error && "border-danger",
           className,
         )}
+        aria-invalid={!!error}
+        aria-describedby={
+          error ? `${inputId}-error` : helper ? `${inputId}-helper` : undefined
+        }
         {...props}
       />
-      {error ? <span className="text-xs text-danger">{error}</span> : null}
-      {!error && helper ? <span className="text-xs text-muted">{helper}</span> : null}
+      {error ? <span id={`${inputId}-error`} className="text-xs text-danger">{error}</span> : null}
+      {!error && helper ? <span id={`${inputId}-helper`} className="text-xs text-muted">{helper}</span> : null}
     </label>
   );
 }
@@ -99,10 +103,14 @@ export function Textarea({
           error && "border-danger",
           className,
         )}
+        aria-invalid={!!error}
+        aria-describedby={
+          error ? `${inputId}-error` : helper ? `${inputId}-helper` : undefined
+        }
         {...props}
       />
-      {error ? <span className="text-xs text-danger">{error}</span> : null}
-      {!error && helper ? <span className="text-xs text-muted">{helper}</span> : null}
+      {error ? <span id={`${inputId}-error`} className="text-xs text-danger">{error}</span> : null}
+      {!error && helper ? <span id={`${inputId}-helper`} className="text-xs text-muted">{helper}</span> : null}
     </label>
   );
 }

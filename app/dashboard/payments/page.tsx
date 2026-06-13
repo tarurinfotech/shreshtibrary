@@ -219,7 +219,7 @@ export default function PaymentsPage() {
         }
       />
 
-      <div className="grid gap-3 md:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricTile label="Today" value={formatMoney(summary.data?.today_amount)} size="sm" />
         <MetricTile label="This Month" value={formatMoney(summary.data?.month_amount)} size="sm" tone="green" />
         <MetricTile label="Pending" value={pending.data?.length ?? summary.data?.pending_count ?? 0} size="sm" tone="amber" />

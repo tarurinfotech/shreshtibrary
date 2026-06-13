@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +15,37 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { access, hydrated, user } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
+
+  // Handle escape key to close mobile menu
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileOpen) {
+        setMobileOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [mobileOpen]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  // Focus trap for mobile menu
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (mobileOpen && mobileMenuRef.current) {
+      mobileMenuRef.current.focus();
+    }
+  }, [mobileOpen]);
 
   useEffect(() => {
     if (!hydrated) {
@@ -37,52 +68,56 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const sidebarW = desktopSidebarOpen ? 256 : 96;
-
   return (
-    <div className="min-h-screen bg-transparent">
-      {/* Desktop sidebar – width driven by inline style so transition interpolates px values */}
+    <div className="min-h-screen bg-transparent flex flex-col">
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:z-[100] focus:p-4 focus:bg-background focus:text-primary"
+      >
+        Skip to main content
+      </a>
+
+      {/* Desktop sidebar – width driven by Tailwind transition classes */}
       <div
-        className="fixed inset-y-0 left-0 z-30 hidden md:block"
-        style={{
-          width: sidebarW,
-          transition: "width 300ms ease-in-out",
-        }}
+        className={`fixed inset-y-0 left-0 z-40 hidden md:block transition-[width] duration-300 ease-in-out ${desktopSidebarOpen ? "w-[256px]" : "w-[96px]"}`}
       >
         <Sidebar user={user} expanded={desktopSidebarOpen} />
       </div>
 
       {mobileOpen ? (
-        <div className="fixed inset-0 z-40 md:hidden">
-          <div className="absolute inset-0 bg-black/65" onClick={() => setMobileOpen(false)} />
-          <div className="absolute inset-y-0 left-0">
+        <div 
+          className="fixed inset-0 z-[60] md:hidden" 
+          role="dialog" 
+          aria-modal="true" 
+          aria-label="Mobile navigation"
+          ref={mobileMenuRef}
+          tabIndex={-1}
+        >
+          <div className="absolute inset-0 bg-black/65 transition-opacity" onClick={() => setMobileOpen(false)} aria-hidden="true" />
+          <div className="absolute inset-y-0 left-0 flex w-64 flex-col bg-background shadow-xl">
             <Sidebar user={user} expanded onNavigate={() => setMobileOpen(false)} />
           </div>
           <div className="absolute right-4 top-4">
-            <Button variant="secondary" size="icon" onClick={() => setMobileOpen(false)}>
-              <X className="h-4 w-4" />
-              Close navigation
+            <Button variant="secondary" size="icon" onClick={() => setMobileOpen(false)} title="Close navigation">
+              <X className="h-4 w-4" aria-hidden="true" />
+              <span className="sr-only">Close navigation</span>
             </Button>
           </div>
         </div>
       ) : null}
 
-      {/* Main content – padding-left matches sidebar width and transitions together */}
+      {/* Main content – margin-left matches sidebar width and transitions together */}
       <div
-        className="hidden md:block"
-        style={{
-          paddingLeft: sidebarW,
-          transition: "padding-left 300ms ease-in-out",
-        }}
+        className={`hidden md:flex md:flex-col md:flex-1 md:min-w-0 transition-[margin-left] duration-300 ease-in-out ${desktopSidebarOpen ? "ml-[256px]" : "ml-[96px]"}`}
       >
         <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={() => setDesktopSidebarOpen((open) => !open)} />
-        <main className="mx-auto grid w-full max-w-[1760px] gap-7 px-4 py-6 md:px-8">{children}</main>
+        <main id="main-content" tabIndex={-1} className="mx-auto grid w-full max-w-[1760px] gap-7 px-4 py-6 md:px-8 focus:outline-none">{children}</main>
       </div>
 
       {/* Mobile: no sidebar offset */}
-      <div className="md:hidden">
+      <div className="flex flex-col flex-1 min-w-0 md:hidden">
         <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={() => setDesktopSidebarOpen((open) => !open)} />
-        <main className="mx-auto grid w-full max-w-[1760px] gap-7 px-4 py-6">{children}</main>
+        <main id="main-content-mobile" tabIndex={-1} className="mx-auto grid w-full max-w-[1760px] gap-7 px-4 py-6 focus:outline-none">{children}</main>
       </div>
     </div>
   );

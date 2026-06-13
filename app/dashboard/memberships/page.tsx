@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Edit3, Eye, Plus, Power, Save } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PlanCard } from "@/components/ui/PlanCard";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EntityListItem } from "@/components/ui/EntityListItem";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
@@ -194,26 +195,27 @@ export default function MembershipsPage() {
             {(plans.data ?? []).map((plan) => {
               const stats = planStats.data?.find((item) => item.id === plan.id);
               return (
-                <article key={plan.id} className="surface grid gap-4 rounded-lg p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-semibold">{plan.name}</h2>
-                      <p className="mt-1 text-sm text-muted">{plan.duration_days} days</p>
-                    </div>
-                    <Badge variant={statusVariant(plan.is_active ? "active" : "inactive")}>{plan.is_active ? "Active" : "Inactive"}</Badge>
-                  </div>
-                  <p className="text-3xl font-semibold tracking-normal">{formatMoney(plan.price)}</p>
-                  <p className="min-h-12 text-sm text-muted">{plan.description || "No description"}</p>
-                  <div className="flex flex-wrap gap-2 text-xs text-muted">
-                    <span>{stats?.active_students ?? 0} active</span>
-                    <span>{stats?.all_time_students ?? 0} all time</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => openPlan(plan)}>Edit</Button>
-                    <Button variant="secondary" size="sm" icon={<Power className="h-4 w-4" />} loading={togglePlan.isPending} onClick={() => togglePlan.mutate(plan)}>Toggle</Button>
-                    <Button variant="secondary" size="sm" icon={<Eye className="h-4 w-4" />} onClick={() => setStudentPlanId(plan.id)}>Students</Button>
-                  </div>
-                </article>
+                <PlanCard
+                  key={plan.id}
+                  title={plan.name}
+                  duration={`${plan.duration_days} days`}
+                  isActive={plan.is_active}
+                  price={formatMoney(plan.price)}
+                  description={plan.description || "No description"}
+                  stats={
+                    <>
+                      <span>{stats?.active_students ?? 0} active</span>
+                      <span>{stats?.all_time_students ?? 0} all time</span>
+                    </>
+                  }
+                  actions={
+                    <>
+                      <Button variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => openPlan(plan)}>Edit</Button>
+                      <Button variant="secondary" size="sm" icon={<Power className="h-4 w-4" />} loading={togglePlan.isPending} onClick={() => togglePlan.mutate(plan)}>Toggle</Button>
+                      <Button variant="secondary" size="sm" icon={<Eye className="h-4 w-4" />} onClick={() => setStudentPlanId(plan.id)}>Students</Button>
+                    </>
+                  }
+                />
               );
             })}
           </div>

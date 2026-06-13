@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import { useDebounce } from "@/lib/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Download,
@@ -25,6 +26,10 @@ import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { ConfirmDialog, PromptDialog } from "@/components/ui/Dialog";
+import { FilterBar } from "@/components/ui/FilterBar";
+import { EntityCard } from "@/components/ui/EntityCard";
+import { GradientStatCard } from "@/components/ui/GradientStatCard";
+import { ProgressBar } from "@/components/ui/ProgressBar";
 
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
 import { Input } from "@/components/ui/Input";
@@ -47,99 +52,6 @@ const emptyStudent: StudentCreatePayload = {
   parent_mobile: "",
   address: "",
 };
-
-// ─── Stat Card ────────────────────────────────────────────────────────────────
-function StatCard({
-  label,
-  value,
-  icon,
-  gradient,
-  loading,
-}: {
-  label: string;
-  value: number | string;
-  icon: React.ReactNode;
-  gradient: string;
-  loading?: boolean;
-}) {
-  return (
-    <div
-      className="relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between gap-4"
-      style={{
-        background: gradient,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-      }}
-    >
-      {/* Decorative circle */}
-      <div
-        className="absolute -right-4 -top-4 h-24 w-24 rounded-full opacity-20"
-        style={{ background: "rgba(255,255,255,0.4)" }}
-      />
-      <div
-        className="absolute -right-2 top-8 h-14 w-14 rounded-full opacity-10"
-        style={{ background: "rgba(255,255,255,0.6)" }}
-      />
-
-      <div className="relative flex items-center justify-between">
-        <div
-          className="grid h-11 w-11 place-items-center rounded-xl text-white"
-          style={{ background: "rgba(255,255,255,0.22)", backdropFilter: "blur(6px)" }}
-        >
-          {icon}
-        </div>
-        <div
-          className="rounded-lg px-2 py-1 text-xs font-semibold text-white"
-          style={{ background: "rgba(255,255,255,0.18)" }}
-        >
-          {label}
-        </div>
-      </div>
-
-      <div className="relative">
-        {loading ? (
-          <div className="h-9 w-20 animate-pulse rounded-lg bg-white/20" />
-        ) : (
-          <p className="text-4xl font-bold tracking-tight text-white">{value}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Gender Bar ───────────────────────────────────────────────────────────────
-function GenderBar({
-  label,
-  value,
-  total,
-  color,
-  emoji,
-}: {
-  label: string;
-  value: number;
-  total: number;
-  color: string;
-  emoji: string;
-}) {
-  const pct = total ? Math.round((value / total) * 100) : 0;
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between text-sm">
-        <span className="flex items-center gap-1.5 font-medium">
-          <span>{emoji}</span> {label}
-        </span>
-        <span className="font-bold" style={{ color }}>
-          {value} <span className="text-xs font-normal opacity-60">({pct}%)</span>
-        </span>
-      </div>
-      <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: "var(--border)" }}>
-        <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, background: color }}
-        />
-      </div>
-    </div>
-  );
-}
 
 // ─── Student Row Card ─────────────────────────────────────────────────────────
 function StudentRowCard({
@@ -170,100 +82,81 @@ function StudentRowCard({
   const statusColor = statusColorMap[student.status] ?? "var(--muted)";
 
   return (
-    <div
-      className="group relative flex flex-col sm:flex-row sm:items-center gap-4 rounded-xl border border-border bg-panel p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-lg"
-      style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
-    >
-      {/* Left accent bar */}
-      <div
-        className="absolute left-0 top-3 bottom-3 w-0.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-        style={{ background: statusColor }}
-      />
-
-      {/* Avatar + Info */}
-      <div className="flex items-center gap-3 min-w-0 flex-1">
+    <EntityCard
+      accentColor={statusColor}
+      avatar={
         <ProfileAvatar
           src={student.profile_image ?? student.profile_photo}
           name={[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || student.username}
           size="md"
           status={student.status}
         />
-        <div className="min-w-0 flex-1">
-          <p className="truncate font-semibold text-sm">{name}</p>
-          <p className="truncate text-xs text-muted mt-0.5">
-            {student.student_id ?? `#${student.user_id}`} · @{student.username}
-          </p>
-        </div>
-      </div>
-
-      {/* Contact */}
-      <div className="flex flex-col gap-1 min-w-[160px]">
-        <span className="flex items-center gap-1.5 text-xs">
-          <Phone className="h-3 w-3 text-muted" />
-          <span className="text-sm font-medium">{student.mobile}</span>
-        </span>
-        <span className="flex items-center gap-1.5 text-xs text-muted">
-          <Mail className="h-3 w-3" />
-          <span className="truncate">{student.email || "—"}</span>
-        </span>
-      </div>
-
-      {/* Goal */}
-      <div className="flex items-center gap-1.5 min-w-[100px]">
-        <GraduationCap className="h-4 w-4 text-muted shrink-0" />
-        <span className="text-sm">{student.goal || "—"}</span>
-      </div>
-
-      {/* Status badge */}
-      <div className="min-w-[90px]">
-        <Badge variant={statusVariant(student.status)}>{student.status}</Badge>
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Link
-          href={`/dashboard/students/${student.user_id}`}
-          className={buttonClasses({ variant: "secondary", size: "sm" })}
-        >
-          <Eye className="h-3.5 w-3.5" />
-          View
-        </Link>
-
-        {student.status === "SUSPENDED" ? (
-          <Button
-            size="sm"
-            variant="success"
-            loading={activatePending}
-            icon={<ShieldCheck className="h-3.5 w-3.5" />}
-            onClick={onActivate}
+      }
+      title={name}
+      subtitle={`${student.student_id ?? `#${student.user_id}`} · @${student.username}`}
+      metadata={
+        <>
+          <span className="flex items-center gap-1.5 text-xs">
+            <Phone className="h-3 w-3 text-muted" />
+            <span className="text-sm font-medium">{student.mobile}</span>
+          </span>
+          <span className="flex items-center gap-1.5 text-xs text-muted">
+            <Mail className="h-3 w-3" />
+            <span className="truncate">{student.email || "—"}</span>
+          </span>
+        </>
+      }
+      badge={<Badge variant={statusVariant(student.status)}>{student.status}</Badge>}
+      actions={
+        <>
+          <div className="flex items-center gap-1.5 mr-4 text-sm">
+            <GraduationCap className="h-4 w-4 text-muted shrink-0" />
+            {student.goal || "—"}
+          </div>
+          <Link
+            href={`/dashboard/students/${student.user_id}`}
+            className={buttonClasses({ variant: "secondary", size: "sm" })}
           >
-            Activate
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="secondary"
-            loading={suspendPending}
-            icon={<ShieldAlert className="h-3.5 w-3.5" />}
-            onClick={onSuspend}
-          >
-            Suspend
-          </Button>
-        )}
+            <Eye className="h-3.5 w-3.5" />
+            View
+          </Link>
 
-        {isSuperAdmin && (
-          <Button
-            size="sm"
-            variant="danger"
-            loading={deletePending}
-            icon={<Trash2 className="h-3.5 w-3.5" />}
-            onClick={onDelete}
-          >
-            Delete
-          </Button>
-        )}
-      </div>
-    </div>
+          {student.status === "SUSPENDED" ? (
+            <Button
+              size="sm"
+              variant="success"
+              loading={activatePending}
+              icon={<ShieldCheck className="h-3.5 w-3.5" />}
+              onClick={onActivate}
+            >
+              Activate
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="secondary"
+              loading={suspendPending}
+              icon={<ShieldAlert className="h-3.5 w-3.5" />}
+              onClick={onSuspend}
+            >
+              Suspend
+            </Button>
+          )}
+
+          {isSuperAdmin && (
+            <Button
+              size="sm"
+              variant="danger"
+              loading={deletePending}
+              icon={<Trash2 className="h-3.5 w-3.5" />}
+              onClick={onDelete}
+            >
+              Delete
+            </Button>
+          )}
+        </>
+      }
+    />
   );
 }
 
@@ -280,14 +173,18 @@ export default function StudentsPage() {
   const [suspendTarget, setSuspendTarget] = useState<StudentProfile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentProfile | null>(null);
 
+  const debouncedSearch = useDebounce(search, 400);
+  const debouncedGoal = useDebounce(goal, 400);
+  const debouncedStatus = useDebounce(status, 100);
+
   // ── Queries ──────────────────────────────────────────────────────────────
   const students = useQuery({
-    queryKey: ["students", search, status, goal],
+    queryKey: ["students", debouncedSearch, debouncedStatus, debouncedGoal],
     queryFn: () =>
       endpoints.students({
-        search: search || undefined,
-        status: status || undefined,
-        goal: goal || undefined,
+        search: debouncedSearch || undefined,
+        status: debouncedStatus || undefined,
+        goal: debouncedGoal || undefined,
         page_size: 50,
       }),
   });
@@ -356,13 +253,13 @@ export default function StudentsPage() {
   return (
     <>
       {/* ── Page Header ─────────────────────────────────────────────────────── */}
-      <div className="mb-8 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest" style={{ color: "var(--primary)" }}>
             Profiles
           </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight">Students</h1>
-          <p className="mt-1 text-sm text-muted">
+          <h1 className="mt-0.5 text-2xl font-bold tracking-tight">Students</h1>
+          <p className="mt-0.5 text-sm text-muted">
             Manage all student profiles, memberships and status
           </p>
         </div>
@@ -381,29 +278,29 @@ export default function StudentsPage() {
       </div>
 
       {/* ── Stat Cards ──────────────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
-        <StatCard
+      <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+        <GradientStatCard
           label="Total"
           value={counts.data?.total ?? 0}
           icon={<Users className="h-5 w-5" />}
           gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
           loading={counts.isLoading}
         />
-        <StatCard
+        <GradientStatCard
           label="Live"
           value={counts.data?.live ?? 0}
           icon={<Activity className="h-5 w-5" />}
           gradient="linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
           loading={counts.isLoading}
         />
-        <StatCard
+        <GradientStatCard
           label="Expired"
           value={counts.data?.expired ?? 0}
           icon={<Clock className="h-5 w-5" />}
           gradient="linear-gradient(135deg, #f7971e 0%, #ffd200 100%)"
           loading={counts.isLoading}
         />
-        <StatCard
+        <GradientStatCard
           label="Suspended"
           value={counts.data?.suspended ?? 0}
           icon={<Ban className="h-5 w-5" />}
@@ -414,10 +311,10 @@ export default function StudentsPage() {
 
       {/* ── Gender Analytics ─────────────────────────────────────────────────── */}
       <div
-        className="mb-6 rounded-2xl border border-border p-6"
-        style={{ background: "var(--surface-sheen), var(--panel)", boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}
+        className="mb-3 rounded-xl border border-border p-3"
+        style={{ background: "var(--surface-sheen), var(--panel)", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}
       >
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-2">
           <div>
             <h2 className="font-bold text-base">Gender Distribution</h2>
             <p className="text-xs text-muted mt-0.5">Based on student profile data</p>
@@ -431,15 +328,15 @@ export default function StudentsPage() {
         </div>
 
         {genderRows.length > 0 ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
             {genderRows.map((item) => (
-              <GenderBar
+              <ProgressBar
                 key={item.label}
                 label={item.label}
                 value={item.value}
                 total={genderTotal}
                 color={item.color}
-                emoji={item.emoji}
+                icon={<span>{item.emoji}</span>}
               />
             ))}
           </div>
@@ -449,10 +346,7 @@ export default function StudentsPage() {
       </div>
 
       {/* ── Filter Bar ────────────────────────────────────────────────────────── */}
-      <div
-        className="mb-5 rounded-2xl border border-border p-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-end"
-        style={{ background: "var(--panel)" }}
-      >
+      <FilterBar.Root>
         {/* Search */}
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted pointer-events-none" />
@@ -494,10 +388,10 @@ export default function StudentsPage() {
             className="rounded-xl border border-border bg-panel-strong px-3 py-2.5 text-sm outline-none focus:border-primary transition-colors w-40"
           />
         </div>
-      </div>
+      </FilterBar.Root>
 
       {/* ── Students List ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         {/* Header row */}
         <div className="hidden sm:flex items-center gap-4 px-4 pb-1">
           <span className="text-xs font-semibold uppercase tracking-wider text-muted flex-1 min-w-0">Student</span>

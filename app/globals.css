@@ -138,6 +138,15 @@ textarea {
   border-radius: 8px;
 }
 
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .surface {
   background: var(--surface-sheen), color-mix(in srgb, var(--panel) 98%, transparent);
   border: 1px solid var(--border);

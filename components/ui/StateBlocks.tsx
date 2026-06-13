@@ -15,22 +15,28 @@ export function LoadingBlock({ label = "Loading", className }: { label?: string;
 export function EmptyState({
   title,
   message,
+  description,
+  icon,
   className,
 }: {
   title: string;
   message?: string;
+  description?: string;
+  icon?: React.ReactNode;
   className?: string;
 }) {
+  const displayMessage = description || message;
   return (
     <div className={clsx("surface grid min-h-40 place-items-center rounded-lg p-6 text-center", className)}>
       <div>
-        <Inbox className="mx-auto h-8 w-8 text-muted" />
+        {icon || <Inbox className="mx-auto h-8 w-8 text-muted" />}
         <h2 className="mt-3 font-semibold">{title}</h2>
-        {message ? <p className="mt-1 text-sm text-muted">{message}</p> : null}
+        {displayMessage ? <p className="mt-1 text-sm text-muted">{displayMessage}</p> : null}
       </div>
     </div>
   );
 }
+
 
 export function ErrorState({ message, className }: { message: string; className?: string }) {
   return (

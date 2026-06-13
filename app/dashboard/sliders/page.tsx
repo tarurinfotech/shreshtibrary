@@ -46,7 +46,7 @@ export default function SlidersPage() {
       <PageHeader
         title="Home Sliders"
         eyebrow="App Customization"
-        action={
+        actions={
           <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAddOpen(true)}>
             Add Slider
           </Button>

@@ -116,23 +116,25 @@ export function AttendanceMatrix({
   }
 
   return (
-    <section className="rounded-lg border border-border bg-panel text-foreground shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
+    <section className="flex flex-col rounded-xl border border-border bg-panel shadow-sm h-full">
+      <div className="relative z-40 flex flex-wrap items-center justify-between gap-4 border-b border-border p-4 sm:px-6">
         <div>
-          <h2 className="font-semibold">Attendance</h2>
-          <p className="text-xs text-muted">Month and week attendance view</p>
+          <h2 className="text-base font-semibold text-foreground">Attendance Matrix</h2>
+          <p className="mt-0.5 text-xs text-muted">Track daily student presence and absences</p>
         </div>
         {actions}
       </div>
+
       {holidayList.length > 0 ? (
-        <div className="flex flex-wrap justify-end gap-2 border-b border-border px-4 py-2">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-[color:var(--field)] px-4 py-2 sm:px-6">
+          <span className="text-xs font-medium text-muted">Holidays this period:</span>
           {holidayList.map((holiday) => (
             <Button
               key={holiday.id}
               size="sm"
-              variant="ghost"
+              variant="secondary"
+              className="h-6 rounded-full px-2.5 text-[10px]"
               tooltip="Click to delete holiday"
-              type="button"
               onClick={() => onDeleteHoliday(holiday.id)}
             >
               {holiday.date.slice(-2)} {holiday.title}
@@ -140,21 +142,21 @@ export function AttendanceMatrix({
           ))}
         </div>
       ) : null}
-      <div className="max-h-[560px] overflow-auto">
-        <table className="w-full min-w-[860px] border-separate border-spacing-0 text-sm">
+
+      <div className="relative flex-1 overflow-auto bg-panel custom-scrollbar min-w-0">
+        <table className="w-full border-collapse text-sm">
           <thead>
             <tr>
-              {/* Column header width bumped to 260px to fit avatar + name */}
-              <th className="sticky left-0 top-0 z-20 w-64 border-b border-r border-border bg-[color:var(--field-strong)] px-4 py-3 text-left text-xs font-semibold text-muted">
-                Student
+              <th className="sticky left-0 top-0 z-30 min-w-[240px] border-b border-r border-border bg-panel-strong px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-muted shadow-[1px_0_0_0_var(--border)]">
+                Student Profile
               </th>
               {days.map((day) => {
                 const holiday = holidays.get(day);
                 return (
                   <th
                     key={day}
-                    className={`sticky top-0 z-10 min-w-20 border-b border-border px-4 py-3 text-center text-xs font-semibold ${
-                      holiday ? "bg-indigo-100/80 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-300" : "bg-[color:var(--field-strong)] text-muted"
+                    className={`sticky top-0 z-20 min-w-[48px] border-b border-border px-1 py-3 text-center text-xs font-bold uppercase tracking-wider ${
+                      holiday ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400" : "bg-panel-strong text-muted"
                     }`}
                     title={holiday?.title}
                   >
@@ -162,15 +164,15 @@ export function AttendanceMatrix({
                   </th>
                 );
               })}
-              <th className="sticky right-20 top-0 z-20 min-w-20 border-b border-l border-border bg-[color:var(--attendance-present-cell)] px-4 py-3 text-center text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+              <th className="sticky right-[80px] top-0 z-30 w-[80px] min-w-[80px] border-b border-l border-border bg-panel-strong px-1 py-3 text-center text-xs font-bold uppercase tracking-wider text-muted shadow-[-1px_0_0_0_var(--border)]">
                 Present
               </th>
-              <th className="sticky right-0 top-0 z-20 min-w-20 border-b border-l border-border bg-[color:var(--attendance-absent-cell)] px-4 py-3 text-center text-xs font-semibold text-rose-700 dark:text-rose-300">
+              <th className="sticky right-0 top-0 z-30 w-[80px] min-w-[80px] border-b border-l border-border bg-panel-strong px-1 py-3 text-center text-xs font-bold uppercase tracking-wider text-muted shadow-[-1px_0_0_0_var(--border)]">
                 Absent
               </th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border">
             {students.map((student) => {
               const studentRecords = records.get(student.user_id);
               const name =
@@ -206,28 +208,28 @@ export function AttendanceMatrix({
               );
 
               return (
-                <tr key={student.user_id} className="group">
-                  {/* ── Sticky name cell with profile avatar ──────────────────── */}
-                  <td className="sticky left-0 z-10 h-14 border-b border-r border-border bg-panel px-3 py-2 group-hover:bg-[color:var(--hover)]">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                <tr key={student.user_id} className="group transition-colors hover:bg-[color:var(--hover)]">
+                  {/* ── Sticky name cell ────────────────────────────────────── */}
+                  <td className="sticky left-0 z-10 border-r border-border bg-panel px-4 py-2.5 shadow-[1px_0_0_0_var(--border)] group-hover:bg-[color:var(--hover)]">
+                    <div className="flex items-center gap-3 min-w-0">
                       <ProfileAvatar
                         src={student.profile_image ?? student.profile_photo}
                         name={name}
-                        size="xs"
+                        size="sm"
                         shape="circle"
                         status={student.status}
                         className="shrink-0"
                       />
-                      <div className="min-w-0">
-                        <div className="truncate text-xs font-semibold text-foreground max-w-[160px]">{name}</div>
-                        <div className="mt-0.5 truncate text-[10px] font-medium text-muted">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold text-foreground">{name}</div>
+                        <div className="truncate text-xs font-medium text-muted">
                           {student.student_id ?? student.username}
                         </div>
                       </div>
                     </div>
                   </td>
 
-                  {/* ── Day cells ─────────────────────────────────────────────── */}
+                  {/* ── Day cells ───────────────────────────────────────────── */}
                   {days.map((day) => {
                     const holiday = holidays.get(day);
                     const record = studentRecords?.get(day);
@@ -235,20 +237,18 @@ export function AttendanceMatrix({
                     const isHoliday = Boolean(holiday);
                     const isPresent = Boolean(record?.is_present);
 
-                    let statusStr = isHoliday ? "H" : isFuture ? "-" : isPresent ? "P" : "AB";
                     let isPending = false;
-
                     const now = new Date();
                     const m = String(now.getMonth() + 1).padStart(2, "0");
                     const d = String(now.getDate()).padStart(2, "0");
                     const todayStr = `${now.getFullYear()}-${m}-${d}`;
+                    
                     if (!isHoliday && !isFuture && !isPresent && day === todayStr && settings?.library_open_time) {
                       const [openHour, openMin] = settings.library_open_time.split(":").map(Number);
                       const openDate = new Date();
                       openDate.setHours(openHour, openMin, 0, 0);
                       const paddingMs = parseInt(settings.attendance_padding_time || "60", 10) * 60000;
                       if (now.getTime() <= openDate.getTime() + paddingMs) {
-                        statusStr = "PN";
                         isPending = true;
                       }
                     }
@@ -256,33 +256,29 @@ export function AttendanceMatrix({
                     return (
                       <td
                         key={day}
-                        className={`border-b border-border px-4 py-3 text-center font-black ${
+                        className={`border-b border-border p-2 text-center align-middle font-black ${
                           isHoliday
-                            ? "bg-indigo-100 text-indigo-800 group-hover:bg-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:group-hover:bg-indigo-900/50"
+                            ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
                             : isFuture
-                              ? "bg-[color:var(--attendance-empty)] text-muted group-hover:bg-[color:var(--attendance-empty-hover)]"
+                              ? "text-muted"
                               : isPresent
-                                ? "bg-[color:var(--attendance-present-cell)] text-emerald-800 group-hover:bg-[color:var(--attendance-present-hover)] dark:text-emerald-300"
+                                ? "bg-[color:var(--attendance-present-cell)] text-emerald-800 dark:text-emerald-300"
                                 : isPending
-                                  ? "bg-[color:var(--attendance-pending-cell)] text-amber-800 group-hover:bg-[color:var(--attendance-pending-hover)] dark:text-amber-300"
-                                  : "bg-[color:var(--attendance-absent-cell)] text-rose-800 group-hover:bg-[color:var(--attendance-absent-hover)] dark:text-rose-300"
+                                  ? "bg-[color:var(--attendance-pending-cell)] text-amber-800 dark:text-amber-300"
+                                  : "bg-[color:var(--attendance-absent-cell)] text-rose-800 dark:text-rose-300"
                         }`}
-                        title={
-                          isPending
-                            ? `Pending Attendance (Padding: ${settings?.attendance_padding_time || 60} mins from opening)`
-                            : holiday?.title
-                        }
+                        title={isPending ? "Pending" : holiday?.title}
                       >
-                        {statusStr}
+                        {isHoliday ? "H" : isFuture ? "-" : isPresent ? "P" : isPending ? "PN" : "AB"}
                       </td>
                     );
                   })}
 
-                  {/* ── Present / Absent totals ────────────────────────────────── */}
-                  <td className="sticky right-20 z-10 border-b border-l border-border bg-[color:var(--attendance-present-cell)] px-4 py-3 text-center text-sm font-black text-emerald-800 group-hover:bg-[color:var(--attendance-present-hover)] dark:text-emerald-300">
+                  {/* ── Totals ──────────────────────────────────────────────── */}
+                  <td className="sticky right-[80px] z-10 border-b border-l border-border bg-[color:var(--attendance-present-cell)] p-2 text-center align-middle font-black text-emerald-800 shadow-[-1px_0_0_0_var(--border)] dark:text-emerald-300">
                     {totals.present}
                   </td>
-                  <td className="sticky right-0 z-10 border-b border-l border-border bg-[color:var(--attendance-absent-cell)] px-4 py-3 text-center text-sm font-black text-rose-800 group-hover:bg-[color:var(--attendance-absent-hover)] dark:text-rose-300">
+                  <td className="sticky right-0 z-10 border-b border-l border-border bg-[color:var(--attendance-absent-cell)] p-2 text-center align-middle font-black text-rose-800 shadow-[-1px_0_0_0_var(--border)] dark:text-rose-300">
                     {totals.absent}
                   </td>
                 </tr>

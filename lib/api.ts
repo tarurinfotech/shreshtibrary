@@ -6,7 +6,7 @@ import { useNetworkStore } from "@/store/networkStore";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://shreshtlibrary.onrender.com/api/v1";
 
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 

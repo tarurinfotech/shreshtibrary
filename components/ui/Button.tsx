@@ -18,9 +18,9 @@ export function buttonClasses({
 }) {
   return clsx(
     "focus-ring inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border font-semibold shadow-sm transition disabled:cursor-not-allowed disabled:opacity-60",
-    size === "sm" && "h-9 px-3 text-sm",
-    size === "md" && "h-10 px-4 text-sm",
-    size === "icon" && "h-10 w-10",
+    size === "sm" && "h-11 md:h-9 px-3 text-sm",
+    size === "md" && "h-12 md:h-10 px-4 text-sm",
+    size === "icon" && "h-11 w-11 md:h-10 md:w-10",
     variant === "primary" &&
       "border-primary bg-primary text-[color:var(--primary-contrast)] hover:brightness-110",
     variant === "secondary" &&

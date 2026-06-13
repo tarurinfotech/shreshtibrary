@@ -36,10 +36,10 @@ export function SectionCard({
       style={animated ? { animationDelay: `${delay * 36}ms` } : undefined}
     >
       {hasHeader ? (
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            {eyebrow ? <p className="text-[11px] font-semibold uppercase text-muted">{eyebrow}</p> : null}
-            {title ? <h2 className="mt-0.5 font-semibold">{title}</h2> : null}
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            {eyebrow ? <p className="text-[11px] font-semibold uppercase text-muted truncate">{eyebrow}</p> : null}
+            {title ? <h2 className="mt-0.5 font-semibold truncate">{title}</h2> : null}
           </div>
           <div className="flex shrink-0 items-center gap-2">
             {actions}

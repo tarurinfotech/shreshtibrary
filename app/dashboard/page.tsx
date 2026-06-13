@@ -114,12 +114,12 @@ export default function DashboardPage() {
         eyebrow="Overview"
         actions={
           <>
-            {canAttendance && <Link href="/dashboard/attendance" className={buttonClasses({ variant: "secondary", size: "md" })}>
-              <QrCode className="h-4 w-4" />
+            {canAttendance && <Link href="/dashboard/attendance" className={buttonClasses({ variant: "secondary", size: "md" })} aria-label="Scan QR Code for Attendance">
+              <QrCode className="h-4 w-4" aria-hidden="true" />
               QR
             </Link>}
-            {canNotifications && <Link href="/dashboard/notifications" className={buttonClasses({ variant: "primary", size: "md" })}>
-              <Send className="h-4 w-4" />
+            {canNotifications && <Link href="/dashboard/notifications" className={buttonClasses({ variant: "primary", size: "md" })} aria-label="Send Notifications">
+              <Send className="h-4 w-4" aria-hidden="true" />
               Notify
             </Link>}
           </>
@@ -166,8 +166,9 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap gap-7 [&>*]:flex-1 [&>*]:basis-[400px]">
+      <div className="grid gap-7 lg:grid-cols-3">
         <ChartCard
+          className="lg:col-span-2"
           title="Reports"
           actions={
             <div className="hidden flex-wrap gap-2 lg:flex">
@@ -234,16 +235,16 @@ export default function DashboardPage() {
         </ChartCard>
 
         {canStudents && (
-          <ChartCard title="Analytics">
+          <ChartCard title="Analytics" className="lg:col-span-1">
             <div className="grid place-items-center">
-              <div className="relative h-[300px] w-full max-w-[360px]">
+              <div className="relative h-[220px] w-full max-w-[280px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={donutData}
                       dataKey="chartValue"
-                      innerRadius={88}
-                      outerRadius={120}
+                      innerRadius={72}
+                      outerRadius={96}
                       paddingAngle={8}
                       cornerRadius={18}
                       startAngle={90}
@@ -262,29 +263,29 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex flex-wrap justify-center gap-5 text-sm">
+              <div className="flex flex-wrap justify-center gap-5 text-sm" role="list" aria-label="Student status breakdown">
                 {donutData.map((item, index) => (
-                  <span key={item.name} className="inline-flex items-center gap-2">
-                    <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: donutColors[index] }} />
+                  <span key={item.name} className="inline-flex items-center gap-2" role="listitem">
+                    <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: donutColors[index] }} aria-hidden="true" />
                     {item.name} <span className="font-bold text-foreground">{item.value}</span>
                   </span>
                 ))}
               </div>
-              <div className="mt-6 w-full rounded-lg border border-border bg-panel-strong p-4">
-                <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="mt-4 w-full rounded-lg border border-border bg-panel-strong p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold">Girls / Boys</h3>
                   <span className="text-xs text-muted">{genderTotal} students</span>
                 </div>
-                <div className="grid gap-3">
+                <div className="grid gap-2">
                   {genderData.map((item) => {
                     const width = genderTotal ? Math.round((item.value / genderTotal) * 100) : 0;
                     return (
-                      <div key={item.name} className="grid gap-1.5">
+                      <div key={item.name} className="grid gap-1">
                         <div className="flex items-center justify-between text-xs">
                           <span className="font-medium text-muted">{item.name}</span>
                           <span className="font-bold text-foreground">{item.value}</span>
                         </div>
-                        <div className="h-2.5 overflow-hidden rounded-full bg-muted/15">
+                        <div className="h-2 overflow-hidden rounded-full bg-muted/15">
                           <div className="h-full rounded-full" style={{ width: `${width}%`, backgroundColor: item.color }} />
                         </div>
                       </div>
@@ -298,36 +299,49 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="flex flex-wrap gap-7 [&>*]:flex-1 [&>*]:basis-[400px]">
+      <div className="grid gap-7 lg:grid-cols-2">
         <ChartCard title="Recent Activity">
-          <TableShell className="!border-0 !bg-transparent !p-0 !shadow-none">
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Action</Th>
-                  <Th>Admin</Th>
-                  <Th>Time</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {(activity.data ?? []).slice(0, 6).map((item) => (
-                  <tr key={item.id}>
-                    <Td>
-                      <div className="font-semibold">{item.action}</div>
-                      <div className="text-xs text-muted">{item.description || item.target_model}</div>
-                    </Td>
-                    <Td>{item.admin_name}</Td>
-                    <Td>{formatDateTime(item.created_at)}</Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </TableShell>
+          {activity.isLoading ? <LoadingBlock label="Loading activity" /> : null}
+          {activity.error ? <ErrorState message="Unable to load activity." /> : null}
+          {activity.data && (
+          <div className="flex flex-col px-2 py-1">
+            {activity.data.slice(0, 6).map((item, index, arr) => (
+              <div key={item.id} className="relative flex gap-5 pb-6 last:pb-0">
+                {/* Timeline line */}
+                {index !== arr.length - 1 && (
+                  <div className="absolute bottom-0 left-[11px] top-7 w-[2px] bg-border" />
+                )}
+                {/* Timeline dot */}
+                <div className="relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[3px] border-panel bg-[color:var(--primary-soft)]">
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                </div>
+                {/* Content */}
+                <div className="flex flex-col pt-0.5">
+                  <p className="text-sm font-semibold text-foreground">{item.action}</p>
+                  <p className="mt-0.5 text-sm text-muted">
+                    {item.description || item.target_model}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-2 text-xs text-muted">
+                    <span className="font-medium text-foreground">{item.admin_name}</span>
+                    <span>&bull;</span>
+                    <span>{formatDateTime(item.created_at)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {activity.data.length === 0 && (
+              <div className="py-4 text-sm text-muted">No recent activity found.</div>
+            )}
+          </div>
+          )}
         </ChartCard>
 
         <ChartCard title="Alerts">
+          {alerts.isLoading ? <LoadingBlock label="Loading alerts" /> : null}
+          {alerts.error ? <ErrorState message="Unable to load alerts." /> : null}
+          {alerts.data && (
           <div className="grid gap-4">
-            {(alerts.data ?? []).map((alert) => (
+            {alerts.data.map((alert) => (
               <div key={alert.type} className="flex items-center justify-between rounded-lg border border-border bg-panel-strong p-4">
                 <div className="flex items-center gap-3">
                   <span className="grid h-11 w-11 place-items-center rounded-full bg-[color:var(--primary-soft)] text-primary">
@@ -338,7 +352,11 @@ export default function DashboardPage() {
                 <Badge variant={alert.count > 0 ? "warning" : "success"}>{alert.count}</Badge>
               </div>
             ))}
+            {alerts.data.length === 0 && (
+              <div className="py-4 text-sm text-muted">No new alerts.</div>
+            )}
           </div>
+          )}
         </ChartCard>
       </div>
     </>

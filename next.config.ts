@@ -4,6 +4,11 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
+        protocol: "https",
+        hostname: "shreshtlibrary.onrender.com",
+        pathname: "/media/**",
+      },
+      {
         protocol: "http",
         hostname: "localhost",
         port: "8000",
