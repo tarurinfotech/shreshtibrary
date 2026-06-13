@@ -1,0 +1,66 @@
+export const queryKeys = {
+  admins: {
+    all: ["admins"] as const,
+    activity: ["super-activity-log"] as const,
+    backups: ["backups"] as const,
+    health: ["system-health"] as const,
+    permissions: ["permission-groups"] as const,
+  },
+  attendance: {
+    all: ["attendance"] as const,
+    absentees: ["attendance-absentees"] as const,
+    holidays: ["holidays"] as const,
+    matrix: ["attendance-matrix"] as const,
+    qr: ["current-qr"] as const,
+    qrHistory: ["qr-history"] as const,
+    records: ["manual-attendance-records"] as const,
+    streak: ["attendance-streak"] as const,
+    summary: ["attendance-summary"] as const,
+  },
+  dashboard: {
+    activity: ["dashboard-activity-recent"] as const,
+    alerts: ["dashboard-alerts"] as const,
+    stats: ["dashboard-stats"] as const,
+  },
+  library: {
+    achievers: ["achievers"] as const,
+    facilities: ["facilities"] as const,
+    info: ["library-info"] as const,
+    publicReviews: ["public-reviews"] as const,
+    reviewSummary: ["review-summary"] as const,
+  },
+  memberships: {
+    all: ["memberships"] as const,
+    expiredToday: ["memberships-expired-today"] as const,
+    expiring: ["memberships-expiring"] as const,
+    plans: ["plans"] as const,
+    planStats: ["plan-stats"] as const,
+  },
+  notifications: {
+    all: ["notifications"] as const,
+    scheduled: ["scheduled-notifications"] as const,
+    templates: ["notification-templates"] as const,
+  },
+  payments: {
+    all: ["payments"] as const,
+    overdue: ["overdue-payments"] as const,
+    pending: ["pending-payments"] as const,
+    summary: ["payment-summary"] as const,
+  },
+  reviews: {
+    all: ["reviews"] as const,
+    pending: ["pending-reviews"] as const,
+    summary: ["review-summary"] as const,
+  },
+  seats: {
+    all: ["flat-seats"] as const,
+    available: ["available-seats"] as const,
+    layout: ["seat-layout"] as const,
+    stats: ["seat-stats"] as const,
+  },
+  students: {
+    all: ["students"] as const,
+    counts: ["student-counts"] as const,
+    options: ["payment-student-options"] as const,
+  },
+} as const;
