@@ -38,13 +38,18 @@ export function EmptyState({
 }
 
 
-export function ErrorState({ message, className }: { message: string; className?: string }) {
+export function ErrorState({ message, className, onRetry }: { message: string; className?: string; onRetry?: () => void }) {
   return (
-    <div className={clsx("surface rounded-lg border-danger/60 p-5 text-danger", className)}>
+    <div className={clsx("surface rounded-lg border-danger/60 p-5 text-danger flex flex-col items-start gap-3", className)}>
       <div className="flex items-center gap-3">
         <AlertCircle className="h-5 w-5" />
         <p className="text-sm">{message}</p>
       </div>
+      {onRetry && (
+        <button onClick={onRetry} className="text-sm border border-danger/20 hover:bg-danger/10 px-3 py-1.5 rounded transition-colors">
+          Retry
+        </button>
+      )}
     </div>
   );
 }
