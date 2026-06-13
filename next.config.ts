@@ -1,4 +1,20 @@
 import type { NextConfig } from "next";
+import os from "os";
+
+function getLocalIPs() {
+  const interfaces = os.networkInterfaces();
+  const ips: string[] = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]!) {
+      if (iface.family === "IPv4" && !iface.internal) {
+        ips.push(iface.address);
+      }
+    }
+  }
+  return ips;
+}
+
+const localIPs = getLocalIPs();
 
 const nextConfig: NextConfig = {
   images: {
@@ -20,20 +36,12 @@ const nextConfig: NextConfig = {
         port: "8000",
         pathname: "/media/**",
       },
-      {
-        // LAN / local-network access (e.g. 192.168.x.x)
-        protocol: "http",
-        hostname: "192.168.1.189",
+      ...localIPs.map((ip) => ({
+        protocol: "http" as const,
+        hostname: ip,
         port: "8000",
         pathname: "/media/**",
-      },
-      {
-        // Any hostname – covers all possible local IPs during development
-        protocol: "http",
-        hostname: "**",
-        port: "8000",
-        pathname: "/media/**",
-      },
+      })),
     ],
   },
 };

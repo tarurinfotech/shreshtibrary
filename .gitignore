@@ -1,3 +1,26 @@
+<<<<<<< HEAD
+# Django
+*.log
+*.pot
+*.pyc
+__pycache__/
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+static/
+.env
+
+# Environments
+.env/
+venv/
+ENV/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+=======
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
@@ -39,3 +62,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+>>>>>>> f4e4ccdb49f060374c6744d4ef90f19790d2471f
