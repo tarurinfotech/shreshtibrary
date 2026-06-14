@@ -2,6 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.throttling import ScopedRateThrottle
+from rest_framework.pagination import PageNumberPagination
+import logging
+
+logger = logging.getLogger(__name__)
 
 from drf_spectacular.utils import extend_schema
 
@@ -28,8 +33,12 @@ class AchieversListView(APIView):
     @extend_schema(responses={200: AchieverSerializer(many=True)}, tags=['Library Info'])
     def get(self, request):
         achievers = Achiever.objects.all().order_by('-year')
-        serializer = AchieverSerializer(achievers, many=True)
-        return standard_response(data=serializer.data)
+        
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        result_page = paginator.paginate_queryset(achievers, request)
+        serializer = AchieverSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 class ReviewsListView(APIView):
@@ -37,14 +46,20 @@ class ReviewsListView(APIView):
 
     @extend_schema(responses={200: ReviewSerializer(many=True)}, tags=['Library Info'])
     def get(self, request):
-        reviews = Review.objects.filter(is_approved=True).order_by('-created_at')
-        serializer = ReviewSerializer(reviews, many=True)
-        return standard_response(data=serializer.data)
+        reviews = Review.objects.select_related('student').filter(is_approved=True).order_by('-created_at')
+        
+        paginator = PageNumberPagination()
+        paginator.page_size = 20
+        result_page = paginator.paginate_queryset(reviews, request)
+        serializer = ReviewSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
 
 
 
 class StudentSubmitReviewView(APIView):
     permission_classes = [IsStudent]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'review_submit'
 
     @extend_schema(request=ReviewSerializer, responses={201: ReviewSerializer}, tags=['Library Info'])
     def post(self, request):
@@ -62,8 +77,8 @@ class StudentSubmitReviewView(APIView):
                     related_id=str(review.id),
                     student=request.user
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to create AdminInboxNotification: {e}", exc_info=True)
 
             return standard_response(
                 message="Review submitted. It will be visible once approved by admin.",

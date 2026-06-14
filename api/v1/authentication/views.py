@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model, authenticate
 from django.utils import timezone
 import datetime
-import random
+import secrets
 import uuid
 
 from drf_spectacular.utils import extend_schema, OpenApiTypes
@@ -23,6 +23,31 @@ from core.models import ActivityLog
 from apps.accounts.models import AdminUser
 
 User = get_user_model()
+
+import threading
+from django.db import close_old_connections
+
+def _send_email_async_worker(subject, to_email, email_type, context):
+    close_old_connections()
+    try:
+        from utils.mail import send_stylish_email
+        send_stylish_email(
+            subject=subject,
+            to_email=to_email,
+            email_type=email_type,
+            context=context
+        )
+    except Exception:
+        pass
+    finally:
+        close_old_connections()
+
+def send_email_async(subject, to_email, email_type, context):
+    threading.Thread(
+        target=_send_email_async_worker,
+        args=(subject, to_email, email_type, context),
+        daemon=True
+    ).start()
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -70,6 +95,19 @@ class StudentRegisterView(APIView):
                 )
             except Exception:
                 pass
+
+            # Send welcome email asynchronously
+            if user.email:
+                send_email_async(
+                    subject="Welcome to Shresht Library!",
+                    to_email=user.email,
+                    email_type="welcome",
+                    context={
+                        "name": f"{user.first_name} {user.last_name}".strip() or user.username,
+                        "username": user.email or user.mobile or user.username
+                    }
+                )
+
             return standard_response(
                 message="Registration successful. Welcome to Shresht Library.",
                 data={
@@ -92,7 +130,7 @@ class SendOTPView(APIView):
             mobile = serializer.validated_data['mobile']
             try:
                 user = User.objects.get(mobile=mobile)
-                user.otp = f"{random.randint(0, 999999):06d}"
+                user.otp = f"{secrets.randbelow(1000000):06d}"
                 user.otp_expiry = timezone.now() + datetime.timedelta(minutes=5)
                 user.save()
                 log_activity(user, "Sent login OTP", request)
@@ -206,6 +244,18 @@ class ForgotPasswordView(APIView):
                 user.otp_expiry = timezone.now() + datetime.timedelta(hours=1)
                 user.save()
                 log_activity(user, "Requested password reset link", request)
+
+                # Send password reset email asynchronously
+                send_email_async(
+                    subject="Reset Your Password - Shresht Library",
+                    to_email=user.email,
+                    email_type="forgot_password",
+                    context={
+                        "name": f"{user.first_name} {user.last_name}".strip() or user.username,
+                        "code": reset_token
+                    }
+                )
+
                 return standard_response(message="Password reset link sent to your email.")
             except User.DoesNotExist:
                 return Response({"errors": {"detail": ["User not found."]}}, status=status.HTTP_404_NOT_FOUND)

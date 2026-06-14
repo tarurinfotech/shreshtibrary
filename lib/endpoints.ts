@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import { api, downloadFile, unwrap, unwrapPage } from "./api";
 import type {
   ActivityLogItem,
@@ -108,7 +109,9 @@ async function getAllPages<T>(url: string, params?: Query) {
   const firstPage = await getPage<T>(url, { ...params, page: 1, page_size: pageSize });
   const rows = [...firstPage.data];
 
-  for (let page = 2; page <= firstPage.total_pages; page += 1) {
+  const maxPages = Math.min(firstPage.total_pages, 20); // Hard cap to prevent infinite loops / DoS
+
+  for (let page = 2; page <= maxPages; page += 1) {
     const nextPage = await getPage<T>(url, { ...params, page, page_size: pageSize });
     rows.push(...nextPage.data);
   }
@@ -200,8 +203,11 @@ export type NotificationPayload = {
 
 export const endpoints = {
   // Auth
-  login: (payload: { username: string; password: string }) =>
-    postData<LoginResponse>("/auth/login/admin/", payload),
+  login: async (payload: { username: string; password: string }) => {
+    // Call the local Next.js API route to handle secure cookies
+    const res = await axios.post<{ data: LoginResponse }>("/api/auth/login", payload);
+    return res.data.data;
+  },
 
   me: () => getData<AdminUser>("/auth/me/"),
 

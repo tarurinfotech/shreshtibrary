@@ -54,7 +54,7 @@ const weekWindows = [
 
 function buildAttendanceRange(selectedMonth: string, selectedWeek: string) {
   if (!selectedMonth) return { from: "", to: "", days: [] };
-  
+
   const [year, month] = selectedMonth.split("-").map(Number);
   const monthIndex = month - 1;
   const window = weekWindows.find((item) => item.value === selectedWeek) ?? weekWindows[0];
@@ -63,14 +63,14 @@ function buildAttendanceRange(selectedMonth: string, selectedWeek: string) {
   const end = new Date(year, monthIndex, Math.min(window.startDay + 13, lastDay));
   const days: string[] = [];
   const cursor = new Date(start);
-  
+
   while (cursor <= end && days.length < 14) {
     const m = String(cursor.getMonth() + 1).padStart(2, "0");
     const d = String(cursor.getDate()).padStart(2, "0");
     days.push(`${cursor.getFullYear()}-${m}-${d}`);
     cursor.setDate(cursor.getDate() + 1);
   }
-  
+
   return {
     from: days[0] ?? "",
     to: days[days.length - 1] ?? "",
@@ -85,7 +85,7 @@ export default function AttendancePage() {
   const pushToast = useToastStore((state) => state.pushToast);
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // URL synced tab state (survives reload)
   const tab = (searchParams.get("tab") as TabType) ?? "logs";
 
@@ -163,7 +163,7 @@ export default function AttendancePage() {
     enabled: mounted && tab === "summary"
   });
   const streak = useQuery({ queryKey: ["attendance-streak"], queryFn: endpoints.attendanceStreak, enabled: mounted && tab === "summary" });
-  
+
   const manualStudents = useQuery({
     queryKey: ["manual-attendance-students"],
     queryFn: () => endpoints.allStudents(),
@@ -339,42 +339,42 @@ export default function AttendancePage() {
         <div className="min-w-0 shrink-0">
           <PageHeader title="Attendance Management" eyebrow="QR and Logs" />
         </div>
-        
+
         {/* ARIA Accessible Tabs */}
-        <div 
+        <div
           role="tablist"
           aria-label="Attendance Views"
           className="flex max-w-full items-center gap-2 overflow-x-auto rounded-lg bg-[color:var(--field)] p-1 hide-scrollbar sm:max-w-md shrink-0"
         >
-          <button 
+          <button
             type="button"
             role="tab"
             aria-selected={tab === "qr"}
             aria-controls="tabpanel-qr"
             id="tab-qr"
-            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "qr" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`} 
+            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "qr" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`}
             onClick={() => setTab("qr")}
           >
             QR Code
           </button>
-          <button 
+          <button
             type="button"
             role="tab"
             aria-selected={tab === "logs"}
             aria-controls="tabpanel-logs"
             id="tab-logs"
-            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "logs" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`} 
+            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "logs" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`}
             onClick={() => setTab("logs")}
           >
-            Matrix Logs
+            Attendance Sheet
           </button>
-          <button 
+          <button
             type="button"
             role="tab"
             aria-selected={tab === "summary"}
             aria-controls="tabpanel-summary"
             id="tab-summary"
-            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "summary" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`} 
+            className={`shrink-0 flex-1 whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-semibold transition-colors focus-ring ${tab === "summary" ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm" : "text-muted hover:text-foreground"}`}
             onClick={() => setTab("summary")}
           >
             Summary
@@ -413,41 +413,41 @@ export default function AttendancePage() {
           <section className="flex min-w-0 flex-col rounded-xl border border-border bg-panel p-4 shadow-sm">
             <h2 className="mb-3 text-sm font-bold text-foreground">QR Scan History</h2>
             {qrHistory.isLoading ? <LoadingBlock label="Loading History..." /> : (
-            <TableShell className="border-0 bg-transparent p-0 shadow-none">
-              <Table minWidth={400} className="w-full text-xs">
-                <thead className="bg-[color:var(--field-strong)]">
-                  <tr>
-                    <Th className="whitespace-nowrap py-2 text-[10px]">Generation Date</Th>
-                    <Th className="whitespace-nowrap py-2 text-[10px]">Status</Th>
-                    <Th className="whitespace-nowrap py-2 text-[10px]">Expires At</Th>
-                    <Th className="whitespace-nowrap py-2 text-right text-[10px]">Actions</Th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {(qrHistory.data?.data ?? []).map((qr) => (
-                    <tr key={qr.id} className="group hover:bg-[color:var(--hover)]">
-                      <Td className="whitespace-nowrap py-2 font-medium">{formatDate(qr.valid_date)}</Td>
-                      <Td className="whitespace-nowrap py-2">
-                        <Badge variant={qr.is_active ? "success" : "danger"} className="text-[10px]">
-                          {qr.is_active ? "Active" : "Expired"}
-                        </Badge>
-                      </Td>
-                      <Td className="whitespace-nowrap py-2 text-muted">{formatDateTime(qr.expires_at ?? qr.expiry_timestamp)}</Td>
-                      <Td className="whitespace-nowrap py-2 text-right">
-                        <Button size="sm" variant="secondary" aria-label={`View scans for ${formatDate(qr.valid_date)}`} className="h-6 px-2 text-[10px]" icon={<Eye className="h-3 w-3" />} onClick={() => setSelectedQr(qr)}>
-                          View Scans
-                        </Button>
-                      </Td>
-                    </tr>
-                  ))}
-                  {(qrHistory.data?.data?.length ?? 0) === 0 ? (
+              <TableShell className="border-0 bg-transparent p-0 shadow-none">
+                <Table minWidth={400} className="w-full text-xs">
+                  <thead className="bg-[color:var(--field-strong)]">
                     <tr>
-                      <td colSpan={4} className="py-8 text-center text-xs text-muted">No QR history found.</td>
+                      <Th className="whitespace-nowrap py-2 text-[10px]">Generation Date</Th>
+                      <Th className="whitespace-nowrap py-2 text-[10px]">Status</Th>
+                      <Th className="whitespace-nowrap py-2 text-[10px]">Expires At</Th>
+                      <Th className="whitespace-nowrap py-2 text-right text-[10px]">Actions</Th>
                     </tr>
-                  ) : null}
-                </tbody>
-              </Table>
-            </TableShell>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {(qrHistory.data?.data ?? []).map((qr) => (
+                      <tr key={qr.id} className="group hover:bg-[color:var(--hover)]">
+                        <Td className="whitespace-nowrap py-2 font-medium">{formatDate(qr.valid_date)}</Td>
+                        <Td className="whitespace-nowrap py-2">
+                          <Badge variant={qr.is_active ? "success" : "danger"} className="text-[10px]">
+                            {qr.is_active ? "Active" : "Expired"}
+                          </Badge>
+                        </Td>
+                        <Td className="whitespace-nowrap py-2 text-muted">{formatDateTime(qr.expires_at ?? qr.expiry_timestamp)}</Td>
+                        <Td className="whitespace-nowrap py-2 text-right">
+                          <Button size="sm" variant="secondary" aria-label={`View scans for ${formatDate(qr.valid_date)}`} className="h-6 px-2 text-[10px]" icon={<Eye className="h-3 w-3" />} onClick={() => setSelectedQr(qr)}>
+                            View Scans
+                          </Button>
+                        </Td>
+                      </tr>
+                    ))}
+                    {(qrHistory.data?.data?.length ?? 0) === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="py-8 text-center text-xs text-muted">No QR history found.</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </Table>
+              </TableShell>
             )}
           </section>
         </div>
@@ -512,32 +512,32 @@ export default function AttendancePage() {
             <section className="surface rounded-lg p-5">
               <h2 className="mb-4 font-semibold">Absentees</h2>
               {absentees.isLoading ? <LoadingBlock label="Loading absentees" /> : (
-              <div className="grid gap-2">
-                {(absentees.data ?? []).slice(0, 12).map((student) => (
-                  <EntityListItem 
-                    key={student.user_id} 
-                    title={fullName(student.first_name, student.last_name)} 
-                    trailing={
-                      <div className="flex flex-col items-end gap-1">
-                        {student.attendance_status === 'pending' && <Badge variant="warning">Pending</Badge>}
-                        <span className="text-xs text-muted">{student.mobile}</span>
-                      </div>
-                    } 
-                  />
-                ))}
-                {(absentees.data?.length === 0) && <EmptyState title="No absentees found" />}
-              </div>
+                <div className="grid gap-2">
+                  {(absentees.data ?? []).slice(0, 12).map((student) => (
+                    <EntityListItem
+                      key={student.user_id}
+                      title={fullName(student.first_name, student.last_name)}
+                      trailing={
+                        <div className="flex flex-col items-end gap-1">
+                          {student.attendance_status === 'pending' && <Badge variant="warning">Pending</Badge>}
+                          <span className="text-xs text-muted">{student.mobile}</span>
+                        </div>
+                      }
+                    />
+                  ))}
+                  {(absentees.data?.length === 0) && <EmptyState title="No absentees found" />}
+                </div>
               )}
             </section>
             <section className="surface rounded-lg p-5">
               <h2 className="mb-4 font-semibold">Streaks</h2>
               {streak.isLoading ? <LoadingBlock label="Loading streaks" /> : (
-              <div className="grid gap-2">
-                {(streak.data ?? []).slice(0, 12).map((item) => (
-                  <EntityListItem key={item.student.user_id} title={fullName(item.student.first_name, item.student.last_name)} trailing={<Badge variant="info">{item.streak} days</Badge>} />
-                ))}
-                {(streak.data?.length === 0) && <EmptyState title="No streaks currently active" />}
-              </div>
+                <div className="grid gap-2">
+                  {(streak.data ?? []).slice(0, 12).map((item) => (
+                    <EntityListItem key={item.student.user_id} title={fullName(item.student.first_name, item.student.last_name)} trailing={<Badge variant="info">{item.streak} days</Badge>} />
+                  ))}
+                  {(streak.data?.length === 0) && <EmptyState title="No streaks currently active" />}
+                </div>
               )}
             </section>
           </div>
@@ -596,19 +596,19 @@ export default function AttendancePage() {
               return (
                 <div key={student.user_id} className="surface flex items-center justify-between p-3 rounded-xl">
                   <div className="flex items-center gap-3">
-                     <ProfileAvatar src={student.profile_image} name={student.first_name} size="sm" />
-                     <div className="flex flex-col">
-                       <span className="text-sm font-medium">{fullName(student.first_name, student.last_name)}</span>
-                       <span className="text-xs text-muted">{student.student_id}</span>
-                     </div>
+                    <ProfileAvatar src={student.profile_image} name={student.first_name} size="sm" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium">{fullName(student.first_name, student.last_name)}</span>
+                      <span className="text-xs text-muted">{student.student_id}</span>
+                    </div>
                   </div>
                   <input
-                      checked={checked}
-                      className="h-5 w-5 rounded border-border accent-[var(--primary)]"
-                      type="checkbox"
-                      aria-label={`Mark ${student.first_name} present`}
-                      onChange={(event) => setManualPresence(student.user_id, event.target.checked)}
-                    />
+                    checked={checked}
+                    className="h-5 w-5 rounded border-border accent-[var(--primary)]"
+                    type="checkbox"
+                    aria-label={`Mark ${student.first_name} present`}
+                    onChange={(event) => setManualPresence(student.user_id, event.target.checked)}
+                  />
                 </div>
               )
             })}

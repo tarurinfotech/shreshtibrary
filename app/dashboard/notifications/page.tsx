@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EntityListItem } from "@/components/ui/EntityListItem";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { Input, Textarea } from "@/components/ui/Input";
+import { DateInput, Input, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Select } from "@/components/ui/Select";
@@ -439,7 +439,7 @@ export default function NotificationsPage() {
               {form.display_mode === "recurring" && (
                 <Input label="Recurring Time" type="time" value={form.recurring_time ?? ""} onChange={(e) => setForm((curr) => ({ ...curr, recurring_time: e.target.value }))} />
               )}
-              <Input label="Event Date" type="date" value={form.event_date ?? ""} onChange={(event) => setForm((current) => ({ ...current, event_date: event.target.value }))} />
+              <DateInput label="Event Date" value={form.event_date ?? ""} onChange={(event) => setForm((current) => ({ ...current, event_date: event.target.value }))} />
             </FormGrid>
 
             {form.audience === "selected" && (
@@ -471,8 +471,8 @@ export default function NotificationsPage() {
             )}
 
             <div className="grid grid-cols-2 gap-4 mt-6">
-              <Input label="Schedule Publish (Optional)" type="datetime-local" value={form.scheduled_at ?? ""} onChange={(event) => setForm((current) => ({ ...current, scheduled_at: event.target.value }))} />
-              <Input label="Schedule Expiry (Optional)" type="datetime-local" value={form.expires_at ?? ""} onChange={(event) => setForm((current) => ({ ...current, expires_at: event.target.value }))} />
+              <DateInput label="Schedule Publish (Optional)" showTime value={form.scheduled_at ?? ""} onChange={(event) => setForm((current) => ({ ...current, scheduled_at: event.target.value }))} />
+              <DateInput label="Schedule Expiry (Optional)" showTime value={form.expires_at ?? ""} onChange={(event) => setForm((current) => ({ ...current, expires_at: event.target.value }))} />
             </div>
 
             <FormActions className="mt-8">

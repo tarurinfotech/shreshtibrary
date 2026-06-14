@@ -1,6 +1,7 @@
 "use client";
 
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
+import { z } from "zod";
 import { useAuthStore } from "@/store/authStore";
 import { useNetworkStore } from "@/store/networkStore";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
@@ -12,6 +13,8 @@ type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 15000,
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
@@ -29,28 +32,33 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => {
-    if (useNetworkStore.getState().isOffline) {
-      if (typeof window !== "undefined") {
-        window.location.reload();
-      }
+    if (useNetworkStore.getState().isOffline && typeof window !== "undefined") {
+      window.location.reload();
     }
     return response;
   },
   async (error: AxiosError<ApiResponse<unknown>>) => {
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+
     if (error.code === "ERR_NETWORK" || error.response?.status === 502 || error.response?.status === 503) {
       useNetworkStore.getState().setOffline(true);
     }
 
     const original = error.config as RetryConfig | undefined;
-    const isRefreshRequest = original?.url?.includes("/auth/token/refresh/");
+    const isRefreshRequest = original?.url?.includes("/api/auth/refresh");
 
     if (error.response?.status === 401 && original && !original._retry && !isRefreshRequest) {
       original._retry = true;
-      const nextAccess = await refreshAccessToken();
-
-      if (nextAccess) {
-        original.headers.Authorization = `Bearer ${nextAccess}`;
-        return api(original);
+      try {
+        const nextAccess = await refreshAccessToken();
+        if (nextAccess) {
+          original.headers.Authorization = `Bearer ${nextAccess}`;
+          return api(original);
+        }
+      } catch (err) {
+        // Fallthrough to logout
       }
 
       useAuthStore.getState().clearSession();
@@ -63,53 +71,71 @@ api.interceptors.response.use(
   },
 );
 
-async function refreshAccessToken() {
-  const { refresh, setAccess } = useAuthStore.getState();
-  if (!refresh) {
-    return null;
+export async function refreshAccessToken() {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post<{ data: { access: string } }>("/api/auth/refresh")
+      .then((response) => {
+        const access = response.data.data.access;
+        useAuthStore.getState().setAccess(access);
+        return access;
+      })
+      .catch(() => null)
+      .finally(() => {
+        refreshPromise = null;
+      });
   }
-
-  refreshPromise ??= axios
-    .post<{ access: string }>(`${API_BASE_URL}/auth/token/refresh/`, { refresh })
-    .then((response) => {
-      setAccess(response.data.access);
-      return response.data.access;
-    })
-    .catch(() => null)
-    .finally(() => {
-      refreshPromise = null;
-    });
-
   return refreshPromise;
 }
 
-export function unwrap<T>(response: { data: ApiResponse<T> }) {
-  if (response.data && "data" in response.data) {
-    return response.data.data as T;
+export function unwrap<T>(response: { data: ApiResponse<T> }, schema?: z.ZodType<T>) {
+  const data = (response.data && "data" in (response.data as object)) ? response.data.data as T : response.data as unknown as T;
+  if (schema) {
+    try {
+      return schema.parse(data);
+    } catch (error) {
+      console.warn("Zod validation failed for response data:", error);
+    }
   }
-  return response.data.data as T;
+  return data;
 }
 
-export function unwrapPage<T>(response: { data: PaginatedResponse<T> }) {
-  return response.data;
+export function unwrapPage<T>(response: { data: PaginatedResponse<T> }, itemSchema?: z.ZodType<T>) {
+  const page = response.data;
+  if (itemSchema && page.data) {
+    try {
+      // Validate array of items
+      z.array(itemSchema).parse(page.data);
+    } catch (error) {
+      console.warn("Zod validation failed for paginated data:", error);
+    }
+  }
+  return page;
 }
 
 export async function downloadFile(url: string, filename: string, params?: Record<string, unknown>) {
-  const response = await api.get<Blob>(url, { params, responseType: "blob" });
-  if (typeof window === "undefined") {
-    return;
-  }
+  try {
+    const response = await api.get<Blob>(url, { params, responseType: "blob" });
+    if (typeof window === "undefined") {
+      return;
+    }
 
-  const blobUrl = window.URL.createObjectURL(response.data);
-  const anchor = document.createElement("a");
-  anchor.href = blobUrl;
-  anchor.download = filename;
-  anchor.click();
-  window.URL.revokeObjectURL(blobUrl);
+    const blobUrl = window.URL.createObjectURL(response.data);
+    const anchor = document.createElement("a");
+    anchor.href = blobUrl;
+    anchor.download = filename;
+    anchor.click();
+    window.URL.revokeObjectURL(blobUrl);
+  } catch (error) {
+    console.error("Failed to download file:", error);
+  }
 }
 
 export function getErrorMessage(error: unknown) {
   if (axios.isAxiosError<ApiResponse<unknown>>(error)) {
+    if (error.code === 'ECONNABORTED') return "Request timed out.";
+    if (axios.isCancel(error)) return "Request cancelled.";
+    
     const payload = error.response?.data;
     if (payload?.message) {
       return payload.message;

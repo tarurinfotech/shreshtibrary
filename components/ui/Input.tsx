@@ -59,8 +59,9 @@ export function DateInput({
   min,
   max,
   placeholder,
+  showTime,
   ...props
-}: FieldProps & Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+}: FieldProps & Omit<InputHTMLAttributes<HTMLInputElement>, "type"> & { showTime?: boolean }) {
   return (
     <DatePicker
       id={id}
@@ -77,6 +78,7 @@ export function DateInput({
       helper={helper}
       hideLabel={hideLabel}
       className={className}
+      showTime={showTime}
       {...props}
     />
   );

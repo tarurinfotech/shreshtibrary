@@ -41,6 +41,7 @@ class Command(BaseCommand):
                 target="ALL",
                 target_group="all",
                 send_push=True,
+                send_email=True,
                 sent_at=timezone.now()
             )
             
@@ -51,13 +52,31 @@ class Command(BaseCommand):
             for student in students:
                 StudentNotification.objects.create(
                     student=student,
-                    notification=notification
+                    notification=notification,
+                    push_delivered=True,
+                    email_delivered=True
                 )
                 
-                # In a real setup, send_push_notification might be queued via celery.
+                # Send push notification
                 from apps.notifications.models import DeviceToken
                 tokens = DeviceToken.objects.filter(student=student)
                 for token_obj in tokens:
                     send_push_notification(token_obj.token, title, body)
+
+                # Send holiday announcement email
+                if student.email:
+                    try:
+                        from utils.mail import send_stylish_email
+                        send_stylish_email(
+                            subject=title,
+                            to_email=student.email,
+                            email_type="general_announcement",
+                            context={
+                                "title": title,
+                                "body": body
+                            }
+                        )
+                    except Exception:
+                        pass
                     
             self.stdout.write(self.style.SUCCESS(f"Successfully sent advance notification for {holiday.title}."))

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { GripVertical, Image as ImageIcon, Link, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -8,10 +8,24 @@ import { ConfirmDialog } from "@/components/ui/Dialog";
 import { Input, Switch } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getErrorMessage } from "@/lib/api";
+import { API_BASE_URL, getErrorMessage } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { useToastStore } from "@/store/toastStore";
 import type { HomeSlider } from "@/types/api";
+
+function getImageUrl(path: string | null | undefined) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  
+  try {
+    const url = new URL(API_BASE_URL);
+    return `${url.origin}${normalizedPath}`;
+  } catch {
+    return normalizedPath;
+  }
+}
 
 export default function SlidersPage() {
   const queryClient = useQueryClient();
@@ -57,7 +71,21 @@ export default function SlidersPage() {
         <section>
           <h2 className="mb-4 text-lg font-semibold text-foreground">Active Sliders</h2>
           {isLoading ? (
-            <div className="h-32 animate-pulse rounded-xl bg-panel" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-sm">
+                  <div className="aspect-[21/9] w-full animate-pulse bg-slate-200 dark:bg-slate-800" />
+                  <div className="flex flex-1 flex-col p-4">
+                    <div className="mb-2 h-5 w-3/4 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                    <div className="mb-4 h-4 w-1/2 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                    <div className="mt-auto flex gap-2 pt-4">
+                      <div className="h-8 flex-1 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                      <div className="h-8 w-8 animate-pulse rounded bg-slate-200 dark:bg-slate-800" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : activeSliders.length === 0 ? (
             <div className="flex h-32 flex-col items-center justify-center rounded-xl border border-dashed border-border bg-panel text-muted">
               <ImageIcon className="mb-2 h-8 w-8 opacity-20" />
@@ -134,15 +162,18 @@ function SliderCard({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-sm transition-all hover:shadow-md">
       <div className="relative aspect-[21/9] w-full bg-slate-100 dark:bg-slate-800">
-        {slider.image ? (
+        {slider.image && !imageError ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={slider.image}
+            src={getImageUrl(slider.image)}
             alt={slider.title}
             className="h-full w-full object-cover"
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
@@ -200,22 +231,26 @@ function SliderModal({
   const [isActive, setIsActive] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
-  // Sync initial data when modal opens
-  if (open && initialData && title === "" && !imageFile) {
-    setTitle(initialData.title);
-    setSubtitle(initialData.subtitle);
-    setLinkUrl(initialData.link_url);
-    setSortOrder(initialData.sort_order);
-    setIsActive(initialData.is_active);
-  }
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setTitle(initialData.title || "");
+        setSubtitle(initialData.subtitle || "");
+        setLinkUrl(initialData.link_url || "");
+        setSortOrder(initialData.sort_order ?? 0);
+        setIsActive(initialData.is_active ?? true);
+      } else {
+        setTitle("");
+        setSubtitle("");
+        setLinkUrl("");
+        setSortOrder(0);
+        setIsActive(true);
+      }
+      setImageFile(null);
+    }
+  }, [open, initialData]);
 
   const close = () => {
-    setTitle("");
-    setSubtitle("");
-    setLinkUrl("");
-    setSortOrder(0);
-    setIsActive(true);
-    setImageFile(null);
     onClose();
   };
 
@@ -261,7 +296,7 @@ function SliderModal({
           {initialData?.image && !imageFile && (
             <div className="relative mb-2 aspect-[21/9] w-full overflow-hidden rounded-lg border border-border">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={initialData.image} alt="" className="h-full w-full object-cover" />
+              <img src={getImageUrl(initialData.image)} alt="" className="h-full w-full object-cover" />
             </div>
           )}
           <input

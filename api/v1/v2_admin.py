@@ -91,13 +91,15 @@ def _activity(request, action, target_model="", target_id=None, description=""):
     )
 
 
-def _paginate(request, rows):
+def _paginate(request, rows, serializer=None):
     page = max(int(request.query_params.get("page", 1)), 1)
     page_size = min(max(int(request.query_params.get("page_size", 20)), 1), 100)
-    count = len(rows)
+    count = rows.count() if hasattr(rows, "count") else len(rows)
     start = (page - 1) * page_size
     end = start + page_size
     total_pages = (count + page_size - 1) // page_size
+    page_items = rows[start:end]
+    data = [serializer(item) for item in page_items] if serializer else (page_items if isinstance(page_items, list) else list(page_items))
     return Response({
         "success": True,
         "count": count,
@@ -105,7 +107,7 @@ def _paginate(request, rows):
         "current_page": page,
         "next": None if page >= total_pages else f"?page={page + 1}&page_size={page_size}",
         "previous": None if page <= 1 else f"?page={page - 1}&page_size={page_size}",
-        "data": rows[start:end],
+        "data": data,
     })
 
 
@@ -559,7 +561,7 @@ class AdminStudentsView(APIView):
             qs = qs.filter(created_at__date__gte=created_from)
         if created_to:
             qs = qs.filter(created_at__date__lte=created_to)
-        return _paginate(request, [serialize_student(profile) for profile in qs])
+        return _paginate(request, qs, serialize_student)
 
     def post(self, request):
         payload = request.data
@@ -903,7 +905,7 @@ class AdminMembershipsView(APIView):
             qs = qs.filter(student_id=request.query_params["student_id"])
         if request.query_params.get("plan_id"):
             qs = qs.filter(plan_id=request.query_params["plan_id"])
-        return _paginate(request, [serialize_membership(item) for item in qs])
+        return _paginate(request, qs, serialize_membership)
 
 
 class AdminMembershipActionView(APIView):
@@ -1032,7 +1034,7 @@ class AdminQRView(APIView):
 
     def get(self, request, action=None, pk=None):
         if action == "history":
-            return _paginate(request, [serialize_qr(qr) for qr in QRCode.objects.all().order_by("-created_at")])
+            return _paginate(request, QRCode.objects.all().order_by("-created_at"), serialize_qr)
         if action == "scans":
             return standard_response(data=[serialize_attendance(item) for item in Attendance.objects.filter(qr_code_id=pk)])
         qr = QRCode.objects.filter(is_active=True).order_by("-created_at").first()
@@ -1068,7 +1070,7 @@ class AdminAttendanceView(APIView):
             qs = qs.filter(date__lte=request.query_params["to_date"])
         if request.query_params.get("method"):
             qs = qs.filter(method=request.query_params["method"])
-        return _paginate(request, [serialize_attendance(item) for item in qs])
+        return _paginate(request, qs, serialize_attendance)
 
     def post(self, request):
         student = None
@@ -1256,7 +1258,7 @@ class AdminPaymentsView(APIView):
                 qs = qs.filter(**{lookup: value})
         if request.query_params.get("from_date"):
             qs = qs.filter(payment_date__gte=request.query_params["from_date"])
-        return _paginate(request, [serialize_payment(item) for item in qs])
+        return _paginate(request, qs, serialize_payment)
 
     def post(self, request):
         student = get_object_or_404(User, id=request.data.get("student_id"), role="student")
@@ -1310,12 +1312,53 @@ class AdminPaymentActionView(APIView):
                 payment.membership.status = "active"
                 payment.membership.save()
             event = "VERIFY_PAYMENT"
+            
+            # Send payment success email
+            if payment.student and payment.student.email:
+                try:
+                    from utils.mail import send_stylish_email
+                    send_stylish_email(
+                        subject=f"Payment Verified - Receipt #{payment.payment_id or payment.id}",
+                        to_email=payment.student.email,
+                        email_type="payment_receipt",
+                        context={
+                            "name": f"{payment.student.first_name} {payment.student.last_name}".strip() or payment.student.username,
+                            "payment_id": payment.payment_id or str(payment.id),
+                            "amount": str(payment.amount),
+                            "plan_name": payment.membership.plan.name if payment.membership and payment.membership.plan else "Library Plan",
+                            "payment_mode": payment.payment_mode or "Online",
+                            "date": payment.verified_at.strftime('%Y-%m-%d %H:%M') if payment.verified_at else _now().strftime('%Y-%m-%d %H:%M')
+                        }
+                    )
+                except Exception:
+                    pass
+
         elif action == "refund":
             payment.status = "refunded"
             payment.refund_amount = Decimal(str(request.data.get("refund_amount", payment.amount)))
             payment.refund_reason = request.data.get("refund_reason") or request.data.get("reason")
             payment.refunded_at = _now()
             event = "REFUND_PAYMENT"
+            
+            # Send refund confirmation email
+            if payment.student and payment.student.email:
+                try:
+                    from utils.mail import send_stylish_email
+                    send_stylish_email(
+                        subject=f"Refund Processed - Receipt #{payment.payment_id or payment.id}",
+                        to_email=payment.student.email,
+                        email_type="payment_refund",
+                        context={
+                            "name": f"{payment.student.first_name} {payment.student.last_name}".strip() or payment.student.username,
+                            "payment_id": payment.payment_id or str(payment.id),
+                            "refund_amount": str(payment.refund_amount),
+                            "reason": payment.refund_reason or "Requested by user",
+                            "date": payment.refunded_at.strftime('%Y-%m-%d %H:%M') if payment.refunded_at else _now().strftime('%Y-%m-%d %H:%M')
+                        }
+                    )
+                except Exception:
+                    pass
+
         else:
             return standard_response("error", "Unknown payment action.", status_code=404)
         payment.save()
@@ -1376,7 +1419,7 @@ class AdminSeatsView(APIView):
     def get(self, request):
         _ensure_floor_rows()
         seats = Seat.objects.select_related("student", "student__student_profile", "row_ref").all().order_by("floor", "row", "seat_number")
-        return _paginate(request, [serialize_seat(seat) for seat in seats])
+        return _paginate(request, seats, serialize_seat)
 
     def post(self, request):
         floor_name = request.data.get("floor") or request.data.get("floor_name") or "Ground"
@@ -1503,14 +1546,8 @@ class SeatActionView(APIView):
                         return standard_response("error", f"Seat is already occupied by another student.", status_code=400)
                     
                     # Prevent a student from having multiple seats assigned (one seat one time)
-                    previous_seats = Seat.objects.select_for_update().filter(student=student)
-                    previous = previous_seats.exclude(id=seat.id).first()
-                    
-                    for prev in previous_seats:
-                        if prev.id != seat.id:
-                            prev.student = None
-                            prev.status = "available"
-                            prev.save()
+                    previous = Seat.objects.filter(student=student).exclude(id=seat.id).first()
+                    Seat.objects.filter(student=student).exclude(id=seat.id).update(student=None, status="available")
                             
                     seat.student = student
                     seat.status = "occupied"
@@ -1521,6 +1558,25 @@ class SeatActionView(APIView):
                     SeatAssignment.objects.filter(student=student, released_date__isnull=True).update(released_date=timezone.now().date())
                     SeatAssignment.objects.create(student=student, seat=seat)
                     SeatChangeLog.objects.create(seat=seat, student=student, action="ASSIGNED", changed_by=_admin_user(request), previous_seat=previous)
+
+                    # Send seat assignment email
+                    if student and student.email:
+                        try:
+                            from utils.mail import send_stylish_email
+                            send_stylish_email(
+                                subject=f"Library Seat Assigned - Seat {seat.seat_number}",
+                                to_email=student.email,
+                                email_type="seat_assignment",
+                                context={
+                                    "name": f"{student.first_name} {student.last_name}".strip() or student.username,
+                                    "seat_number": str(seat.seat_number),
+                                    "floor": seat.floor or "Ground",
+                                    "row": seat.row or "A",
+                                    "date": seat.assigned_at.strftime('%Y-%m-%d %H:%M') if seat.assigned_at else _now().strftime('%Y-%m-%d %H:%M')
+                                }
+                            )
+                        except Exception:
+                            pass
                     
                 elif action == "unassign":
                     student = seat.student
@@ -1533,6 +1589,12 @@ class SeatActionView(APIView):
                     
                 else:
                     return standard_response("error", "Unknown seat action.", status_code=404)
+                    
+                try:
+                    from api.v1.admin.views.dashboard import clear_dashboard_cache
+                    clear_dashboard_cache()
+                except Exception:
+                    pass
                     
                 return standard_response(data=serialize_seat(seat))
         except OperationalError:
@@ -1571,7 +1633,7 @@ class AdminNotificationsView(APIView):
     permission_classes = [HasAdminPermission("manage_notifications")]
 
     def get(self, request):
-        return _paginate(request, [serialize_notification(item) for item in Notification.objects.all().order_by("-created_at")])
+        return _paginate(request, Notification.objects.all().order_by("-created_at"), serialize_notification)
 
 
 class AdminNotificationSendView(APIView):
@@ -1641,6 +1703,45 @@ class AdminNotificationTemplatesView(APIView):
         return standard_response(data=[])
 
 
+def send_notification_emails_async(notification_id, student_ids_with_emails):
+    import threading
+    from django.db import close_old_connections
+    from apps.notifications.models import Notification
+    from django.contrib.auth import get_user_model
+    
+    def worker():
+        close_old_connections()
+        try:
+            notification = Notification.objects.get(id=notification_id)
+            User = get_user_model()
+            students = User.objects.filter(id__in=student_ids_with_emails)
+            for student in students:
+                if student.email:
+                    try:
+                        from utils.mail import send_stylish_email
+                        send_stylish_email(
+                            subject=notification.title,
+                            to_email=student.email,
+                            email_type="general_announcement",
+                            context={
+                                "title": notification.title,
+                                "subtitle": notification.subtitle,
+                                "body": notification.body,
+                                "description": notification.description,
+                                "link_url": notification.link_url,
+                                "link_button_text": notification.link_button_text or "View Details"
+                            }
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        finally:
+            close_old_connections()
+
+    threading.Thread(target=worker, daemon=True).start()
+
+
 def _create_notification(request, send_now):
     from apps.notifications.models import NotificationImage
     data = request.data
@@ -1682,15 +1783,29 @@ def _create_notification(request, send_now):
         notification.total_recipients = students.count()
         notification.success_count = students.count()
         notification.save(update_fields=["total_recipients", "success_count"])
+        
+        student_notifications = []
+        student_ids_with_emails = []
         for student in students:
-            StudentNotification.objects.create(
-                student=student,
-                notification=notification,
-                push_delivered=notification.send_push,
-                email_delivered=notification.send_email,
-                sms_delivered=notification.send_sms,
-                delivered_at=_now(),
+            student_notifications.append(
+                StudentNotification(
+                    student=student,
+                    notification=notification,
+                    push_delivered=notification.send_push,
+                    email_delivered=notification.send_email,
+                    sms_delivered=notification.send_sms,
+                    delivered_at=_now(),
+                )
             )
+            if notification.send_email and student.email:
+                student_ids_with_emails.append(student.id)
+                
+        if student_notifications:
+            StudentNotification.objects.bulk_create(student_notifications)
+            
+        if student_ids_with_emails:
+            send_notification_emails_async(notification.id, student_ids_with_emails)
+
     _activity(request, "SEND_NOTIFICATION" if send_now else "SCHEDULE_NOTIFICATION", "Notification", notification.id, notification.title)
     return notification
 
@@ -1756,6 +1871,7 @@ def _notify_holiday(holiday, action="added", admin_user=None):
         target="ALL",
         target_group="all",
         send_push=True,
+        send_email=True,
         sent_at=_now(),
         created_by=admin_user,
     )
@@ -1768,8 +1884,23 @@ def _notify_holiday(holiday, action="added", admin_user=None):
             student=student,
             notification=notification,
             push_delivered=True,
+            email_delivered=True,
             delivered_at=_now(),
         )
+        if student.email:
+            try:
+                from utils.mail import send_stylish_email
+                send_stylish_email(
+                    subject=title,
+                    to_email=student.email,
+                    email_type="general_announcement",
+                    context={
+                        "title": title,
+                        "body": body
+                    }
+                )
+            except Exception:
+                pass
 
     if action == "added":
         reminder_time = timezone.make_aware(datetime.datetime.combine(holiday.date - datetime.timedelta(days=1), datetime.time(9, 0)))

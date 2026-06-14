@@ -7,6 +7,7 @@ import { LockKeyhole, LogIn, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FormShell } from "@/components/ui/Form";
 import { Input } from "@/components/ui/Input";
+import { LoadingBlock } from "@/components/ui/StateBlocks";
 import { getErrorMessage } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { useAuthStore } from "@/store/authStore";
@@ -15,12 +16,14 @@ import { useToastStore } from "@/store/toastStore";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { access, hydrated, setSession } = useAuthStore();
+  const { access, hydrated, setSession, user } = useAuthStore();
   const theme = useThemeStore((state) => state.theme);
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
   const pushToast = useToastStore((state) => state.pushToast);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+
+  const isRefreshingSession = hydrated && user && !access;
 
   useEffect(() => {
     if (hydrated && access) {
@@ -28,10 +31,18 @@ export default function LoginPage() {
     }
   }, [access, hydrated, router]);
 
+  if (!hydrated || isRefreshingSession) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-transparent p-6">
+        <LoadingBlock label="Checking session" />
+      </main>
+    );
+  }
+
   const login = useMutation({
     mutationFn: () => endpoints.login({ username, password }),
     onSuccess: (data) => {
-      setSession(data.tokens.access, data.tokens.refresh, data.user);
+      setSession(data.tokens.access, data.user);
       pushToast({ kind: "success", title: "Signed in", message: `Welcome, ${data.user.username}` });
       router.replace("/dashboard");
     },

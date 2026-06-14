@@ -6,12 +6,11 @@ import type { AuthUser } from "@/types/api";
 
 type AuthState = {
   access: string | null;
-  refresh: string | null;
   user: AuthUser | null;
   hydrated: boolean;
-  setSession: (access: string, refresh: string, user: AuthUser) => void;
-  setAccess: (access: string) => void;
-  setUser: (user: AuthUser) => void;
+  setSession: (access: string, user: AuthUser) => void;
+  setAccess: (access: string | null) => void;
+  setUser: (user: AuthUser | null) => void;
   clearSession: () => void;
   setHydrated: (hydrated: boolean) => void;
 };
@@ -20,21 +19,22 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       access: null,
-      refresh: null,
       user: null,
       hydrated: false,
-      setSession: (access, refresh, user) => set({ access, refresh, user }),
+      setSession: (access, user) => set({ access, user }),
       setAccess: (access) => set({ access }),
       setUser: (user) => set({ user }),
-      clearSession: () => set({ access: null, refresh: null, user: null }),
+      clearSession: () => {
+        fetch("/api/auth/logout", { method: "POST" }).catch(console.error);
+        set({ access: null, user: null });
+      },
       setHydrated: (hydrated) => set({ hydrated }),
     }),
     {
       name: "shresht-admin-auth",
       partialize: (state) => ({
-        access: state.access,
-        refresh: state.refresh,
         user: state.user,
+        access: state.access, // Persist access token for instant UI load
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);

@@ -1,11 +1,18 @@
 from decimal import Decimal
+import logging
 from django.db.models import Sum
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.views import APIView
+from rest_framework.throttling import UserRateThrottle
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
+
+logger = logging.getLogger(__name__)
+
+class PaymentActionThrottle(UserRateThrottle):
+    rate = '30/minute'
 
 from apps.payments.models import Payment
 from apps.memberships.models import Membership
@@ -14,7 +21,8 @@ from api.v1.admin.pagination import AdminStandardPagination
 from api.v1.admin.serializers import PaymentSerializer
 from utils.response import standard_response
 from utils.exporters import export_to_pdf
-from api.v1.v2_admin import _activity, _admin_user, _file_response, _now
+from api.v1.v2_admin import _activity, _admin_user, _file_response, _now, _date
+from api.v1.admin.views.dashboard import clear_dashboard_cache
 
 User = get_user_model()
 
@@ -22,6 +30,7 @@ class AdminPaymentsView(generics.ListCreateAPIView):
     permission_classes = [HasAdminPermission("manage_payments")]
     serializer_class = PaymentSerializer
     pagination_class = AdminStandardPagination
+    throttle_classes = [PaymentActionThrottle]
     # Note: status and method filters are handled manually in get_queryset
     # to normalize case (frontend sends lowercase, DB stores lowercase)
 
@@ -32,14 +41,18 @@ class AdminPaymentsView(generics.ListCreateAPIView):
         if status_filter:
             qs = qs.filter(status=status_filter)
         student_id = self.request.query_params.get("student_id")
-        if student_id:
+        if student_id and student_id.strip():
             qs = qs.filter(student_id=student_id)
         method = self.request.query_params.get("method")
-        if method:
+        if method and method.strip():
             qs = qs.filter(payment_mode=method)
+        from rest_framework.exceptions import ValidationError
         from_date = self.request.query_params.get("from_date")
-        if from_date:
-            qs = qs.filter(payment_date__gte=from_date)
+        if from_date and from_date.strip():
+            try:
+                qs = qs.filter(payment_date__gte=_date(from_date))
+            except ValueError:
+                raise ValidationError({"from_date": "Invalid date format. Use YYYY-MM-DD."})
         return qs
 
     def create(self, request, *args, **kwargs):
@@ -52,22 +65,49 @@ class AdminPaymentsView(generics.ListCreateAPIView):
         except Exception:
             return standard_response("error", "Invalid amount value.", status_code=400)
 
-        student = get_object_or_404(User, id=request.data.get("student_id"), role="student")
-        membership = Membership.objects.filter(id=request.data.get("membership_id")).first()
+        student_id = request.data.get("student_id")
+        if not student_id:
+            return standard_response("error", "Student ID is required.", status_code=400)
+            
+        try:
+            student = get_object_or_404(User, id=student_id, role="student")
+        except (ValueError, TypeError):
+            return standard_response("error", "Invalid Student ID format.", status_code=400)
+            
+        membership_id = request.data.get("membership_id")
+        membership = None
+        if membership_id:
+            try:
+                membership = Membership.objects.filter(id=membership_id).first()
+            except (ValueError, TypeError):
+                return standard_response("error", "Invalid Membership ID format.", status_code=400)
+                
         payment_mode = request.data.get("payment_mode") or request.data.get("method", "Cash")
-        payment = Payment.objects.create(
-            student=student,
-            membership=membership,
-            amount=amount,
-            payment_mode=payment_mode,
-            method=payment_mode.upper().replace(" ", "_"),
-            transaction_id=request.data.get("transaction_id") or request.data.get("transaction_ref"),
-            transaction_ref=request.data.get("transaction_ref") or request.data.get("transaction_id"),
-            notes=request.data.get("notes"),
-            recorded_by=_admin_user(request),
-            paid_at=_now(),
-            status="pending",
-        )
+        
+        payload = {
+            "student": student.id,
+            "membership": membership.id if membership else None,
+            "amount": str(amount),
+            "payment_mode": payment_mode,
+            "method": payment_mode.upper().replace(" ", "_"),
+            "transaction_id": request.data.get("transaction_id") or request.data.get("transaction_ref"),
+            "transaction_ref": request.data.get("transaction_ref") or request.data.get("transaction_id"),
+            "notes": request.data.get("notes"),
+            "recorded_by": _admin_user(request).id,
+            "paid_at": _now(),
+            "status": "pending",
+        }
+        
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                serializer = self.get_serializer(data=payload)
+                serializer.is_valid(raise_exception=True)
+                payment = serializer.save()
+        except Exception as e:
+            logger.exception("Failed to record manual payment")
+            return standard_response("error", "Failed to record payment due to a database error.", status_code=500)
+            
         _activity(request, "RECORD_PAYMENT", "Payment", payment.id, f"Recorded payment {payment.payment_id}")
 
         try:
@@ -85,6 +125,7 @@ class AdminPaymentsView(generics.ListCreateAPIView):
         except Exception:
             pass
 
+        clear_dashboard_cache()
         return standard_response(data=self.get_serializer(payment).data, status_code=201)
 
 
@@ -92,6 +133,7 @@ class AdminPaymentDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [HasAdminPermission("manage_payments")]
     serializer_class = PaymentSerializer
     queryset = Payment.objects.all()
+    throttle_classes = [PaymentActionThrottle]
 
     def retrieve(self, request, *args, **kwargs):
         return standard_response(data=self.get_serializer(self.get_object()).data)
@@ -101,33 +143,50 @@ class AdminPaymentDetailView(generics.RetrieveUpdateAPIView):
         serializer = self.get_serializer(payment, data=request.data, partial=True)
         if serializer.is_valid():
             payment = serializer.save()
+            clear_dashboard_cache()
             return standard_response(data=self.get_serializer(payment).data)
         return standard_response("error", "Validation failed.", errors=serializer.errors, status_code=400)
 
 
 class AdminPaymentActionView(APIView):
     permission_classes = [HasAdminPermission("manage_payments")]
+    throttle_classes = [PaymentActionThrottle]
 
     def post(self, request, pk, action):
-        payment = get_object_or_404(Payment, id=pk)
-        if action == "verify":
-            payment.status = "verified"
-            payment.verified_by = _admin_user(request)
-            payment.verified_at = _now()
-            if payment.membership:
-                payment.membership.status = "active"
-                payment.membership.save()
-            event = "VERIFY_PAYMENT"
-        elif action == "refund":
-            payment.status = "refunded"
-            payment.refund_amount = Decimal(str(request.data.get("refund_amount", payment.amount)))
-            payment.refund_reason = request.data.get("refund_reason") or request.data.get("reason")
-            payment.refunded_at = _now()
-            event = "REFUND_PAYMENT"
-        else:
-            return standard_response("error", "Unknown payment action.", status_code=404)
-        payment.save()
+        from django.http import Http404
+        from django.db import transaction
+        try:
+            with transaction.atomic():
+                # Acquire database lock to prevent concurrent modifications
+                payment = get_object_or_404(Payment.objects.select_for_update(), id=pk)
+                if action == "verify":
+                    payment.status = "verified"
+                    payment.verified_by = _admin_user(request)
+                    payment.verified_at = _now()
+                    if payment.membership:
+                        payment.membership.status = "active"
+                        payment.membership.save()
+                    event = "VERIFY_PAYMENT"
+                elif action == "refund":
+                    payment.status = "refunded"
+                    try:
+                        payment.refund_amount = Decimal(str(request.data.get("refund_amount", payment.amount)))
+                    except Exception:
+                        return standard_response("error", "Invalid refund amount.", status_code=400)
+                    payment.refund_reason = request.data.get("refund_reason") or request.data.get("reason")
+                    payment.refunded_at = _now()
+                    event = "REFUND_PAYMENT"
+                else:
+                    return standard_response("error", "Unknown payment action.", status_code=404)
+                payment.save()
+        except Http404:
+            raise
+        except Exception as e:
+            logger.exception("Failed to verify/refund payment")
+            return standard_response("error", "Failed to update payment status due to a database error.", status_code=500)
+            
         _activity(request, event, "Payment", payment.id, f"{event} {payment.payment_id}")
+        clear_dashboard_cache()
         return standard_response(data=PaymentSerializer(payment).data)
 
 
@@ -156,6 +215,7 @@ class AdminPaymentReceiptView(APIView):
 
 class AdminPaymentSpecialView(APIView):
     permission_classes = [HasAdminPermission("manage_payments")]
+    throttle_classes = [PaymentActionThrottle]
 
     def get(self, request, kind):
         today = timezone.now().date()

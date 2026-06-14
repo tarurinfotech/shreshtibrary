@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 import { ToastHost } from "@/components/ui/ToastHost";
 import { ServerOfflineOverlay } from "@/components/ui/ServerOfflineOverlay";
 import { useThemeStore, type ThemeMode } from "@/store/themeStore";
+import { useAuthStore } from "@/store/authStore";
+import { refreshAccessToken } from "@/lib/api";
 
 export function AppProviders({
   children,
@@ -15,14 +17,16 @@ export function AppProviders({
 }) {
   const theme = useThemeStore((state) => state.theme);
   const setTheme = useThemeStore((state) => state.setTheme);
+  const { user, access, hydrated } = useAuthStore();
   const [queryClient] = useState(
     () =>
       new QueryClient({
         defaultOptions: {
           queries: {
             retry: 1,
-            refetchOnWindowFocus: false,
-            staleTime: 30_000,
+            refetchOnWindowFocus: true, // Keep sync but less aggressive
+            staleTime: 60 * 1000, // 60 seconds for freshness (faster response)
+            gcTime: 10 * 60 * 1000, // 10 minutes
           },
         },
       }),
@@ -47,6 +51,15 @@ export function AppProviders({
 
     setTheme(nextTheme);
   }, [initialTheme, setTheme]);
+
+  // Restore access token on load if user is logged in
+  useEffect(() => {
+    if (hydrated && user && !access) {
+      refreshAccessToken().catch(() => {
+        useAuthStore.getState().clearSession();
+      });
+    }
+  }, [hydrated, user, access]);
 
   return (
     <QueryClientProvider client={queryClient}>

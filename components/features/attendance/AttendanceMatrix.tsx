@@ -35,11 +35,10 @@ export function MatrixOptionSelect({
     >
       <button
         type="button"
-        className={`focus-ring flex h-10 w-full items-center justify-between gap-2 rounded-xl border px-3 text-left text-xs font-semibold shadow-sm transition-all duration-150 ${
-          open
+        className={`focus-ring flex h-10 w-full items-center justify-between gap-2 rounded-xl border px-3 text-left text-xs font-semibold shadow-sm transition-all duration-150 ${open
             ? "border-primary bg-[color:var(--field)] text-foreground ring-2 ring-primary/20"
             : "border-border bg-[color:var(--field)] text-foreground hover:border-primary/50 hover:bg-[color:var(--hover)]"
-        }`}
+          }`}
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -60,11 +59,10 @@ export function MatrixOptionSelect({
                 <button
                   key={option.value}
                   type="button"
-                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-100 ${
-                    active
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-100 ${active
                       ? "bg-[color:var(--primary-soft)] font-semibold text-primary"
                       : "text-foreground hover:bg-[color:var(--hover)]"
-                  }`}
+                    }`}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
                     onChange(option.value);
@@ -108,11 +106,11 @@ export function AttendanceMatrix({
   actions: ReactNode;
 }) {
   if (loading) {
-    return <LoadingBlock label="Loading attendance matrix" />;
+    return <LoadingBlock label="Loading attendance Sheet" />;
   }
 
   if (!students.length) {
-    return <EmptyState title="No students for attendance matrix" />;
+    return <EmptyState title="No students for attendance Sheet" />;
   }
 
   return (
@@ -155,9 +153,8 @@ export function AttendanceMatrix({
                 return (
                   <th
                     key={day}
-                    className={`sticky top-0 z-20 min-w-[48px] border-b border-border px-1 py-3 text-center text-xs font-bold uppercase tracking-wider ${
-                      holiday ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400" : "bg-panel-strong text-muted"
-                    }`}
+                    className={`sticky top-0 z-20 min-w-[48px] border-b border-border px-1 py-3 text-center text-xs font-bold uppercase tracking-wider ${holiday ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400" : "bg-panel-strong text-muted"
+                      }`}
                     title={holiday?.title}
                   >
                     {day.slice(-2)}
@@ -242,7 +239,7 @@ export function AttendanceMatrix({
                     const m = String(now.getMonth() + 1).padStart(2, "0");
                     const d = String(now.getDate()).padStart(2, "0");
                     const todayStr = `${now.getFullYear()}-${m}-${d}`;
-                    
+
                     if (!isHoliday && !isFuture && !isPresent && day === todayStr && settings?.library_open_time) {
                       const [openHour, openMin] = settings.library_open_time.split(":").map(Number);
                       const openDate = new Date();
@@ -256,8 +253,7 @@ export function AttendanceMatrix({
                     return (
                       <td
                         key={day}
-                        className={`border-b border-border p-2 text-center align-middle font-black ${
-                          isHoliday
+                        className={`border-b border-border p-2 text-center align-middle font-black ${isHoliday
                             ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
                             : isFuture
                               ? "text-muted"
@@ -266,7 +262,7 @@ export function AttendanceMatrix({
                                 : isPending
                                   ? "bg-[color:var(--attendance-pending-cell)] text-amber-800 dark:text-amber-300"
                                   : "bg-[color:var(--attendance-absent-cell)] text-rose-800 dark:text-rose-300"
-                        }`}
+                          }`}
                         title={isPending ? "Pending" : holiday?.title}
                       >
                         {isHoliday ? "H" : isFuture ? "-" : isPresent ? "P" : isPending ? "PN" : "AB"}

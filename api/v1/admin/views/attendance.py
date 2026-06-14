@@ -1,13 +1,24 @@
 import uuid
 import datetime
-from django.db.models import Q
+import logging
+from django.db import transaction
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.throttling import UserRateThrottle
 from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
+
+logger = logging.getLogger(__name__)
+
+class QRActionThrottle(UserRateThrottle):
+    rate = '30/minute'
+
+class AttendanceActionThrottle(UserRateThrottle):
+    rate = '60/minute'
 
 from apps.attendance.models import Attendance, Holiday, QRCode
 from apps.students.models import StudentProfile
@@ -16,28 +27,34 @@ from api.v1.admin.pagination import AdminStandardPagination
 from api.v1.admin.serializers import AttendanceSerializer, HolidaySerializer, QRCodeSerializer, StudentProfileSerializer
 from utils.response import standard_response
 from api.v1.v2_admin import _activity, _admin_user, _date, _holiday_for_date
+from api.v1.admin.views.dashboard import clear_dashboard_cache
 
 User = get_user_model()
 
 def _generate_qr(request, method="MANUAL"):
-    QRCode.objects.filter(is_active=True).update(is_active=False, is_expired=True)
-    now = timezone.now()
-    qr = QRCode.objects.create(
-        token=uuid.uuid4(),
-        code=f"library-qr-{now.date()}-{uuid.uuid4()}",
-        valid_date=now.date(),
-        expiry_timestamp=now + datetime.timedelta(days=1),
-        expires_at=now + datetime.timedelta(days=1),
-        is_active=True,
-        is_expired=False,
-        generation_method=method,
-        created_by=_admin_user(request),
-    )
+    with transaction.atomic():
+        # Prevent concurrent modification by locking active QR codes
+        active_qrs = list(QRCode.objects.select_for_update().filter(is_active=True))
+        QRCode.objects.filter(id__in=[q.id for q in active_qrs]).update(is_active=False, is_expired=True)
+        
+        now = timezone.now()
+        qr = QRCode.objects.create(
+            token=uuid.uuid4(),
+            code=f"library-qr-{now.date()}-{uuid.uuid4()}",
+            valid_date=now.date(),
+            expiry_timestamp=now + datetime.timedelta(days=1),
+            expires_at=now + datetime.timedelta(days=1),
+            is_active=True,
+            is_expired=False,
+            generation_method=method,
+            created_by=_admin_user(request),
+        )
     _activity(request, "GENERATE_QR", "QRCode", qr.id, "Generated QR code")
     return qr
 
 class AdminQRView(APIView):
     permission_classes = [HasAdminPermission("manage_attendance")]
+    throttle_classes = [QRActionThrottle]
 
     def get(self, request, action=None, pk=None):
         if action == "history":
@@ -47,7 +64,7 @@ class AdminQRView(APIView):
             return paginator.get_paginated_response(QRCodeSerializer(paginated_qs, many=True).data)
             
         if action == "scans":
-            qs = Attendance.objects.filter(qr_code_id=pk)
+            qs = Attendance.objects.filter(qr_code_id=pk).select_related("student")
             return standard_response(data=AttendanceSerializer(qs, many=True).data)
             
         qr = QRCode.objects.filter(is_active=True).order_by("-created_at").first()
@@ -59,7 +76,9 @@ class AdminQRView(APIView):
             return standard_response(data=QRCodeSerializer(qr).data, status_code=201)
             
         if action == "expire":
-            QRCode.objects.filter(is_active=True).update(is_active=False, is_expired=True)
+            with transaction.atomic():
+                active_qrs = list(QRCode.objects.select_for_update().filter(is_active=True))
+                QRCode.objects.filter(id__in=[q.id for q in active_qrs]).update(is_active=False, is_expired=True)
             return standard_response(message="Current QR expired.")
             
         return standard_response("error", "Unknown QR action.", status_code=404)
@@ -71,44 +90,73 @@ class AdminAttendanceView(generics.ListCreateAPIView):
     pagination_class = AdminStandardPagination
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['student_id', 'date', 'method']
+    throttle_classes = [AttendanceActionThrottle]
 
     def get_queryset(self):
         qs = Attendance.objects.select_related("student").all().order_by("-date", "-marked_at")
         from_date = self.request.query_params.get("from_date")
         to_date = self.request.query_params.get("to_date")
-        if from_date:
-            qs = qs.filter(date__gte=from_date)
-        if to_date:
-            qs = qs.filter(date__lte=to_date)
+        
+        from rest_framework.exceptions import ValidationError
+        if from_date and from_date.strip():
+            try:
+                qs = qs.filter(date__gte=_date(from_date))
+            except ValueError:
+                raise ValidationError({"from_date": "Invalid date format. Use YYYY-MM-DD."})
+        if to_date and to_date.strip():
+            try:
+                qs = qs.filter(date__lte=_date(to_date))
+            except ValueError:
+                raise ValidationError({"to_date": "Invalid date format. Use YYYY-MM-DD."})
         return qs
 
     def create(self, request, *args, **kwargs):
         student = None
-        if request.data.get("student_id"):
-            student = get_object_or_404(User, id=request.data["student_id"], role="student")
-        elif request.data.get("student_mobile"):
-            student = get_object_or_404(User, mobile=request.data["student_mobile"], role="student")
+        student_id = request.data.get("student_id")
+        student_mobile = request.data.get("student_mobile")
+        
+        if student_id:
+            try:
+                student = get_object_or_404(User, id=student_id, role="student")
+            except (ValueError, TypeError):
+                return standard_response("error", "Invalid Student ID format.", status_code=400)
+        elif student_mobile:
+            student = get_object_or_404(User, mobile=student_mobile, role="student")
             
         if not student:
             return standard_response("error", "Student is required.", status_code=400)
             
-        date = _date(request.data.get("date"), timezone.now().date())
+        raw_date = request.data.get("date")
+        try:
+            date = _date(raw_date, timezone.now().date())
+        except ValueError:
+            return standard_response("error", "Invalid date format. Use YYYY-MM-DD.", status_code=400)
+            
         holiday = _holiday_for_date(date)
         if holiday:
             return standard_response("error", f"Attendance is closed for holiday: {holiday.title}.", data=HolidaySerializer(holiday).data, status_code=400)
             
-        record, _ = Attendance.objects.update_or_create(
-            student=student,
-            date=date,
-            defaults={
-                "is_present": request.data.get("is_present", True),
-                "is_manual": True,
-                "method": "MANUAL",
-                "marked_by": _admin_user(request),
-                "note": request.data.get("note"),
-            },
-        )
+        payload = {
+            "student": student.id,
+            "date": date,
+            "is_present": request.data.get("is_present", True),
+            "is_manual": True,
+            "method": "MANUAL",
+            "marked_by": _admin_user(request).id,
+            "note": request.data.get("note"),
+        }
+        
+        with transaction.atomic():
+            existing_record = Attendance.objects.select_for_update().filter(student=student, date=date).first()
+            if existing_record:
+                serializer = self.get_serializer(existing_record, data=payload, partial=True)
+            else:
+                serializer = self.get_serializer(data=payload)
+            serializer.is_valid(raise_exception=True)
+            record = serializer.save()
+            
         _activity(request, "MANUAL_ATTENDANCE", "Attendance", record.id, f"Manual attendance for {student.username}")
+        clear_dashboard_cache()
         return standard_response(data=self.get_serializer(record).data, status_code=201)
 
 
@@ -119,7 +167,12 @@ class AdminAttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         record = self.get_object()
-        target_date = _date(request.data.get("date"), record.date)
+        raw_date = request.data.get("date")
+        try:
+            target_date = _date(raw_date, record.date)
+        except ValueError:
+            return standard_response("error", "Invalid date format. Use YYYY-MM-DD.", status_code=400)
+            
         holiday = _holiday_for_date(target_date)
         if holiday:
             return standard_response("error", f"Attendance is closed for holiday: {holiday.title}.", data=HolidaySerializer(holiday).data, status_code=400)
@@ -129,11 +182,13 @@ class AdminAttendanceDetailView(generics.RetrieveUpdateDestroyAPIView):
             if "date" in request.data:
                 serializer.validated_data["date"] = target_date
             record = serializer.save()
+            clear_dashboard_cache()
             return standard_response(data=self.get_serializer(record).data)
         return standard_response("error", "Validation failed.", errors=serializer.errors, status_code=400)
 
     def destroy(self, request, *args, **kwargs):
         self.get_object().delete()
+        clear_dashboard_cache()
         return standard_response(message="Attendance deleted.")
 
 
@@ -141,7 +196,11 @@ class AdminAttendanceSummaryView(APIView):
     permission_classes = [HasAdminPermission("manage_attendance")]
 
     def get(self, request, kind):
-        date = _date(request.query_params.get("date"), timezone.now().date())
+        raw_date = request.query_params.get("date")
+        try:
+            date = _date(raw_date, timezone.now().date())
+        except ValueError:
+            return standard_response("error", "Invalid date format. Use YYYY-MM-DD.", status_code=400)
         present_students = Attendance.objects.filter(date=date, is_present=True).values_list("student_id", flat=True)
         
         is_pending_period = False
@@ -159,8 +218,8 @@ class AdminAttendanceSummaryView(APIView):
                 open_dt = timezone.make_aware(open_dt, timezone.get_current_timezone())
                 if now <= open_dt + timezone.timedelta(minutes=padding):
                     is_pending_period = True
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Error parsing pending period for attendance summary: {e}")
 
         if kind == "daily-summary":
             total = User.objects.filter(role="student").count()
@@ -173,13 +232,20 @@ class AdminAttendanceSummaryView(APIView):
             qs = StudentProfile.objects.exclude(user_id__in=present_students).select_related("user")
             res = []
             for item in qs:
-                ser = StudentProfileSerializer(item).data
+                ser = StudentProfileSerializer(item, context={'request': request}).data
                 ser["attendance_status"] = "pending" if is_pending_period else "absent"
                 res.append(ser)
             return standard_response(data=res)
             
-        streaks = []
-        for profile in StudentProfile.objects.select_related("user"):
-            count = Attendance.objects.filter(student=profile.user, is_present=True).count()
-            streaks.append({"student": StudentProfileSerializer(profile).data, "streak": count})
-        return standard_response(data=sorted(streaks, key=lambda item: item["streak"], reverse=True)[:20])
+        profiles = StudentProfile.objects.select_related("user").annotate(
+            streak=Count('user__attendances', filter=Q(user__attendances__is_present=True))
+        ).order_by('-streak')[:20]
+        
+        streaks = [
+            {
+                "student": StudentProfileSerializer(profile, context={'request': request}).data,
+                "streak": profile.streak
+            }
+            for profile in profiles
+        ]
+        return standard_response(data=streaks)

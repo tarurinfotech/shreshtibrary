@@ -16,6 +16,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
 
+  const isRefreshingSession = hydrated && user && !access;
+
   // Handle escape key to close mobile menu
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
@@ -48,7 +50,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [mobileOpen]);
 
   useEffect(() => {
-    if (!hydrated) {
+    if (!hydrated || isRefreshingSession) {
       return;
     }
     if (!access || !user) {
@@ -58,9 +60,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith("/dashboard/admins") && user.role !== "super_admin") {
       router.replace("/dashboard");
     }
-  }, [access, hydrated, pathname, router, user]);
+  }, [access, hydrated, isRefreshingSession, pathname, router, user]);
 
-  if (!hydrated || !access || !user) {
+  if (!hydrated || isRefreshingSession || !access || !user) {
     return (
       <main className="grid min-h-screen place-items-center p-6">
         <LoadingBlock label="Checking session" />
