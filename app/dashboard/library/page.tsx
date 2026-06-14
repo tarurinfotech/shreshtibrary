@@ -68,18 +68,6 @@ export default function LibraryPage() {
     onError: (error) => pushToast({ kind: "error", title: "Facility failed", message: getErrorMessage(error) }),
   });
 
-  const updateFacility = useMutation({
-    mutationFn: (facility: Facility) => endpoints.updateFacility(facility.id, facilityForm, facilityImage),
-    onSuccess: () => {
-      invalidate();
-      setFacilityForm(emptyFacility);
-      setFacilityImage(null);
-      setFacilityOpen(false);
-      pushToast({ kind: "success", title: "Facility updated" });
-    },
-    onError: (error) => pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) }),
-  });
-
   const toggleFacility = useMutation({
     mutationFn: (facility: Facility) => endpoints.toggleFacility(facility.id, !facility.is_active),
     onSuccess: () => {
@@ -186,26 +174,35 @@ export default function LibraryPage() {
       <section className="surface rounded-lg p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Facilities</h2>
-          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => {
-            setFacilityForm(emptyFacility);
-            setFacilityImage(null);
-            setFacilityOpen(true);
-          }}>Add</Button>
+          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setFacilityOpen(true)}>Add</Button>
         </div>
         {facilities.data?.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No facilities added yet.</div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {(facilities.data ?? []).map((facility) => (
-              <FacilityCard
+              <EntityCard
                 key={facility.id}
-                facility={facility}
-                onEdit={() => {
-                  setFacilityForm(facility);
-                  setFacilityImage(null);
-                  setFacilityOpen(true);
-                }}
-                onDelete={() => deleteFacility.mutate(facility.id)}
+                className="bg-panel-strong"
+                avatar={
+                  <div
+                    className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary/10 bg-cover bg-center text-primary"
+                    style={facility.image ? { backgroundImage: `url(${mediaUrl(facility.image)})` } : undefined}
+                    role="img"
+                    aria-label={`${facility.name} icon`}
+                  >
+                    {!facility.image && facility.icon_key ? <span className="text-xl font-bold" aria-hidden="true">{facility.icon_key[0]}</span> : null}
+                  </div>
+                }
+                title={facility.name}
+                subtitle={facility.description || facility.icon_key || "No description"}
+                badge={<Badge variant={statusVariant(facility.is_active ? "active" : "inactive")}>{facility.is_active ? "Active" : "Inactive"}</Badge>}
+                actions={
+                  <>
+                    <Button size="sm" variant="secondary" loading={toggleFacility.isPending} onClick={() => toggleFacility.mutate(facility)}>Toggle</Button>
+                    <Button size="sm" variant="danger" loading={deleteFacility.isPending} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
+                  </>
+                }
               />
             ))}
           </div>
@@ -286,34 +283,18 @@ export default function LibraryPage() {
       </div>
       )}
 
-      <Modal open={facilityOpen} title={facilityForm.id ? "Edit Facility" : "Add Facility"} onClose={() => setFacilityOpen(false)}>
-        <FormShell onSubmit={(event) => { 
-          event.preventDefault(); 
-          if (facilityForm.id) {
-            updateFacility.mutate(facilityForm as Facility);
-          } else {
-            createFacility.mutate(); 
-          }
-        }}>
+      <Modal open={facilityOpen} title="Add Facility" onClose={() => setFacilityOpen(false)}>
+        <FormShell onSubmit={(event) => { event.preventDefault(); createFacility.mutate(); }}>
           <Input label="Name" value={facilityForm.name ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, name: event.target.value }))} required />
-          <Input label="Icon Key (Fallback)" value={facilityForm.icon_key ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, icon_key: event.target.value }))} />
-          <div className="grid gap-2">
-            <label className="text-sm font-medium text-foreground">Facility Image</label>
-            {facilityForm.image && !facilityImage && (
-              <div className="relative mb-2 aspect-[21/9] w-full overflow-hidden rounded-lg border border-border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={mediaUrl(facilityForm.image) ?? ""} alt="" className="h-full w-full object-cover" />
-              </div>
-            )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setFacilityImage(e.target.files?.[0] ?? null)}
-              className="block w-full text-sm text-muted file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary hover:file:bg-primary/20"
-            />
-          </div>
+          <Input label="Icon Key" value={facilityForm.icon_key ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, icon_key: event.target.value }))} />
+          <FileInput 
+            label="Facility Image" 
+            accept="image/*" 
+            fileName={facilityImage ? `${facilityImage.name} selected` : null}
+            onChange={(event) => setFacilityImage(event.target.files?.[0] ?? null)} 
+          />
           <Textarea label="Description" value={facilityForm.description ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, description: event.target.value }))} />
-          <FormActions><Button type="submit" loading={createFacility.isPending || updateFacility.isPending} icon={facilityForm.id ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}>{facilityForm.id ? "Save Changes" : "Add Facility"}</Button></FormActions>
+          <FormActions><Button type="submit" loading={createFacility.isPending} icon={<Plus className="h-4 w-4" />}>Add Facility</Button></FormActions>
         </FormShell>
       </Modal>
 
@@ -337,60 +318,5 @@ export default function LibraryPage() {
         </FormShell>
       </Modal>
     </>
-  );
-}
-
-function FacilityCard({
-  facility,
-  onEdit,
-  onDelete,
-}: {
-  facility: Facility;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const [imageError, setImageError] = useState(false);
-
-  return (
-    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-sm transition-all hover:shadow-md">
-      <div className="relative aspect-[21/9] w-full bg-slate-100 dark:bg-slate-800">
-        {facility.image && !imageError ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={mediaUrl(facility.image) ?? ""}
-            alt={facility.name}
-            className="h-full w-full object-cover"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            {facility.icon_key ? (
-              <span className="text-4xl font-bold text-muted opacity-20" aria-hidden="true">{facility.icon_key[0]}</span>
-            ) : (
-              <ImagePlus className="h-8 w-8 text-muted opacity-20" />
-            )}
-          </div>
-        )}
-        <div className="absolute right-2 top-2 rounded bg-black/50 px-2 py-0.5 text-xs font-semibold text-white backdrop-blur-sm">
-          {facility.is_active ? "Active" : "Inactive"}
-        </div>
-      </div>
-      <div className="flex flex-1 flex-col p-4">
-        <h3 className="line-clamp-1 font-semibold text-foreground">
-          {facility.name}
-        </h3>
-        {facility.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-muted">{facility.description}</p>
-        )}
-        <div className="mt-4 flex gap-2">
-          <Button variant="secondary" size="sm" className="flex-1" onClick={onEdit}>
-            Edit
-          </Button>
-          <Button variant="danger" size="icon" onClick={onDelete}>
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
   );
 }

@@ -630,9 +630,7 @@ export const endpoints = {
       })
     ),
 
-  deleteSlider: (id: number) =>
-    postData<unknown>(`/admin/sliders/${id}/`).then(() => undefined),
-
-  deleteSliderDELETE: async (id: number) =>
-    unwrap<unknown>(await api.delete<ApiResponse<unknown>>(`/admin/sliders/${id}/`)),
+  deleteSlider: async (id: number) => {
+    await api.delete(`/admin/sliders/${id}/`);
+  },
 };
