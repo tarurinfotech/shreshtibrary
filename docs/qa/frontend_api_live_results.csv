@@ -1,0 +1,71 @@
+Endpoint,Method,Status,Elapsed ms,Grade,Verdict,Response Shape,Evidence
+/auth/login/admin/,POST,SKIPPED,—,—,BLOCKED,—,ADMIN_USERNAME and ADMIN_PASSWORD were not provided.
+/auth/me/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/profile/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/settings/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/dashboard/stats/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/dashboard/stats/overview/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/dashboard/charts/students/overview/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/dashboard/activity/recent/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/dashboard/activity/log/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/dashboard/alerts/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/1/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/1/timeline/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/1/payments/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/1/attendance/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/1/analytics/?period=monthly,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/students/counts/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/plans/,GET,0,390.8,Good,FAIL,network error,Request failed before an HTTP response was received.
+/admin/plans/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/plans/stats/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/plans/1/students/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/memberships/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/memberships/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/memberships/1/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/memberships/expiring/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/memberships/expired-today/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/qr/current/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/qr/history/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/qr/1/scans/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/attendance/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/attendance/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/attendance/daily-summary/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/attendance/absentees/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/attendance/streak/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/holidays/?is_active=true,GET,0,17.8,Excellent,FAIL,network error,Request failed before an HTTP response was received.
+/admin/payments/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/payments/1/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/payments/summary/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/payments/pending/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/payments/overdue/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/seats/layout/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/seats/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/seats/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/seats/available/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/seats/1/history/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/seats/stats/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/notifications/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/notifications/1/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/notifications/1/recipients/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/notifications/scheduled/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/notifications/templates/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/inbox/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/library/info/,GET,0,27.0,Excellent,FAIL,network error,Request failed before an HTTP response was received.
+/admin/library/facilities/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/library/achievers/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/library/achievers/,GET,0,14.3,Excellent,FAIL,network error,Request failed before an HTTP response was received.
+/library/reviews/,GET,0,3.2,Excellent,FAIL,network error,Request failed before an HTTP response was received.
+/library/reviews/summary/,GET,0,4.4,Excellent,FAIL,network error,Request failed before an HTTP response was received.
+/admin/reviews/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/reviews/pending/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/reports/attendance/?page_size=5,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/reports/daily-summary/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/reports/seats/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/superadmin/admins/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/superadmin/permissions/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/superadmin/backup/list/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/superadmin/activity-log/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/superadmin/health/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.
+/admin/sliders/,GET,SKIPPED,—,—,BLOCKED,—,Protected production endpoint skipped because no valid admin access token was available.

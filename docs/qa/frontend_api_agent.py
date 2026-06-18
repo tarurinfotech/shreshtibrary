@@ -17,6 +17,8 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_DIR = REPO_ROOT / "docs" / "qa"
 API_BASE_FALLBACK = "https://shreshtlibrary.onrender.com/api/v1"
+PROBE_TIMEOUT_SECONDS = float(os.environ.get("PROBE_TIMEOUT_SECONDS", "8"))
+MAX_LIVE_PROBES = int(os.environ.get("MAX_LIVE_PROBES", "120"))
 
 
 @dataclass
@@ -509,7 +511,7 @@ def request_json(url: str, method: str = "GET", token: str | None = None, body: 
     request = urllib.request.Request(url, data=data, headers=headers, method=method)
     started = time.perf_counter()
     try:
-        with urllib.request.urlopen(request, timeout=10) as response:
+        with urllib.request.urlopen(request, timeout=PROBE_TIMEOUT_SECONDS) as response:
             raw = response.read()
             elapsed_ms = (time.perf_counter() - started) * 1000
             text = raw.decode("utf-8", errors="replace")
@@ -527,6 +529,9 @@ def request_json(url: str, method: str = "GET", token: str | None = None, body: 
         except json.JSONDecodeError:
             payload = text[:500]
         return error.code, payload, elapsed_ms
+    except (urllib.error.URLError, TimeoutError) as error:
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        return 0, {"error": str(error)}, elapsed_ms
 
 
 def extract_access_token(payload: Any) -> str | None:
@@ -589,6 +594,8 @@ def with_probe_params(endpoint: str, library: str) -> str:
 
 
 def shape_result(payload: Any, library: str, status: int) -> tuple[str, str]:
+    if status == 0:
+        return "network error", "Request failed before an HTTP response was received."
     if status == 401:
         return "401 unauthorized", "Expected for protected calls without a valid access token."
     if not (200 <= status < 300):
@@ -664,6 +671,22 @@ def run_live_probes(definitions: dict[str, EndpointDefinition], env_values: dict
         and "receipt" not in definition.endpoint
     ]
     for definition in safe_definitions:
+        if len(results) >= MAX_LIVE_PROBES:
+            break
+        if definition.auth.startswith("Yes") and not token:
+            results.append(
+                LiveResult(
+                    endpoint=with_probe_params(concrete_path(definition.endpoint), definition.fetching_library),
+                    method="GET",
+                    status="SKIPPED",
+                    elapsed_ms="—",
+                    grade="—",
+                    verdict="BLOCKED",
+                    response_shape="—",
+                    evidence="Protected production endpoint skipped because no valid admin access token was available.",
+                )
+            )
+            continue
         endpoint = with_probe_params(concrete_path(definition.endpoint), definition.fetching_library)
         if endpoint in seen:
             continue
@@ -672,6 +695,8 @@ def run_live_probes(definitions: dict[str, EndpointDefinition], env_values: dict
         status, payload, elapsed_ms = request_json(url, token=token)
         grade, verdict = live_grade(elapsed_ms)
         shape, evidence = shape_result(payload, definition.fetching_library, status)
+        if status == 0:
+            verdict = "FAIL"
         if shape == "FAIL":
             verdict = "FAIL"
         elif shape == "WARN" and verdict == "PASS":
