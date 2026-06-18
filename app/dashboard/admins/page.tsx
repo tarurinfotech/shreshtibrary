@@ -15,7 +15,7 @@ import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Select } from "@/components/ui/Select";
 import { EmptyState } from "@/components/ui/StateBlocks";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate, formatDateTime, fullName } from "@/lib/format";
 import { useAuthStore } from "@/store/authStore";
@@ -44,6 +44,7 @@ export default function AdminsPage() {
   const [selected, setSelected] = useState<AdminUser | null>(null);
   const [form, setForm] = useState<AdminForm>(emptyAdmin);
   const [removeTarget, setRemoveTarget] = useState<AdminUser | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const admins = useQuery({ queryKey: ["admins"], queryFn: endpoints.admins });
   const permissions = useQuery({ queryKey: ["permission-groups"], queryFn: endpoints.permissionGroups });
@@ -67,7 +68,10 @@ export default function AdminsPage() {
       setOpen(false);
       pushToast({ kind: "success", title: "Admin saved" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Save failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFieldErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Save failed", message: getErrorMessage(error) });
+    },
   });
 
   const remove = useMutation({
@@ -116,11 +120,13 @@ export default function AdminsPage() {
   const openAdmin = (admin?: AdminUser) => {
     setSelected(admin ?? null);
     setForm(admin ? { ...admin, password: "" } : emptyAdmin);
+    setFieldErrors({});
     setOpen(true);
   };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFieldErrors({});
     save.mutate();
   };
 
@@ -252,12 +258,12 @@ export default function AdminsPage() {
       <Modal open={open} title={selected ? "Edit Admin" : "Add Admin"} onClose={() => setOpen(false)}>
         <FormShell onSubmit={submit}>
           <FormGrid columns={2}>
-            <Input label="Username" value={form.username ?? ""} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} required />
-            <Input label="Mobile" value={form.mobile ?? ""} onChange={(event) => setForm((current) => ({ ...current, mobile: event.target.value }))} required />
-            <Input label="First Name" value={form.first_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} />
-            <Input label="Last Name" value={form.last_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} />
-            <Input label="Email" type="email" value={form.email ?? ""} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
-            <Input label={selected ? "New Password" : "Password"} type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} required={!selected} />
+            <Input label="Username" value={form.username ?? ""} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} error={fieldErrors.username} required />
+            <Input label="Mobile" value={form.mobile ?? ""} onChange={(event) => setForm((current) => ({ ...current, mobile: event.target.value }))} error={fieldErrors.mobile} required />
+            <Input label="First Name" value={form.first_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} error={fieldErrors.first_name} />
+            <Input label="Last Name" value={form.last_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} error={fieldErrors.last_name} />
+            <Input label="Email" type="email" value={form.email ?? ""} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} error={fieldErrors.email} />
+            <Input label={selected ? "New Password" : "Password"} type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} error={fieldErrors.password} required={!selected} />
             <Select
               label="Role"
               value={form.role ?? "admin"}

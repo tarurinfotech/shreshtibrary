@@ -12,7 +12,7 @@ import { Input, Textarea } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
@@ -38,6 +38,9 @@ export default function LibraryPage() {
   const [achieverOpen, setAchieverOpen] = useState(false);
   const [achieverForm, setAchieverForm] = useState<Partial<Achiever>>(emptyAchiever);
   const [achieverPhoto, setAchieverPhoto] = useState<File | null>(null);
+  const [infoErrors, setInfoErrors] = useState<Record<string, string>>({});
+  const [facilityErrors, setFacilityErrors] = useState<Record<string, string>>({});
+  const [achieverErrors, setAchieverErrors] = useState<Record<string, string>>({});
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["library-info"] });
@@ -53,7 +56,10 @@ export default function LibraryPage() {
       setFeatureImage(null);
       pushToast({ kind: "success", title: "Library info saved" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Save failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setInfoErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Save failed", message: getErrorMessage(error) });
+    },
   });
 
   const createFacility = useMutation({
@@ -65,7 +71,10 @@ export default function LibraryPage() {
       setFacilityOpen(false);
       pushToast({ kind: "success", title: "Facility added" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Facility failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFacilityErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Facility failed", message: getErrorMessage(error) });
+    },
   });
 
   const toggleFacility = useMutation({
@@ -95,7 +104,10 @@ export default function LibraryPage() {
       setAchieverOpen(false);
       pushToast({ kind: "success", title: "Achiever added" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Achiever failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setAchieverErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Achiever failed", message: getErrorMessage(error) });
+    },
   });
 
   const toggleAchiever = useMutation({
@@ -118,6 +130,7 @@ export default function LibraryPage() {
 
   const submitInfo = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setInfoErrors({});
     saveInfo.mutate();
   };
 
@@ -158,16 +171,16 @@ export default function LibraryPage() {
           />
         </div>
         <FormGrid columns={2}>
-          <Input label="Name" value={infoForm.name ?? info.data?.name ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, name: event.target.value }))} />
-          <Input label="Tagline" value={infoForm.tagline ?? info.data?.tagline ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, tagline: event.target.value }))} />
-          <Input label="Primary Phone" value={infoForm.phone_primary ?? info.data?.phone_primary ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, phone_primary: event.target.value }))} />
-          <Input label="Email" type="email" value={infoForm.email ?? info.data?.email ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, email: event.target.value }))} />
-          <Input label="Open Time" type="time" value={infoForm.open_time ?? info.data?.open_time ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, open_time: event.target.value }))} />
-          <Input label="Close Time" type="time" value={infoForm.close_time ?? info.data?.close_time ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, close_time: event.target.value }))} />
+          <Input label="Name" value={infoForm.name ?? info.data?.name ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, name: event.target.value }))} error={infoErrors.name} />
+          <Input label="Tagline" value={infoForm.tagline ?? info.data?.tagline ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, tagline: event.target.value }))} error={infoErrors.tagline} />
+          <Input label="Primary Phone" value={infoForm.phone_primary ?? info.data?.phone_primary ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, phone_primary: event.target.value }))} error={infoErrors.phone_primary} />
+          <Input label="Email" type="email" value={infoForm.email ?? info.data?.email ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, email: event.target.value }))} error={infoErrors.email} />
+          <Input label="Open Time" type="time" value={infoForm.open_time ?? info.data?.open_time ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, open_time: event.target.value }))} error={infoErrors.open_time} />
+          <Input label="Close Time" type="time" value={infoForm.close_time ?? info.data?.close_time ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, close_time: event.target.value }))} error={infoErrors.close_time} />
         </FormGrid>
-        <Textarea label="About" value={infoForm.about ?? info.data?.about ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, about: event.target.value, description: event.target.value }))} />
-        <Textarea label="Rules" value={infoForm.rules ?? info.data?.rules ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, rules: event.target.value }))} />
-        <Textarea label="Facilities Text" value={infoForm.facilities ?? info.data?.facilities ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, facilities: event.target.value }))} />
+        <Textarea label="About" value={infoForm.about ?? info.data?.about ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, about: event.target.value, description: event.target.value }))} error={infoErrors.about} />
+        <Textarea label="Rules" value={infoForm.rules ?? info.data?.rules ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, rules: event.target.value }))} error={infoErrors.rules} />
+        <Textarea label="Facilities Text" value={infoForm.facilities ?? info.data?.facilities ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, facilities: event.target.value }))} error={infoErrors.facilities} />
         <FormActions><Button type="submit" loading={saveInfo.isPending} icon={<Save className="h-4 w-4" />}>Save Info</Button></FormActions>
       </FormShell>
 
@@ -284,29 +297,29 @@ export default function LibraryPage() {
       )}
 
       <Modal open={facilityOpen} title="Add Facility" onClose={() => setFacilityOpen(false)}>
-        <FormShell onSubmit={(event) => { event.preventDefault(); createFacility.mutate(); }}>
-          <Input label="Name" value={facilityForm.name ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, name: event.target.value }))} required />
-          <Input label="Icon Key" value={facilityForm.icon_key ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, icon_key: event.target.value }))} />
+        <FormShell onSubmit={(event) => { event.preventDefault(); setFacilityErrors({}); createFacility.mutate(); }}>
+          <Input label="Name" value={facilityForm.name ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, name: event.target.value }))} error={facilityErrors.name} required />
+          <Input label="Icon Key" value={facilityForm.icon_key ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, icon_key: event.target.value }))} error={facilityErrors.icon_key} />
           <FileInput 
             label="Facility Image" 
             accept="image/*" 
             fileName={facilityImage ? `${facilityImage.name} selected` : null}
             onChange={(event) => setFacilityImage(event.target.files?.[0] ?? null)} 
           />
-          <Textarea label="Description" value={facilityForm.description ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, description: event.target.value }))} />
+          <Textarea label="Description" value={facilityForm.description ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, description: event.target.value }))} error={facilityErrors.description} />
           <FormActions><Button type="submit" loading={createFacility.isPending} icon={<Plus className="h-4 w-4" />}>Add Facility</Button></FormActions>
         </FormShell>
       </Modal>
 
       <Modal open={achieverOpen} title="Add Achiever" onClose={() => setAchieverOpen(false)}>
-        <FormShell onSubmit={(event) => { event.preventDefault(); createAchiever.mutate(); }}>
+        <FormShell onSubmit={(event) => { event.preventDefault(); setAchieverErrors({}); createAchiever.mutate(); }}>
           <FormGrid columns={2}>
-            <Input label="Name" value={achieverForm.name ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, name: event.target.value }))} required />
-            <Input label="Goal" value={achieverForm.goal ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, goal: event.target.value }))} />
-            <Input label="Year" type="number" value={achieverForm.year ?? new Date().getFullYear()} onChange={(event) => setAchieverForm((current) => ({ ...current, year: Number(event.target.value) }))} />
-            <Input label="Order" type="number" value={achieverForm.order ?? 0} onChange={(event) => setAchieverForm((current) => ({ ...current, order: Number(event.target.value) }))} />
+            <Input label="Name" value={achieverForm.name ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, name: event.target.value }))} error={achieverErrors.name} required />
+            <Input label="Goal" value={achieverForm.goal ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, goal: event.target.value }))} error={achieverErrors.goal} />
+            <Input label="Year" type="number" value={achieverForm.year ?? new Date().getFullYear()} onChange={(event) => setAchieverForm((current) => ({ ...current, year: Number(event.target.value) }))} error={achieverErrors.year} />
+            <Input label="Order" type="number" value={achieverForm.order ?? 0} onChange={(event) => setAchieverForm((current) => ({ ...current, order: Number(event.target.value) }))} error={achieverErrors.order} />
           </FormGrid>
-          <Textarea label="Achievement" value={achieverForm.achievement ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, achievement: event.target.value }))} required />
+          <Textarea label="Achievement" value={achieverForm.achievement ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, achievement: event.target.value }))} error={achieverErrors.achievement} required />
           <FileInput
             accept="image/*"
             label="Photo"

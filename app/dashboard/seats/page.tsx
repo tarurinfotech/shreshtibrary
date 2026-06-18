@@ -16,7 +16,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Select } from "@/components/ui/Select";
 import { SectionCard } from "@/components/ui/SectionCard";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDateTime, fullName } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
@@ -41,6 +41,7 @@ export default function SeatsPage() {
   const [rowFloorId, setRowFloorId] = useState("");
   const [rowLabel, setRowLabel] = useState("");
   const [historySeat, setHistorySeat] = useState<Seat | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const seats = useQuery({ queryKey: ["flat-seats"], queryFn: endpoints.flatSeats });
   const layout = useQuery({ queryKey: ["seat-layout"], queryFn: endpoints.seatLayout });
@@ -72,7 +73,10 @@ export default function SeatsPage() {
       setAddOpen(false);
       pushToast({ kind: "success", title: "Seat added" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Add failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFieldErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Add failed", message: getErrorMessage(error) });
+    },
   });
 
   const updateStatus = useMutation({
@@ -122,7 +126,10 @@ export default function SeatsPage() {
       setFloorName("");
       pushToast({ kind: "success", title: "Floor added" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Floor failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFieldErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Floor failed", message: getErrorMessage(error) });
+    },
   });
 
   const createRow = useMutation({
@@ -133,7 +140,10 @@ export default function SeatsPage() {
       setRowLabel("");
       pushToast({ kind: "success", title: "Row added" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Row failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFieldErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Row failed", message: getErrorMessage(error) });
+    },
   });
 
   const openSeat = (seat: Seat) => {
@@ -144,6 +154,7 @@ export default function SeatsPage() {
 
   const submitAdd = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFieldErrors({});
     addSeat.mutate();
   };
 
@@ -174,8 +185,8 @@ export default function SeatsPage() {
 
       <SectionCard title="Floors and Rows">
         <div className="grid gap-4 lg:grid-cols-2">
-          <FormShell className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={(event) => { event.preventDefault(); createFloor.mutate(); }}>
-            <Input label="Floor Name" value={floorName} onChange={(event) => setFloorName(event.target.value)} required />
+          <FormShell className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={(event) => { event.preventDefault(); setFieldErrors({}); createFloor.mutate(); }}>
+            <Input label="Floor Name" value={floorName} onChange={(event) => setFloorName(event.target.value)} error={fieldErrors.name} required />
             <div className="self-end"><Button type="submit" loading={createFloor.isPending} icon={<Plus className="h-4 w-4" />}>Add Floor</Button></div>
           </FormShell>
           <FormShell className="grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={(event) => { event.preventDefault(); createRow.mutate(); }}>
@@ -189,7 +200,7 @@ export default function SeatsPage() {
                 ...(layout.data ?? []).map((floor) => ({ value: String(floor.id), label: floor.name })),
               ]}
             />
-            <Input label="Row" value={rowLabel} onChange={(event) => setRowLabel(event.target.value)} required />
+            <Input label="Row" value={rowLabel} onChange={(event) => setRowLabel(event.target.value)} error={fieldErrors.label} required />
             <div className="self-end"><Button type="submit" loading={createRow.isPending} icon={<Plus className="h-4 w-4" />}>Add Row</Button></div>
           </FormShell>
         </div>
@@ -214,9 +225,9 @@ export default function SeatsPage() {
       <Modal open={addOpen} title="Add Seat" onClose={() => setAddOpen(false)}>
         <FormShell onSubmit={submitAdd}>
           <FormGrid columns={2}>
-            <Input label="Floor" value={draft.floor ?? ""} onChange={(event) => setDraft((current) => ({ ...current, floor: event.target.value }))} required />
-            <Input label="Row" value={draft.row ?? ""} onChange={(event) => setDraft((current) => ({ ...current, row: event.target.value }))} required />
-            <Input label="Seat Number" value={draft.seat_number ?? ""} onChange={(event) => setDraft((current) => ({ ...current, seat_number: event.target.value }))} required />
+            <Input label="Floor" value={draft.floor ?? ""} onChange={(event) => setDraft((current) => ({ ...current, floor: event.target.value }))} error={fieldErrors.floor} required />
+            <Input label="Row" value={draft.row ?? ""} onChange={(event) => setDraft((current) => ({ ...current, row: event.target.value }))} error={fieldErrors.row} required />
+            <Input label="Seat Number" value={draft.seat_number ?? ""} onChange={(event) => setDraft((current) => ({ ...current, seat_number: event.target.value }))} error={fieldErrors.seat_number} required />
             <Select
               label="Status"
               value={draft.status ?? "AVAILABLE"}

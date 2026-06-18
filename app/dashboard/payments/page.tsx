@@ -13,7 +13,7 @@ import { Modal } from "@/components/ui/Modal";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Select } from "@/components/ui/Select";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints, type PaymentPayload } from "@/lib/endpoints";
 import { formatDate, formatMoney, fullName } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
@@ -35,6 +35,7 @@ export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<PaymentPayload>(emptyPayment);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [refundTarget, setRefundTarget] = useState<PaymentRecord | null>(null);
 
   // ── Data queries ──────────────────────────────────────────────────────────
@@ -77,7 +78,10 @@ export default function PaymentsPage() {
       setOpen(false);
       pushToast({ kind: "success", title: "Payment recorded" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Create failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFieldErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Create failed", message: getErrorMessage(error) });
+    },
   });
 
   const verify = useMutation({
@@ -124,6 +128,7 @@ export default function PaymentsPage() {
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFieldErrors({});
     create.mutate();
   };
 
@@ -258,7 +263,7 @@ export default function PaymentsPage() {
       />
 
       {/* ── Record Payment Modal ── */}
-      <Modal open={open} title="Record Payment" onClose={() => { setOpen(false); setForm(emptyPayment); }}>
+      <Modal open={open} title="Record Payment" onClose={() => { setOpen(false); setForm(emptyPayment); setFieldErrors({}); }}>
         <FormShell onSubmit={submit}>
           <FormGrid columns={2}>
             {/* Student — required */}
@@ -266,6 +271,7 @@ export default function PaymentsPage() {
               label="Student"
               value={String(form.student_id || "")}
               onChange={handleStudentChange}
+              error={fieldErrors.student_id}
               required
               searchable
               options={[
@@ -291,6 +297,7 @@ export default function PaymentsPage() {
               value={String(form.membership_id ?? "")}
               onChange={(v) => setForm((cur) => ({ ...cur, membership_id: v ? Number(v) : undefined }))}
               options={membershipOptions}
+              error={fieldErrors.membership_id}
             />
 
             {/* Amount */}
@@ -301,6 +308,7 @@ export default function PaymentsPage() {
               step="0.01"
               value={form.amount}
               onChange={(event) => setForm((cur) => ({ ...cur, amount: event.target.value }))}
+              error={fieldErrors.amount}
               required
             />
 
@@ -309,6 +317,7 @@ export default function PaymentsPage() {
               label="Payment Mode"
               value={form.payment_mode ?? "Cash"}
               onChange={(v) => setForm((cur) => ({ ...cur, payment_mode: v }))}
+              error={fieldErrors.payment_mode}
               options={[
                 { value: "Cash", label: "Cash" },
                 { value: "UPI", label: "UPI" },
@@ -322,6 +331,7 @@ export default function PaymentsPage() {
               label="Transaction Ref"
               value={form.transaction_ref ?? ""}
               onChange={(event) => setForm((cur) => ({ ...cur, transaction_ref: event.target.value }))}
+              error={fieldErrors.transaction_ref}
             />
 
             {/* Notes */}
@@ -329,6 +339,7 @@ export default function PaymentsPage() {
               label="Notes"
               value={form.notes ?? ""}
               onChange={(event) => setForm((cur) => ({ ...cur, notes: event.target.value }))}
+              error={fieldErrors.notes}
             />
           </FormGrid>
 

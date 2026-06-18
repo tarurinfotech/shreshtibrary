@@ -18,7 +18,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { Table, TableShell, Td, Th } from "@/components/ui/Table";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate, formatDateTime, fullName } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
@@ -108,6 +108,7 @@ export default function AttendancePage() {
   const [manualOverrides, setManualOverrides] = useState<Record<number, boolean>>({});
   const [selectedQr, setSelectedQr] = useState<QRCodeRecord | null>(null);
   const [holidayOpen, setHolidayOpen] = useState(false);
+  const [holidayErrors, setHolidayErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setSelectedMonth(getMonthKey());
@@ -294,7 +295,10 @@ export default function AttendancePage() {
       setHolidayForm({ date: getTodayDate(), title: "", description: "" });
       pushToast({ kind: "success", title: "Holiday saved" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Holiday failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setHolidayErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Holiday failed", message: getErrorMessage(error) });
+    },
   });
 
   const deleteHoliday = useMutation({
@@ -321,6 +325,7 @@ export default function AttendancePage() {
 
   const submitHoliday = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setHolidayErrors({});
     saveHoliday.mutate();
   };
 
@@ -486,6 +491,7 @@ export default function AttendancePage() {
                   icon={<CalendarPlus className="h-4 w-4" />}
                   onClick={() => {
                     setHolidayForm({ date: attendanceRange.from, title: "", description: "" });
+                    setHolidayErrors({});
                     setHolidayOpen(true);
                   }}
                 >
@@ -700,6 +706,7 @@ export default function AttendancePage() {
             label="Holiday Date"
             value={holidayForm.date}
             onChange={(event) => setHolidayForm((current) => ({ ...current, date: event.target.value }))}
+            error={holidayErrors.date}
             required
           />
           <Input
@@ -707,6 +714,7 @@ export default function AttendancePage() {
             value={holidayForm.title}
             onChange={(event) => setHolidayForm((current) => ({ ...current, title: event.target.value }))}
             placeholder="Library closed"
+            error={holidayErrors.title}
             required
           />
           <Input
@@ -714,6 +722,7 @@ export default function AttendancePage() {
             value={holidayForm.description}
             onChange={(event) => setHolidayForm((current) => ({ ...current, description: event.target.value }))}
             placeholder="Optional note"
+            error={holidayErrors.description}
           />
           <FormActions>
             <Button type="submit" loading={saveHoliday.isPending} icon={<CalendarPlus className="h-4 w-4" />}>

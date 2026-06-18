@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { FormShell } from "@/components/ui/Form";
 import { Input, Switch, Textarea } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
@@ -21,6 +21,8 @@ export default function SettingsPage() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
+  const [settingsErrors, setSettingsErrors] = useState<Record<string, string>>({});
 
   const changePassword = useMutation({
     mutationFn: () =>
@@ -34,7 +36,10 @@ export default function SettingsPage() {
       clearSession();
       router.replace("/login");
     },
-    onError: (error) => pushToast({ kind: "error", title: "Change failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setPasswordErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Change failed", message: getErrorMessage(error) });
+    },
   });
 
   const settings = useQuery({ queryKey: ["settings"], queryFn: endpoints.settings });
@@ -66,7 +71,10 @@ export default function SettingsPage() {
       queryClient.setQueryData(["settings"], data);
       pushToast({ kind: "success", title: "Settings updated" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setSettingsErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) });
+    },
   });
 
   // Effect to load settings
@@ -84,11 +92,13 @@ export default function SettingsPage() {
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setPasswordErrors({});
     changePassword.mutate();
   };
 
   const submitSettings = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setSettingsErrors({});
     updateSettings.mutate();
   };
 
@@ -116,6 +126,7 @@ export default function SettingsPage() {
                 min="0"
                 value={paddingTime}
                 onChange={(event) => setPaddingTime(event.target.value)}
+                error={settingsErrors.attendance_padding_time}
                 required
               />
             </div>
@@ -139,11 +150,13 @@ export default function SettingsPage() {
                       label="Dialog Title"
                       value={expiryTitle}
                       onChange={(e) => setExpiryTitle(e.target.value)}
+                      error={settingsErrors.expiry_dialog_title}
                     />
                     <Textarea
                       label="Dialog Message"
                       value={expiryMessage}
                       onChange={(e) => setExpiryMessage(e.target.value)}
+                      error={settingsErrors.expiry_dialog_message}
                     />
                     
                     <p className="text-xs text-muted mt-2">Allow Non-Premium Access to Specific Features</p>
@@ -187,6 +200,7 @@ export default function SettingsPage() {
               type="password"
               value={oldPassword}
               onChange={(event) => setOldPassword(event.target.value)}
+              error={passwordErrors.old_password}
               required
             />
             <Input
@@ -194,6 +208,7 @@ export default function SettingsPage() {
               type="password"
               value={newPassword}
               onChange={(event) => setNewPassword(event.target.value)}
+              error={passwordErrors.new_password}
               required
             />
             <Input
@@ -201,6 +216,7 @@ export default function SettingsPage() {
               type="password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
+              error={passwordErrors.confirm_password}
               required
             />
           </div>

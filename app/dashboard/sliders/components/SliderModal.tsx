@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Input, Switch } from "@/components/ui/Input";
 import { endpoints } from "@/lib/endpoints";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { useToastStore } from "@/store/toastStore";
 import type { HomeSlider } from "@/types/api";
 
@@ -25,6 +25,7 @@ export function SliderModal({ isOpen, onClose, slider }: Props) {
   const [sortOrder, setSortOrder] = useState("0");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
@@ -47,6 +48,7 @@ export function SliderModal({ isOpen, onClose, slider }: Props) {
         setPreviewUrl(null);
       }
       setImageFile(null);
+      setFieldErrors({});
     }
   }, [isOpen, slider]);
 
@@ -81,11 +83,15 @@ export function SliderModal({ isOpen, onClose, slider }: Props) {
       pushToast({ kind: "success", title: slider ? "Slider updated" : "Slider created" });
       onClose();
     },
-    onError: (err) => pushToast({ kind: "error", title: "Save failed", message: getErrorMessage(err) }),
+    onError: (err) => {
+      setFieldErrors(getFieldErrors(err));
+      pushToast({ kind: "error", title: "Save failed", message: getErrorMessage(err) });
+    },
   });
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setFieldErrors({});
     saveMutation.mutate();
   };
 
@@ -112,13 +118,13 @@ export function SliderModal({ isOpen, onClose, slider }: Props) {
           </div>
         </div>
 
-        <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-        <Input label="Subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} required />
-        <Input label="Link URL" placeholder="https://" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
+        <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} error={fieldErrors.title} required />
+        <Input label="Subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} error={fieldErrors.subtitle} required />
+        <Input label="Link URL" placeholder="https://" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} error={fieldErrors.link_url} />
 
         <div className="flex gap-4">
           <div className="flex-1">
-            <Input label="Sort Order" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} required />
+            <Input label="Sort Order" type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} error={fieldErrors.sort_order} required />
           </div>
           <div className="flex-1 flex items-end pb-2">
             <Switch label="Active" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />

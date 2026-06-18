@@ -13,7 +13,7 @@ import { MetricTile } from "@/components/ui/MetricTile";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { useAuthStore } from "@/store/authStore";
@@ -25,6 +25,7 @@ export default function AdminProfilePage() {
   const pushToast = useToastStore((state) => state.pushToast);
   const setUser = useAuthStore((state) => state.setUser);
   const [form, setForm] = useState<Partial<AdminProfile>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [profileImage, setProfileImage] = useState<File | null>(null);
 
   const profile = useQuery({ queryKey: ["admin-profile"], queryFn: endpoints.adminProfile });
@@ -38,11 +39,15 @@ export default function AdminProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
       pushToast({ kind: "success", title: "Profile updated" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Profile update failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFieldErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Profile update failed", message: getErrorMessage(error) });
+    },
   });
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFieldErrors({});
     update.mutate();
   };
 
@@ -128,10 +133,10 @@ export default function AdminProfilePage() {
               </div>
             </div>
             <FormGrid columns={2}>
-              <Input label="First Name" value={form.first_name ?? profile.data.first_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} />
-              <Input label="Last Name" value={form.last_name ?? profile.data.last_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} />
-              <Input label="Email" type="email" value={form.email ?? profile.data.email ?? ""} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} />
-              <Input label="Mobile" value={form.mobile ?? profile.data.mobile ?? ""} onChange={(event) => setForm((current) => ({ ...current, mobile: event.target.value }))} />
+              <Input label="First Name" value={form.first_name ?? profile.data.first_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} error={fieldErrors.first_name} />
+              <Input label="Last Name" value={form.last_name ?? profile.data.last_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} error={fieldErrors.last_name} />
+              <Input label="Email" type="email" value={form.email ?? profile.data.email ?? ""} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} error={fieldErrors.email} />
+              <Input label="Mobile" value={form.mobile ?? profile.data.mobile ?? ""} onChange={(event) => setForm((current) => ({ ...current, mobile: event.target.value }))} error={fieldErrors.mobile} />
             </FormGrid>
             <FormActions>
               <Button type="submit" loading={update.isPending} icon={profileImage ? <Upload className="h-4 w-4" /> : <Save className="h-4 w-4" />}>

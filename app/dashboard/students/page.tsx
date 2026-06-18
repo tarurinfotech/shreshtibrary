@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import axios from "axios";
 import { useDebounce } from "@/lib/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -35,7 +36,7 @@ import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
 import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { FilterSelect, Select } from "@/components/ui/Select";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints, type StudentCreatePayload } from "@/lib/endpoints";
 import { fullName } from "@/lib/format";
 import { useAuthStore } from "@/store/authStore";
@@ -170,6 +171,7 @@ export default function StudentsPage() {
   const [goal, setGoal] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<StudentCreatePayload>(emptyStudent);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [suspendTarget, setSuspendTarget] = useState<StudentProfile | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<StudentProfile | null>(null);
 
@@ -197,10 +199,14 @@ export default function StudentsPage() {
       queryClient.invalidateQueries({ queryKey: ["students"] });
       queryClient.invalidateQueries({ queryKey: ["student-counts"] });
       setForm(emptyStudent);
+      setFormErrors({});
       setOpen(false);
       pushToast({ kind: "success", title: "Student created" });
     },
-    onError: (error) => pushToast({ kind: "error", title: "Create failed", message: getErrorMessage(error) }),
+    onError: (error) => {
+      setFormErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Create failed", message: getErrorMessage(error) });
+    },
   });
 
   const suspend = useMutation({
@@ -237,6 +243,7 @@ export default function StudentsPage() {
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFormErrors({});
     create.mutate();
   };
 
@@ -455,29 +462,41 @@ export default function StudentsPage() {
               label="First Name"
               value={form.first_name ?? ""}
               onChange={(e) => setForm((c) => ({ ...c, first_name: e.target.value }))}
+              error={formErrors.first_name}
               required
             />
             <Input
               label="Last Name"
               value={form.last_name ?? ""}
               onChange={(e) => setForm((c) => ({ ...c, last_name: e.target.value }))}
+              error={formErrors.last_name}
             />
             <Input
               label="Mobile"
               value={form.mobile}
-              onChange={(e) => setForm((c) => ({ ...c, mobile: e.target.value }))}
+              onChange={(e) => {
+                setForm((c) => ({ ...c, mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }));
+                if (formErrors.mobile) setFormErrors((errs) => ({ ...errs, mobile: "" }));
+              }}
               required
+              pattern="[0-9]{10}"
+              title="Mobile number must be exactly 10 digits"
+              maxLength={10}
+              minLength={10}
+              error={formErrors.mobile}
             />
             <Input
               label="Email"
               type="email"
               value={form.email ?? ""}
               onChange={(e) => setForm((c) => ({ ...c, email: e.target.value }))}
+              error={formErrors.email}
             />
             <Input
               label="Goal"
               value={form.goal ?? ""}
               onChange={(e) => setForm((c) => ({ ...c, goal: e.target.value }))}
+              error={formErrors.goal}
             />
             <Select
               label="Gender"
@@ -492,19 +511,26 @@ export default function StudentsPage() {
             <Input
               label="Parent Mobile"
               value={form.parent_mobile ?? ""}
-              onChange={(e) => setForm((c) => ({ ...c, parent_mobile: e.target.value }))}
+              onChange={(e) => setForm((c) => ({ ...c, parent_mobile: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+              pattern="[0-9]{10}"
+              title="Parent mobile number must be exactly 10 digits"
+              maxLength={10}
+              minLength={10}
+              error={formErrors.parent_mobile}
             />
             <Input
               label="Password"
               type="password"
               value={form.password ?? ""}
               onChange={(e) => setForm((c) => ({ ...c, password: e.target.value }))}
+              error={formErrors.password}
             />
           </FormGrid>
           <Input
             label="Address"
             value={form.address ?? ""}
             onChange={(e) => setForm((c) => ({ ...c, address: e.target.value }))}
+            error={formErrors.address}
           />
           <FormActions>
             <Button type="submit" loading={create.isPending} icon={<Plus className="h-4 w-4" />}>

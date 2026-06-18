@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { FormShell } from "@/components/ui/Form";
 import { Input } from "@/components/ui/Input";
 import { LoadingBlock } from "@/components/ui/StateBlocks";
-import { getErrorMessage } from "@/lib/api";
+import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
@@ -22,6 +22,7 @@ export default function LoginPage() {
   const pushToast = useToastStore((state) => state.pushToast);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const isRefreshingSession = hydrated && user && !access;
 
@@ -31,14 +32,6 @@ export default function LoginPage() {
     }
   }, [access, hydrated, router]);
 
-  if (!hydrated || isRefreshingSession) {
-    return (
-      <main className="grid min-h-screen place-items-center bg-transparent p-6">
-        <LoadingBlock label="Checking session" />
-      </main>
-    );
-  }
-
   const login = useMutation({
     mutationFn: () => endpoints.login({ username, password }),
     onSuccess: (data) => {
@@ -47,12 +40,22 @@ export default function LoginPage() {
       router.replace("/dashboard");
     },
     onError: (error) => {
+      setFieldErrors(getFieldErrors(error));
       pushToast({ kind: "error", title: "Login failed", message: getErrorMessage(error) });
     },
   });
 
+  if (!hydrated || isRefreshingSession) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-transparent p-6">
+        <LoadingBlock label="Checking session" />
+      </main>
+    );
+  }
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setFieldErrors({});
     login.mutate();
   };
 
@@ -85,6 +88,7 @@ export default function LoginPage() {
             autoComplete="username"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
+            error={fieldErrors.username}
             required
           />
           <Input
@@ -94,6 +98,7 @@ export default function LoginPage() {
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            error={fieldErrors.password}
             required
           />
           <Button type="submit" loading={login.isPending} icon={<LogIn className="h-4 w-4" />}>

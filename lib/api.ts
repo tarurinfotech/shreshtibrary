@@ -160,3 +160,21 @@ export function getErrorMessage(error: unknown) {
 
   return "Something went wrong.";
 }
+
+export function getFieldErrors(error: unknown): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (axios.isAxiosError<ApiResponse<unknown>>(error)) {
+    const payload = error.response?.data;
+    const errors = payload?.errors;
+    if (errors && typeof errors === "object" && !Array.isArray(errors)) {
+      Object.entries(errors).forEach(([key, val]) => {
+        if (Array.isArray(val) && val.length > 0) {
+          result[key] = String(val[0]);
+        } else if (typeof val === "string") {
+          result[key] = val;
+        }
+      });
+    }
+  }
+  return result;
+}
