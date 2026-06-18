@@ -11,9 +11,13 @@ export const API_BASE_URL =
 
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
+// Track consecutive network failures to avoid false positives on cold starts
+let consecutiveFailures = 0;
+const FAILURE_THRESHOLD = 3;
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 15000,
+  timeout: 30000,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -32,6 +36,8 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (response) => {
+    // Server responded — reset failure counter and clear offline state
+    consecutiveFailures = 0;
     if (useNetworkStore.getState().isOffline && typeof window !== "undefined") {
       window.location.reload();
     }
@@ -42,8 +48,25 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.code === "ERR_NETWORK" || error.response?.status === 502 || error.response?.status === 503) {
-      useNetworkStore.getState().setOffline(true);
+    const status = error.response?.status;
+
+    // Only count genuine server-down / network errors, NOT client-side errors (4xx)
+    const isServerDown =
+      error.code === "ERR_NETWORK" ||
+      error.code === "ECONNABORTED" ||
+      status === 502 ||
+      status === 503 ||
+      status === 504;
+
+    if (isServerDown) {
+      consecutiveFailures++;
+      // Only show the overlay after multiple consecutive failures
+      if (consecutiveFailures >= FAILURE_THRESHOLD) {
+        useNetworkStore.getState().setOffline(true);
+      }
+    } else {
+      // Any non-server-down response means the server IS reachable
+      consecutiveFailures = 0;
     }
 
     const original = error.config as RetryConfig | undefined;
