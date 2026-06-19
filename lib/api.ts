@@ -6,8 +6,8 @@ import { useAuthStore } from "@/store/authStore";
 import { useNetworkStore } from "@/store/networkStore";
 import type { ApiResponse, PaginatedResponse } from "@/types/api";
 
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://shreshtlibrary.onrender.com/api/v1";
+import { API_BASE_URL } from "./baseApi";
+export { API_BASE_URL };
 
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
@@ -18,7 +18,7 @@ const FAILURE_THRESHOLD = 3;
 export const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
-  withCredentials: true,
+  withCredentials: false,
   headers: {
     "Content-Type": "application/json",
   },

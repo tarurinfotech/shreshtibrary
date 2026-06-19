@@ -69,8 +69,8 @@ export default function NotificationsPage() {
 
   const updateSettings = useMutation({
     mutationFn: () => endpoints.updateSettings({ ...settings.data, expiry_dialog_title: expiryTitle, expiry_dialog_message: expiryMessage }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["settings"] });
       pushToast({ kind: "success", title: "Template updated successfully" });
     },
     onError: (e) => pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(e) }),
@@ -102,9 +102,9 @@ export default function NotificationsPage() {
     enabled: Boolean(selected),
   });
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    queryClient.invalidateQueries({ queryKey: ["scheduled-notifications"] });
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    await queryClient.invalidateQueries({ queryKey: ["scheduled-notifications"] });
   };
 
   const getFormData = () => {
@@ -125,8 +125,8 @@ export default function NotificationsPage() {
 
   const send = useMutation({
     mutationFn: () => endpoints.sendNotification(getFormData()),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setForm(emptyNotification);
       setBackgroundImage(null);
       setGalleryImages([]);
@@ -137,8 +137,8 @@ export default function NotificationsPage() {
 
   const schedule = useMutation({
     mutationFn: () => endpoints.scheduleNotification(getFormData()),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setForm(emptyNotification);
       setBackgroundImage(null);
       setGalleryImages([]);
@@ -149,8 +149,8 @@ export default function NotificationsPage() {
 
   const cancel = useMutation({
     mutationFn: (id: number) => endpoints.cancelScheduledNotification(id),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Schedule cancelled" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Cancel failed", message: getErrorMessage(error) }),

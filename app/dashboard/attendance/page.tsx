@@ -218,18 +218,18 @@ export default function AttendancePage() {
     });
   }, [manualSearch, manualStudents.data]);
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["attendance"] });
-    queryClient.invalidateQueries({ queryKey: ["attendance-matrix"] });
-    queryClient.invalidateQueries({ queryKey: ["manual-attendance-records"] });
-    queryClient.invalidateQueries({ queryKey: ["attendance-summary"] });
-    queryClient.invalidateQueries({ queryKey: ["attendance-absentees"] });
-    queryClient.invalidateQueries({ queryKey: ["attendance-streak"] });
-    queryClient.invalidateQueries({ queryKey: ["holidays"] });
-    queryClient.invalidateQueries({ queryKey: ["manual-holiday"] });
-    queryClient.invalidateQueries({ queryKey: ["current-qr"] });
-    queryClient.invalidateQueries({ queryKey: ["qr-history"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["attendance"] });
+    await queryClient.invalidateQueries({ queryKey: ["attendance-matrix"] });
+    await queryClient.invalidateQueries({ queryKey: ["manual-attendance-records"] });
+    await queryClient.invalidateQueries({ queryKey: ["attendance-summary"] });
+    await queryClient.invalidateQueries({ queryKey: ["attendance-absentees"] });
+    await queryClient.invalidateQueries({ queryKey: ["attendance-streak"] });
+    await queryClient.invalidateQueries({ queryKey: ["holidays"] });
+    await queryClient.invalidateQueries({ queryKey: ["manual-holiday"] });
+    await queryClient.invalidateQueries({ queryKey: ["current-qr"] });
+    await queryClient.invalidateQueries({ queryKey: ["qr-history"] });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
   };
 
   const getManualPresence = (studentUserId: number) =>
@@ -265,8 +265,8 @@ export default function AttendancePage() {
       }
       return rows.length;
     },
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setManualOverrides({});
       pushToast({ kind: "success", title: "Attendance saved" });
     },
@@ -279,9 +279,9 @@ export default function AttendancePage() {
       if (action === "expire") return endpoints.expireQr();
       return endpoints.generateQr();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["current-qr"] });
-      queryClient.invalidateQueries({ queryKey: ["qr-history"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["current-qr"] });
+      await queryClient.invalidateQueries({ queryKey: ["qr-history"] });
       pushToast({ kind: "success", title: "QR updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "QR action failed", message: getErrorMessage(error) }),
@@ -289,8 +289,8 @@ export default function AttendancePage() {
 
   const saveHoliday = useMutation({
     mutationFn: () => endpoints.createHoliday(holidayForm),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setHolidayOpen(false);
       setHolidayForm({ date: getTodayDate(), title: "", description: "" });
       pushToast({ kind: "success", title: "Holiday saved" });
@@ -303,8 +303,8 @@ export default function AttendancePage() {
 
   const deleteHoliday = useMutation({
     mutationFn: (id: number) => endpoints.deleteHoliday(id),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Holiday deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),

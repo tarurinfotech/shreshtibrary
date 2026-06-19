@@ -22,6 +22,7 @@ export function DataTable<T>({
   shellClassName,
   tableClassName,
   rowClassName,
+  onRowClick,
 }: {
   data: T[];
   columns: Array<DataTableColumn<T>>;
@@ -34,6 +35,7 @@ export function DataTable<T>({
   shellClassName?: string;
   tableClassName?: string;
   rowClassName?: string | ((row: T) => string | undefined);
+  onRowClick?: (row: T) => void;
 }) {
   if (loading) {
     return <LoadingBlock label="Loading" />;
@@ -59,7 +61,11 @@ export function DataTable<T>({
         </thead>
         <tbody>
           {data.map((row) => (
-            <tr key={getRowKey(row)} className={typeof rowClassName === "function" ? rowClassName(row) : rowClassName}>
+            <tr 
+              key={getRowKey(row)} 
+              className={`${typeof rowClassName === "function" ? rowClassName(row) : rowClassName} ${onRowClick ? 'cursor-pointer hover:bg-slate-50' : ''}`}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+            >
               {columns.map((column) => (
                 <Td key={column.id} className={column.className}>{column.cell(row)}</Td>
               ))}

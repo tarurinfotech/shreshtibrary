@@ -26,17 +26,17 @@ export default function ReviewsPage() {
   const pending = useQuery({ queryKey: ["pending-reviews"], queryFn: endpoints.pendingReviews });
   const summary = useQuery({ queryKey: ["review-summary"], queryFn: endpoints.reviewSummary });
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["reviews"] });
-    queryClient.invalidateQueries({ queryKey: ["pending-reviews"] });
-    queryClient.invalidateQueries({ queryKey: ["public-reviews"] });
-    queryClient.invalidateQueries({ queryKey: ["review-summary"] });
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["reviews"] });
+    await queryClient.invalidateQueries({ queryKey: ["pending-reviews"] });
+    await queryClient.invalidateQueries({ queryKey: ["public-reviews"] });
+    await queryClient.invalidateQueries({ queryKey: ["review-summary"] });
   };
 
   const approve = useMutation({
     mutationFn: (id: number) => endpoints.approveReview(id),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Review approved" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Approval failed", message: getErrorMessage(error) }),
@@ -44,8 +44,8 @@ export default function ReviewsPage() {
 
   const reject = useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) => endpoints.rejectReview(id, reason),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setRejectTarget(null);
       pushToast({ kind: "success", title: "Review rejected" });
     },
@@ -54,8 +54,8 @@ export default function ReviewsPage() {
 
   const remove = useMutation({
     mutationFn: (id: number) => endpoints.deleteReview(id),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Review deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),

@@ -42,17 +42,17 @@ export default function LibraryPage() {
   const [facilityErrors, setFacilityErrors] = useState<Record<string, string>>({});
   const [achieverErrors, setAchieverErrors] = useState<Record<string, string>>({});
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["library-info"] });
-    queryClient.invalidateQueries({ queryKey: ["facilities"] });
-    queryClient.invalidateQueries({ queryKey: ["achievers"] });
-    queryClient.invalidateQueries({ queryKey: ["public-reviews"] });
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["library-info"] });
+    await queryClient.invalidateQueries({ queryKey: ["facilities"] });
+    await queryClient.invalidateQueries({ queryKey: ["achievers"] });
+    await queryClient.invalidateQueries({ queryKey: ["public-reviews"] });
   };
 
   const saveInfo = useMutation({
     mutationFn: () => endpoints.updateLibraryInfo({ ...info.data, ...infoForm }, featureImage),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setFeatureImage(null);
       pushToast({ kind: "success", title: "Library info saved" });
     },
@@ -64,8 +64,8 @@ export default function LibraryPage() {
 
   const createFacility = useMutation({
     mutationFn: () => endpoints.createFacility(facilityForm, facilityImage),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setFacilityForm(emptyFacility);
       setFacilityImage(null);
       setFacilityOpen(false);
@@ -77,10 +77,25 @@ export default function LibraryPage() {
     },
   });
 
+  const updateFacility = useMutation({
+    mutationFn: () => endpoints.updateFacility(facilityForm.id!, facilityForm, facilityImage),
+    onSuccess: async () => {
+      await invalidate();
+      setFacilityForm(emptyFacility);
+      setFacilityImage(null);
+      setFacilityOpen(false);
+      pushToast({ kind: "success", title: "Facility updated" });
+    },
+    onError: (error) => {
+      setFacilityErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) });
+    },
+  });
+
   const toggleFacility = useMutation({
     mutationFn: (facility: Facility) => endpoints.toggleFacility(facility.id, !facility.is_active),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Facility updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Toggle failed", message: getErrorMessage(error) }),
@@ -88,8 +103,8 @@ export default function LibraryPage() {
 
   const deleteFacility = useMutation({
     mutationFn: (id: number) => endpoints.deleteFacility(id),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Facility deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
@@ -97,8 +112,8 @@ export default function LibraryPage() {
 
   const createAchiever = useMutation({
     mutationFn: () => endpoints.createAchiever(achieverForm, achieverPhoto),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setAchieverForm(emptyAchiever);
       setAchieverPhoto(null);
       setAchieverOpen(false);
@@ -110,10 +125,25 @@ export default function LibraryPage() {
     },
   });
 
+  const updateAchiever = useMutation({
+    mutationFn: () => endpoints.updateAchiever(achieverForm.id!, achieverForm, achieverPhoto),
+    onSuccess: async () => {
+      await invalidate();
+      setAchieverForm(emptyAchiever);
+      setAchieverPhoto(null);
+      setAchieverOpen(false);
+      pushToast({ kind: "success", title: "Achiever updated" });
+    },
+    onError: (error) => {
+      setAchieverErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) });
+    },
+  });
+
   const toggleAchiever = useMutation({
     mutationFn: (achiever: Achiever) => endpoints.toggleAchiever(achiever.id, !achiever.is_active),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Achiever updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Toggle failed", message: getErrorMessage(error) }),
@@ -121,8 +151,8 @@ export default function LibraryPage() {
 
   const deleteAchiever = useMutation({
     mutationFn: (id: number) => endpoints.deleteAchiever(id),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Achiever deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
@@ -187,7 +217,7 @@ export default function LibraryPage() {
       <section className="surface rounded-lg p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Facilities</h2>
-          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setFacilityOpen(true)}>Add</Button>
+          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setFacilityForm(emptyFacility); setFacilityImage(null); setFacilityOpen(true); }}>Add</Button>
         </div>
         {facilities.data?.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No facilities added yet.</div>
@@ -212,8 +242,11 @@ export default function LibraryPage() {
                 badge={<Badge variant={statusVariant(facility.is_active ? "active" : "inactive")}>{facility.is_active ? "Active" : "Inactive"}</Badge>}
                 actions={
                   <>
-                    <Button size="sm" variant="secondary" loading={toggleFacility.isPending} onClick={() => toggleFacility.mutate(facility)}>Toggle</Button>
-                    <Button size="sm" variant="danger" loading={deleteFacility.isPending} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
+                    <Button size="sm" variant="secondary" onClick={() => { setFacilityForm(facility); setFacilityImage(null); setFacilityOpen(true); }}>Edit</Button>
+                    <Button size="sm" variant="secondary" loading={toggleFacility.isPending && toggleFacility.variables?.id === facility.id} onClick={() => toggleFacility.mutate(facility)}>
+                      {facility.is_active ? "Inactive" : "Active"}
+                    </Button>
+                    <Button size="sm" variant="danger" loading={deleteFacility.isPending && deleteFacility.variables === facility.id} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
                   </>
                 }
               />
@@ -225,7 +258,7 @@ export default function LibraryPage() {
       <section className="surface rounded-lg p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Achievers</h2>
-          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setAchieverOpen(true)}>Add</Button>
+          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setAchieverForm(emptyAchiever); setAchieverPhoto(null); setAchieverOpen(true); }}>Add</Button>
         </div>
         {achievers.data?.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No achievers added yet.</div>
@@ -254,8 +287,11 @@ export default function LibraryPage() {
                   }
                   actions={
                     <>
-                      <Button size="sm" variant="secondary" loading={toggleAchiever.isPending} onClick={() => toggleAchiever.mutate(achiever)}>Toggle</Button>
-                      <Button size="sm" variant="danger" loading={deleteAchiever.isPending} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteAchiever.mutate(achiever.id)}>Delete</Button>
+                      <Button size="sm" variant="secondary" onClick={() => { setAchieverForm(achiever); setAchieverPhoto(null); setAchieverOpen(true); }}>Edit</Button>
+                      <Button size="sm" variant="secondary" loading={toggleAchiever.isPending && toggleAchiever.variables?.id === achiever.id} onClick={() => toggleAchiever.mutate(achiever)}>
+                        {achiever.is_active ? "Inactive" : "Active"}
+                      </Button>
+                      <Button size="sm" variant="danger" loading={deleteAchiever.isPending && deleteAchiever.variables === achiever.id} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteAchiever.mutate(achiever.id)}>Delete</Button>
                     </>
                   }
                 />
@@ -296,8 +332,8 @@ export default function LibraryPage() {
       </div>
       )}
 
-      <Modal open={facilityOpen} title="Add Facility" onClose={() => setFacilityOpen(false)}>
-        <FormShell onSubmit={(event) => { event.preventDefault(); setFacilityErrors({}); createFacility.mutate(); }}>
+      <Modal open={facilityOpen} title={facilityForm.id ? "Edit Facility" : "Add Facility"} onClose={() => setFacilityOpen(false)}>
+        <FormShell onSubmit={(event) => { event.preventDefault(); setFacilityErrors({}); facilityForm.id ? updateFacility.mutate() : createFacility.mutate(); }}>
           <Input label="Name" value={facilityForm.name ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, name: event.target.value }))} error={facilityErrors.name} required />
           <Input label="Icon Key" value={facilityForm.icon_key ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, icon_key: event.target.value }))} error={facilityErrors.icon_key} />
           <FileInput 
@@ -307,12 +343,12 @@ export default function LibraryPage() {
             onChange={(event) => setFacilityImage(event.target.files?.[0] ?? null)} 
           />
           <Textarea label="Description" value={facilityForm.description ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, description: event.target.value }))} error={facilityErrors.description} />
-          <FormActions><Button type="submit" loading={createFacility.isPending} icon={<Plus className="h-4 w-4" />}>Add Facility</Button></FormActions>
+          <FormActions><Button type="submit" loading={createFacility.isPending || updateFacility.isPending} icon={<Save className="h-4 w-4" />}>{facilityForm.id ? "Save Changes" : "Add Facility"}</Button></FormActions>
         </FormShell>
       </Modal>
 
-      <Modal open={achieverOpen} title="Add Achiever" onClose={() => setAchieverOpen(false)}>
-        <FormShell onSubmit={(event) => { event.preventDefault(); setAchieverErrors({}); createAchiever.mutate(); }}>
+      <Modal open={achieverOpen} title={achieverForm.id ? "Edit Achiever" : "Add Achiever"} onClose={() => setAchieverOpen(false)}>
+        <FormShell onSubmit={(event) => { event.preventDefault(); setAchieverErrors({}); achieverForm.id ? updateAchiever.mutate() : createAchiever.mutate(); }}>
           <FormGrid columns={2}>
             <Input label="Name" value={achieverForm.name ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, name: event.target.value }))} error={achieverErrors.name} required />
             <Input label="Goal" value={achieverForm.goal ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, goal: event.target.value }))} error={achieverErrors.goal} />
@@ -327,7 +363,7 @@ export default function LibraryPage() {
             helper="Optional image, compressed on upload."
             onChange={(event) => setAchieverPhoto(event.target.files?.[0] ?? null)}
           />
-          <FormActions><Button type="submit" loading={createAchiever.isPending} icon={<Plus className="h-4 w-4" />}>Add Achiever</Button></FormActions>
+          <FormActions><Button type="submit" loading={createAchiever.isPending || updateAchiever.isPending} icon={<Save className="h-4 w-4" />}>{achieverForm.id ? "Save Changes" : "Add Achiever"}</Button></FormActions>
         </FormShell>
       </Modal>
     </>

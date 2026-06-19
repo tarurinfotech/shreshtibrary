@@ -181,7 +181,9 @@ export function AttendanceMatrix({
                 (acc, day) => {
                   const holiday = holidays.get(day);
                   const isFuture = new Date(`${day}T00:00:00`) > new Date();
-                  if (holiday || isFuture) return acc;
+                  const isBeforeJoin = student.joining_date ? day < student.joining_date.substring(0, 10) : false;
+                  
+                  if (holiday || isFuture || isBeforeJoin) return acc;
                   const record = studentRecords?.get(day);
                   if (record?.is_present) {
                     acc.present += 1;
@@ -234,13 +236,15 @@ export function AttendanceMatrix({
                     const isHoliday = Boolean(holiday);
                     const isPresent = Boolean(record?.is_present);
 
+                    const isBeforeJoin = student.joining_date ? day < student.joining_date.substring(0, 10) : false;
+
                     let isPending = false;
                     const now = new Date();
                     const m = String(now.getMonth() + 1).padStart(2, "0");
                     const d = String(now.getDate()).padStart(2, "0");
                     const todayStr = `${now.getFullYear()}-${m}-${d}`;
 
-                    if (!isHoliday && !isFuture && !isPresent && day === todayStr && settings?.library_open_time) {
+                    if (!isHoliday && !isFuture && !isPresent && !isBeforeJoin && day === todayStr && settings?.library_open_time) {
                       const [openHour, openMin] = settings.library_open_time.split(":").map(Number);
                       const openDate = new Date();
                       openDate.setHours(openHour, openMin, 0, 0);
@@ -255,7 +259,7 @@ export function AttendanceMatrix({
                         key={day}
                         className={`border-b border-border p-2 text-center align-middle font-black ${isHoliday
                             ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
-                            : isFuture
+                            : (isFuture || isBeforeJoin)
                               ? "text-muted"
                               : isPresent
                                 ? "bg-[color:var(--attendance-present-cell)] text-emerald-800 dark:text-emerald-300"
@@ -265,7 +269,7 @@ export function AttendanceMatrix({
                           }`}
                         title={isPending ? "Pending" : holiday?.title}
                       >
-                        {isHoliday ? "H" : isFuture ? "-" : isPresent ? "P" : isPending ? "PN" : "AB"}
+                        {isHoliday ? "H" : (isFuture || isBeforeJoin) ? "-" : isPresent ? "P" : isPending ? "PN" : "AB"}
                       </td>
                     );
                   })}

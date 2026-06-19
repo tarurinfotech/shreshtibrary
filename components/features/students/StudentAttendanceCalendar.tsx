@@ -9,9 +9,10 @@ import { endpoints } from "@/lib/endpoints";
 
 type Props = {
   records: AttendanceRecord[];
+  joiningDate?: string;
 };
 
-export function StudentAttendanceCalendar({ records }: Props) {
+export function StudentAttendanceCalendar({ records, joiningDate }: Props) {
   const [currentDate, setCurrentDate] = useState(() => new Date());
 
   const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
@@ -104,6 +105,14 @@ export function StudentAttendanceCalendar({ records }: Props) {
              bgClass = "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 font-semibold shadow-sm border border-indigo-200/50 dark:border-indigo-800/50";
           } else if (isFuture) {
              bgClass = "bg-[color:var(--attendance-empty)] text-muted border border-border/20 opacity-60";
+          } else if (joiningDate && cellDate.getTime() < new Date(`${joiningDate.substring(0, 10)}T00:00:00`).getTime()) {
+             bgClass = "bg-[color:var(--attendance-empty)] text-muted border border-border/20 opacity-60 text-[10px]";
+             titleStr = `${dateStr}: Not Joined Yet`;
+             return (
+               <div key={index} title={titleStr} className={clsx("flex items-center justify-center rounded-md text-sm transition-colors cursor-default h-8 xl:h-9 w-full", bgClass)}>
+                 -
+               </div>
+             );
           } else if (isPresent) {
              titleStr = `${dateStr}: Present`;
              bgClass = "bg-[color:var(--attendance-present-cell)] text-emerald-800 dark:text-emerald-300 font-semibold shadow-sm";

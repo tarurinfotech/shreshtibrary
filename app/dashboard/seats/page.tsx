@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Armchair, History, Plus, Save, UserMinus, UserPlus } from "lucide-react";
+import { Armchair, History, Plus, Save, UserMinus, UserPlus, Trash2 } from "lucide-react";
 import { SeatGrid } from "@/components/features/SeatGrid";
 import { SeatStudentAvatar } from "@/components/features/seats/SeatStudentAvatar";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -27,6 +27,7 @@ const blankSeat: Partial<Seat> = {
   row: "",
   seat_number: "",
   status: "AVAILABLE",
+  is_reserved_for_girls: false,
 };
 
 export default function SeatsPage() {
@@ -36,12 +37,16 @@ export default function SeatsPage() {
   const [draft, setDraft] = useState<Partial<Seat>>(blankSeat);
   const [selected, setSelected] = useState<Seat | null>(null);
   const [status, setStatus] = useState("AVAILABLE");
+  const [isReservedForGirls, setIsReservedForGirls] = useState(false);
   const [studentId, setStudentId] = useState("");
   const [floorName, setFloorName] = useState("");
   const [rowFloorId, setRowFloorId] = useState("");
   const [rowLabel, setRowLabel] = useState("");
   const [historySeat, setHistorySeat] = useState<Seat | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [bulkReserveOpen, setBulkReserveOpen] = useState(false);
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<number[]>([]);
+  const [bulkIsReserved, setBulkIsReserved] = useState(true);
 
   const seats = useQuery({ queryKey: ["flat-seats"], queryFn: endpoints.flatSeats });
   const layout = useQuery({ queryKey: ["seat-layout"], queryFn: endpoints.seatLayout });
@@ -57,18 +62,20 @@ export default function SeatsPage() {
     queryFn: () => endpoints.allStudents({ page_size: 200 }),
   });
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["flat-seats"] });
-    queryClient.invalidateQueries({ queryKey: ["seat-layout"] });
-    queryClient.invalidateQueries({ queryKey: ["seat-stats"] });
-    queryClient.invalidateQueries({ queryKey: ["available-seats"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+  const invalidate = async () => {
+    await Promise.all([
+      await queryClient.invalidateQueries({ queryKey: ["flat-seats"] }),
+      await queryClient.invalidateQueries({ queryKey: ["seat-layout"] }),
+      await queryClient.invalidateQueries({ queryKey: ["seat-stats"] }),
+      await queryClient.invalidateQueries({ queryKey: ["available-seats"] }),
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
+    ]);
   };
 
   const addSeat = useMutation({
     mutationFn: () => endpoints.addSeat(draft),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setDraft(blankSeat);
       setAddOpen(false);
       pushToast({ kind: "success", title: "Seat added" });
@@ -79,13 +86,15 @@ export default function SeatsPage() {
     },
   });
 
-  const updateStatus = useMutation({
+  const updateSeatInfo = useMutation({
     mutationFn: () => {
       if (!selected) throw new Error("No seat selected.");
-      return endpoints.updateSeatStatus(selected.id, { status });
+      // We also update status in updateSeat, but updateSeatStatus is for just status patching.
+      // We will use updateSeat to pass both.
+      return endpoints.updateSeat(selected.id, { status, is_reserved_for_girls: isReservedForGirls });
     },
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setSelected(null);
       pushToast({ kind: "success", title: "Seat updated" });
     },
@@ -97,8 +106,8 @@ export default function SeatsPage() {
       if (!selected || !studentId) throw new Error("Seat and student are required.");
       return endpoints.assignSeat(selected.id, studentId);
     },
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setSelected(null);
       setStudentId("");
       pushToast({ kind: "success", title: "Seat assigned" });
@@ -111,8 +120,8 @@ export default function SeatsPage() {
       if (!selected) throw new Error("No seat selected.");
       return endpoints.unassignSeat(selected.id);
     },
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setSelected(null);
       pushToast({ kind: "success", title: "Seat unassigned" });
     },
@@ -121,8 +130,8 @@ export default function SeatsPage() {
 
   const createFloor = useMutation({
     mutationFn: () => endpoints.createFloor({ name: floorName }),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setFloorName("");
       pushToast({ kind: "success", title: "Floor added" });
     },
@@ -132,10 +141,19 @@ export default function SeatsPage() {
     },
   });
 
+  const releaseAll = useMutation({
+    mutationFn: () => endpoints.releaseAllSeats(),
+    onSuccess: async () => {
+      await invalidate();
+      pushToast({ kind: "success", title: "All seats released successfully" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Failed to release seats", message: getErrorMessage(error) }),
+  });
+
   const createRow = useMutation({
     mutationFn: () => endpoints.createRow({ floor_id: Number(rowFloorId), label: rowLabel }),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setRowFloorId("");
       setRowLabel("");
       pushToast({ kind: "success", title: "Row added" });
@@ -146,10 +164,48 @@ export default function SeatsPage() {
     },
   });
 
+  const deleteFloor = useMutation({
+    mutationFn: (id: number) => endpoints.deleteFloor(id),
+    onSuccess: async () => { await invalidate(); pushToast({ kind: "success", title: "Floor deleted" }); },
+    onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
+  });
+
+  const deleteRow = useMutation({
+    mutationFn: (id: number) => endpoints.deleteRow(id),
+    onSuccess: async () => { await invalidate(); pushToast({ kind: "success", title: "Row deleted" }); },
+    onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
+  });
+
+  const deleteSeat = useMutation({
+    mutationFn: (id: number) => endpoints.deleteSeat(id),
+    onSuccess: async () => {
+      await invalidate();
+      setSelected(null);
+      pushToast({ kind: "success", title: "Seat deleted" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
+  });
+
+  const reserveBulk = useMutation({
+    mutationFn: () => endpoints.reserveBulkSeats({ seat_ids: bulkSelectedIds, is_reserved_for_girls: bulkIsReserved }),
+    onSuccess: async () => {
+      await invalidate();
+      setBulkReserveOpen(false);
+      setBulkSelectedIds([]);
+      pushToast({ kind: "success", title: "Seats reserved successfully" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Reservation failed", message: getErrorMessage(error) }),
+  });
+
   const openSeat = (seat: Seat) => {
     setSelected(seat);
     setStatus(seat.status);
-    setStudentId("");
+    setIsReservedForGirls(Boolean(seat.is_reserved_for_girls));
+    if (seat.status.toLowerCase() === "occupied" && seat.student) {
+      setStudentId(String(seat.student));
+    } else {
+      setStudentId("");
+    }
   };
 
   const submitAdd = (event: FormEvent<HTMLFormElement>) => {
@@ -160,7 +216,7 @@ export default function SeatsPage() {
 
   const submitStatus = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    updateStatus.mutate();
+    updateSeatInfo.mutate();
   };
   const historyColumns: Array<DataTableColumn<SeatHistoryItem>> = [
     { id: "student", header: "Student", cell: (item) => item.student_name ?? "None" },
@@ -173,7 +229,30 @@ export default function SeatsPage() {
       <PageHeader
         title="Seats"
         eyebrow="Layout"
-        actions={<Button icon={<Plus className="h-4 w-4" />} onClick={() => setAddOpen(true)}>Add Seat</Button>}
+        actions={
+          <>
+            <Button 
+              variant="danger" 
+              icon={<Trash2 className="h-4 w-4" />} 
+              loading={releaseAll.isPending} 
+              onClick={() => {
+                if (window.confirm("Are you sure you want to release all occupied seats? This cannot be undone.")) {
+                  releaseAll.mutate();
+                }
+              }}
+            >
+              Release All
+            </Button>
+            <Button 
+              variant="secondary" 
+              icon={<Armchair className="h-4 w-4" />} 
+              onClick={() => { setBulkSelectedIds([]); setBulkIsReserved(true); setBulkReserveOpen(true); }}
+            >
+              Reserve Seat
+            </Button>
+            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAddOpen(true)}>Add Seat</Button>
+          </>
+        }
       />
 
       <div className="flex gap-3 overflow-x-auto pb-1">
@@ -209,9 +288,26 @@ export default function SeatsPage() {
             <div key={floor.id} className="min-w-[320px] flex-1 rounded-lg border border-border bg-panel-strong p-3">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{floor.name}</span>
-                <Badge variant={floor.is_active ? "success" : "danger"}>{floor.rows.length} rows</Badge>
+                <div className="flex items-center gap-2">
+                  <Badge variant={floor.is_active ? "success" : "danger"}>{floor.rows.length} rows</Badge>
+                  <Button variant="danger" size="sm" loading={deleteFloor.isPending && deleteFloor.variables === floor.id} disabled={deleteFloor.isPending} onClick={() => { if(confirm("Delete floor and all its seats?")) deleteFloor.mutate(floor.id); }} icon={<Trash2 className="h-3 w-3" />} />
+                </div>
               </div>
-              <p className="mt-2 text-xs text-muted">{floor.rows.map((row) => row.label).join(", ") || "No rows"}</p>
+              <div className="mt-4 flex flex-col gap-2">
+                {floor.rows.map((row) => (
+                  <div key={row.id} className="flex items-center justify-between text-sm text-slate-300 hover:text-slate-100 transition-colors px-1">
+                    <span>Row {row.label}</span>
+                    <button type="button" className="text-rose-500 hover:text-rose-400 transition-colors disabled:opacity-50" disabled={deleteRow.isPending} onClick={() => { if(confirm("Delete row?")) deleteRow.mutate(row.id); }} title="Delete Row">
+                      {deleteRow.isPending && deleteRow.variables === row.id ? (
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+                {floor.rows.length === 0 && <span className="text-sm text-muted px-1">No rows</span>}
+              </div>
             </div>
           ))}
         </div>
@@ -239,6 +335,15 @@ export default function SeatsPage() {
                 { value: "INACTIVE", label: "Inactive" },
               ]}
             />
+            <label className="flex items-center gap-2 text-sm mt-8">
+              <input 
+                type="checkbox" 
+                checked={Boolean(draft.is_reserved_for_girls)}
+                onChange={(e) => setDraft((current) => ({ ...current, is_reserved_for_girls: e.target.checked }))}
+                className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+              />
+              Reserved for Girls
+            </label>
           </FormGrid>
           <FormActions>
             <Button type="submit" loading={addSeat.isPending} icon={<Plus className="h-4 w-4" />}>Add Seat</Button>
@@ -278,27 +383,40 @@ export default function SeatsPage() {
               searchable
               options={[
                 { value: "", label: "Select student" },
-                ...(students.data ?? []).map((student) => {
-                  const assignedSeat = seats.data?.find((s) => s.student === student.user_id && s.status.toLowerCase() === "occupied");
-                  const name = fullName(student.first_name, student.last_name) || student.username;
-                  const baseLabel = `${name}${student.student_id ? ` (${student.student_id})` : ""}${student.mobile ? ` · ${student.mobile}` : ""}`;
-                  
-                  return {
-                    value: String(student.user_id),
-                    label: baseLabel,
-                    avatarSrc: student.profile_photo || student.profile_image,
-                    avatarFallback: name,
-                    badge: assignedSeat ? `Assigned: ${assignedSeat.floor} - Seat ${assignedSeat.seat_number}` : undefined,
-                    badgeTone: assignedSeat ? ("amber" as const) : undefined,
-                  };
-                }),
+                ...(students.data ?? [])
+                  .filter((student) => {
+                    if (selected.is_reserved_for_girls) {
+                      return student.gender?.toLowerCase() === "female" || student.gender?.toLowerCase() === "f";
+                    }
+                    return true;
+                  })
+                  .map((student) => {
+                    const assignedSeat = seats.data?.find((s) => s.student === student.user_id && s.status.toLowerCase() === "occupied");
+                    const name = fullName(student.first_name, student.last_name) || student.username;
+                    const baseLabel = `${name}${student.student_id ? ` (${student.student_id})` : ""}${student.mobile ? ` · ${student.mobile}` : ""}`;
+                    
+                    const genderStr = student.gender?.toLowerCase();
+                    const genderBadgeTone = (genderStr === "female" || genderStr === "f" ? "pink" : genderStr === "male" || genderStr === "m" ? "blue" : "slate") as "pink" | "blue" | "slate";
+                    const genderBadgeText = student.gender ? student.gender.charAt(0).toUpperCase() + student.gender.slice(1).toLowerCase() : "";
+
+                    return {
+                      value: String(student.user_id),
+                      label: baseLabel,
+                      avatarSrc: student.profile_photo || student.profile_image,
+                      avatarFallback: name,
+                      badge: assignedSeat ? `Assigned: ${assignedSeat.floor} - Seat ${assignedSeat.seat_number}` : undefined,
+                      badgeTone: assignedSeat ? ("amber" as const) : undefined,
+                      extraBadges: genderBadgeText ? [{ text: genderBadgeText, tone: genderBadgeTone }] : undefined,
+                    };
+                  }),
               ]}
             />
             <FormActions>
               <Button type="button" variant="secondary" icon={<History className="h-4 w-4" />} onClick={() => setHistorySeat(selected)}>History</Button>
               <Button type="button" variant="secondary" loading={assign.isPending} icon={<UserPlus className="h-4 w-4" />} onClick={() => assign.mutate()}>Assign</Button>
               <Button type="button" variant="danger" loading={unassign.isPending} icon={<UserMinus className="h-4 w-4" />} onClick={() => unassign.mutate()}>Unassign</Button>
-              <Button type="submit" loading={updateStatus.isPending} icon={<Save className="h-4 w-4" />}>Save Status</Button>
+              <Button type="button" variant="danger" loading={deleteSeat.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => { if(confirm("Delete this seat?")) deleteSeat.mutate(selected.id); }}>Delete</Button>
+              <Button type="submit" loading={updateSeatInfo.isPending} icon={<Save className="h-4 w-4" />}>Save Status</Button>
             </FormActions>
           </form>
         ) : null}
@@ -313,6 +431,69 @@ export default function SeatsPage() {
           emptyTitle="No seat history found"
           shellClassName="rounded-none border-0 bg-transparent"
         />
+      </Modal>
+
+      <Modal open={bulkReserveOpen} title="Reserve Seats" onClose={() => setBulkReserveOpen(false)}>
+        <div className="mb-4">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input 
+              type="checkbox" 
+              checked={bulkIsReserved}
+              onChange={(e) => setBulkIsReserved(e.target.checked)}
+              className="rounded border-border text-primary focus:ring-primary h-4 w-4"
+            />
+            Reserve selected seats for girls
+          </label>
+        </div>
+        <div className="max-h-[60vh] overflow-y-auto pr-2 space-y-6">
+          {available.data && available.data.length > 0 ? (
+            Object.entries(
+              available.data.reduce((acc, seat) => {
+                if (!acc[seat.floor]) acc[seat.floor] = {};
+                if (!acc[seat.floor][seat.row]) acc[seat.floor][seat.row] = [];
+                acc[seat.floor][seat.row].push(seat);
+                return acc;
+              }, {} as Record<string, Record<string, typeof available.data>>)
+            ).map(([floorName, rowsMap]) => (
+              <div key={floorName} className="rounded-xl border border-border bg-panel p-4">
+                <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-white/90 border-b border-border pb-2">{floorName}</h4>
+                <div className="space-y-5">
+                  {Object.entries(rowsMap).map(([rowLabel, rowSeats]) => (
+                    <div key={rowLabel}>
+                      <div className="mb-2 text-xs font-semibold text-muted">Row {rowLabel}</div>
+                      <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
+                        {rowSeats.map(seat => (
+                          <button
+                            key={seat.id}
+                            onClick={() => {
+                              setBulkSelectedIds(prev => 
+                                prev.includes(seat.id) ? prev.filter(id => id !== seat.id) : [...prev, seat.id]
+                              );
+                            }}
+                            className={`p-2 rounded-lg border text-center text-sm font-bold transition hover:scale-105 ${
+                              bulkSelectedIds.includes(seat.id)
+                                ? "border-primary bg-primary text-white shadow-[0_0_10px_rgba(var(--color-primary),0.3)]"
+                                : seat.is_reserved_for_girls
+                                  ? "border-pink-400 bg-pink-500/10 text-pink-600"
+                                  : "border-border bg-panel-strong text-slate-300 hover:border-slate-500 hover:text-white"
+                            }`}
+                          >
+                            {seat.seat_number}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          ) : (
+            <EmptyState title="No available seats" />
+          )}
+        </div>
+        <FormActions className="mt-6">
+          <Button type="button" onClick={() => reserveBulk.mutate()} loading={reserveBulk.isPending}>Save Reservations</Button>
+        </FormActions>
       </Modal>
 
       <div className="hidden"><Armchair /></div>

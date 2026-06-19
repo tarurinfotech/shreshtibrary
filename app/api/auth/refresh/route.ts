@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://shreshtlibrary.onrender.com/api/v1";
+import { API_BASE_URL } from "@/lib/baseApi";
 
 export async function POST() {
   try {

@@ -68,18 +68,18 @@ export default function MembershipsPage() {
     queryFn: () => endpoints.allStudents({ page_size: 200 }),
   });
 
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["plans"] });
-    queryClient.invalidateQueries({ queryKey: ["plan-stats"] });
-    queryClient.invalidateQueries({ queryKey: ["memberships"] });
-    queryClient.invalidateQueries({ queryKey: ["memberships-expiring"] });
-    queryClient.invalidateQueries({ queryKey: ["memberships-expired-today"] });
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["plans"] });
+    await queryClient.invalidateQueries({ queryKey: ["plan-stats"] });
+    await queryClient.invalidateQueries({ queryKey: ["memberships"] });
+    await queryClient.invalidateQueries({ queryKey: ["memberships-expiring"] });
+    await queryClient.invalidateQueries({ queryKey: ["memberships-expired-today"] });
   };
 
   const savePlan = useMutation({
     mutationFn: () => selected ? endpoints.updatePlan(selected.id, planForm) : endpoints.createPlan(planForm),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setPlanOpen(false);
       setSelected(null);
       setPlanForm(emptyPlan);
@@ -90,8 +90,8 @@ export default function MembershipsPage() {
 
   const togglePlan = useMutation({
     mutationFn: (plan: MembershipPlan) => endpoints.togglePlan(plan.id, !plan.is_active),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Plan updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Toggle failed", message: getErrorMessage(error) }),
@@ -103,8 +103,8 @@ export default function MembershipsPage() {
       if (membershipMode === "upgrade") return endpoints.upgradeMembership(membershipForm);
       return endpoints.assignMembership(membershipForm);
     },
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setMembershipOpen(false);
       setMembershipForm(emptyMembership);
       pushToast({ kind: "success", title: "Membership saved" });

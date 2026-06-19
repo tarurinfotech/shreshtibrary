@@ -6,6 +6,7 @@ export function EntityCard({
   subtitle,
   metadata,
   badge,
+  extra,
   actions,
   accentColor,
   className = "",
@@ -15,6 +16,7 @@ export function EntityCard({
   subtitle?: ReactNode;
   metadata?: ReactNode;
   badge?: ReactNode;
+  extra?: ReactNode;
   actions?: ReactNode;
   accentColor?: string;
   className?: string;
@@ -43,6 +45,9 @@ export function EntityCard({
 
       {/* Metadata */}
       {metadata && <div className="flex min-w-[160px] flex-col gap-1">{metadata}</div>}
+
+      {/* Extra */}
+      {extra && <div className="min-w-[100px]">{extra}</div>}
 
       {/* Badge */}
       {badge && <div className="min-w-[90px]">{badge}</div>}

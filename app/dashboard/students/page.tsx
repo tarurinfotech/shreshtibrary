@@ -21,7 +21,8 @@ import {
   GraduationCap,
   Phone,
   Mail,
-
+  Target,
+  RotateCcw,
 } from "lucide-react";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -54,112 +55,7 @@ const emptyStudent: StudentCreatePayload = {
   address: "",
 };
 
-// ─── Student Row Card ─────────────────────────────────────────────────────────
-function StudentRowCard({
-  student,
-  onSuspend,
-  onActivate,
-  onDelete,
-  suspendPending,
-  activatePending,
-  deletePending,
-  isSuperAdmin,
-}: {
-  student: StudentProfile;
-  onSuspend: () => void;
-  onActivate: () => void;
-  onDelete: () => void;
-  suspendPending: boolean;
-  activatePending: boolean;
-  deletePending: boolean;
-  isSuperAdmin: boolean;
-}) {
-  const name = fullName(student.first_name, student.last_name);
-  const statusColorMap: Record<string, string> = {
-    LIVE: "var(--success)",
-    EXPIRED: "var(--warning)",
-    SUSPENDED: "var(--danger)",
-  };
-  const statusColor = statusColorMap[student.status] ?? "var(--muted)";
-
-  return (
-    <EntityCard
-      accentColor={statusColor}
-      avatar={
-        <ProfileAvatar
-          src={student.profile_image ?? student.profile_photo}
-          name={[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || student.username}
-          size="md"
-          status={student.status}
-        />
-      }
-      title={name}
-      subtitle={`${student.student_id ?? `#${student.user_id}`} · @${student.username}`}
-      metadata={
-        <>
-          <span className="flex items-center gap-1.5 text-xs">
-            <Phone className="h-3 w-3 text-muted" />
-            <span className="text-sm font-medium">{student.mobile}</span>
-          </span>
-          <span className="flex items-center gap-1.5 text-xs text-muted">
-            <Mail className="h-3 w-3" />
-            <span className="truncate">{student.email || "—"}</span>
-          </span>
-        </>
-      }
-      badge={<Badge variant={statusVariant(student.status)}>{student.status}</Badge>}
-      actions={
-        <>
-          <div className="flex items-center gap-1.5 mr-4 text-sm">
-            <GraduationCap className="h-4 w-4 text-muted shrink-0" />
-            {student.goal || "—"}
-          </div>
-          <Link
-            href={`/dashboard/students/${student.user_id}`}
-            className={buttonClasses({ variant: "secondary", size: "sm" })}
-          >
-            <Eye className="h-3.5 w-3.5" />
-            View
-          </Link>
-
-          {student.status === "SUSPENDED" ? (
-            <Button
-              size="sm"
-              variant="success"
-              loading={activatePending}
-              icon={<ShieldCheck className="h-3.5 w-3.5" />}
-              onClick={onActivate}
-            >
-              Activate
-            </Button>
-          ) : (
-            <Button
-              size="sm"
-              variant="secondary"
-              loading={suspendPending}
-              icon={<ShieldAlert className="h-3.5 w-3.5" />}
-              onClick={onSuspend}
-            >
-              Suspend
-            </Button>
-          )}
-
-          {isSuperAdmin && (
-            <Button
-              size="sm"
-              variant="danger"
-              loading={deletePending}
-              icon={<Trash2 className="h-3.5 w-3.5" />}
-              onClick={onDelete}
-            >
-              Delete
-            </Button>
-          )}
-        </>
-      }
-    />
-  );
-}
+// Removed StudentRowCard entirely. We will render it directly in the table.
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function StudentsPage() {
@@ -195,9 +91,9 @@ export default function StudentsPage() {
   // ── Mutations ─────────────────────────────────────────────────────────────
   const create = useMutation({
     mutationFn: () => endpoints.createStudent(form),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["student-counts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+      await queryClient.invalidateQueries({ queryKey: ["student-counts"] });
       setForm(emptyStudent);
       setFormErrors({});
       setOpen(false);
@@ -211,9 +107,9 @@ export default function StudentsPage() {
 
   const suspend = useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) => endpoints.suspendStudent(id, reason),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["student-counts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+      await queryClient.invalidateQueries({ queryKey: ["student-counts"] });
       setSuspendTarget(null);
       pushToast({ kind: "success", title: "Student suspended" });
     },
@@ -222,9 +118,9 @@ export default function StudentsPage() {
 
   const activate = useMutation({
     mutationFn: (id: number) => endpoints.activateStudent(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["student-counts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+      await queryClient.invalidateQueries({ queryKey: ["student-counts"] });
       pushToast({ kind: "success", title: "Student activated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Activate failed", message: getErrorMessage(error) }),
@@ -232,9 +128,9 @@ export default function StudentsPage() {
 
   const remove = useMutation({
     mutationFn: (id: number) => endpoints.deleteStudent(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["student-counts"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+      await queryClient.invalidateQueries({ queryKey: ["student-counts"] });
       setDeleteTarget(null);
       pushToast({ kind: "success", title: "Student deleted" });
     },
@@ -383,67 +279,170 @@ export default function StudentsPage() {
           className="min-w-[150px]"
         />
 
-        {/* Goal filter */}
-        <div className="flex items-center gap-2">
-          <GraduationCap className="h-4 w-4 text-muted shrink-0" />
-          <input
-            id="student-goal-filter"
-            type="text"
-            value={goal}
-            onChange={(e) => setGoal(e.target.value)}
-            placeholder="Filter by goal…"
-            className="rounded-xl border border-border bg-panel-strong px-3 py-2.5 text-sm outline-none focus:border-primary transition-colors w-40"
-          />
-        </div>
+        <FilterSelect
+          id="student-goal-filter"
+          value={goal}
+          onChange={setGoal}
+          placeholder="All Goals"
+          icon={<GraduationCap className="h-4 w-4" />}
+          options={[
+            { value: "", label: "All Goals" },
+            { value: "UPSC", label: "UPSC" },
+            { value: "GPSC", label: "GPSC" },
+            { value: "CONSTABLE", label: "Constable" },
+            { value: "Banking", label: "Banking" },
+            { value: "Army", label: "Army" },
+            { value: "Teacher", label: "Teacher" },
+            { value: "Railway", label: "Railway" },
+            { value: "SSC", label: "SSC" },
+            { value: "CA", label: "CA" },
+            { value: "Other", label: "Other" },
+          ]}
+          className="min-w-[150px]"
+        />
       </FilterBar.Root>
 
       {/* ── Students List ─────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-2">
-        {/* Header row */}
-        <div className="hidden sm:flex items-center gap-4 px-4 pb-1">
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted flex-1 min-w-0">Student</span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted min-w-[160px]">Contact</span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted min-w-[100px]">Goal</span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted min-w-[90px]">Status</span>
-          <span className="text-xs font-semibold uppercase tracking-wider text-muted">Actions</span>
-        </div>
+      <div className="overflow-x-auto rounded-xl border border-border bg-panel">
+        <table className="w-full text-left text-sm whitespace-nowrap">
+          <thead className="border-b border-border bg-[#141b2d] text-[11px] font-bold uppercase tracking-widest text-muted">
+            <tr>
+              <th className="px-4 py-3 font-semibold">Student</th>
+              <th className="px-4 py-3 font-semibold">Contact</th>
+              <th className="px-4 py-3 font-semibold">Goal</th>
+              <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/50">
+            {students.isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  <td colSpan={5} className="p-4"><div className="h-10 bg-panel-strong animate-pulse rounded-md w-full" /></td>
+                </tr>
+              ))
+            ) : students.error ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-sm font-medium text-danger">Unable to load students.</td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-12 text-center text-sm text-muted">No students found. Try adjusting your search or filters.</td>
+              </tr>
+            ) : (
+              rows.map((student) => {
+                const name = fullName(student.first_name, student.last_name);
+                const isSuspendPending = suspend.isPending && suspend.variables?.id === student.user_id;
+                const isActivatePending = activate.isPending && activate.variables === student.user_id;
+                const isDeletePending = remove.isPending && remove.variables === student.user_id;
+                
+                return (
+                  <tr key={student.user_id} className="transition-colors hover:bg-white/[0.02]">
+                    {/* Student */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <ProfileAvatar
+                          src={student.profile_image ?? student.profile_photo}
+                          name={[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || student.username}
+                          size="md"
+                        />
+                        <div className="min-w-0">
+                          <div className="truncate text-sm font-bold text-white/90">{name}</div>
+                          <div className="mt-0.5 truncate text-[11px] text-muted">SIR-ID: {student.student_id ?? student.user_id}</div>
+                        </div>
+                      </div>
+                    </td>
 
-        {students.isLoading ? (
-          // Skeleton loader
-          Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-[76px] rounded-xl border border-border bg-panel animate-pulse" />
-          ))
-        ) : students.error ? (
-          <div className="rounded-xl border border-danger/20 bg-danger/5 p-8 text-center">
-            <p className="text-sm font-medium text-danger">Unable to load students.</p>
-            <button
-              onClick={() => students.refetch()}
-              className="mt-2 text-xs text-muted underline"
-            >
-              Try again
-            </button>
-          </div>
-        ) : rows.length === 0 ? (
-          <div className="rounded-xl border border-border bg-panel p-12 text-center">
-            <Users className="h-10 w-10 text-muted mx-auto mb-3" />
-            <p className="font-semibold">No students found</p>
-            <p className="text-sm text-muted mt-1">Try adjusting your search or filters.</p>
-          </div>
-        ) : (
-          rows.map((student) => (
-            <StudentRowCard
-              key={student.user_id}
-              student={student}
-              onSuspend={() => setSuspendTarget(student)}
-              onActivate={() => activate.mutate(student.user_id)}
-              onDelete={() => setDeleteTarget(student)}
-              suspendPending={suspend.isPending}
-              activatePending={activate.isPending}
-              deletePending={remove.isPending}
-              isSuperAdmin={isSuperAdmin}
-            />
-          ))
-        )}
+                    {/* Contact */}
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1.5 min-w-[160px]">
+                        <div className="flex items-center gap-2 text-xs text-muted">
+                          <Phone className="h-3.5 w-3.5" />
+                          <span className="font-medium text-foreground/90">{student.mobile}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted">
+                          <Mail className="h-3.5 w-3.5" />
+                          <span className="truncate">{student.email || "—"}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* Goal */}
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2 text-sm text-foreground/90 min-w-[100px]">
+                        <Target className="h-4 w-4 text-muted shrink-0" />
+                        <span className="truncate font-medium">{student.goal || "—"}</span>
+                      </div>
+                    </td>
+
+                    {/* Status */}
+                    <td className="px-4 py-3">
+                      <div className="min-w-[90px]">
+                        {student.status === "LIVE" ? (
+                          <span className="inline-flex items-center rounded-md border border-[#10b981]/60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#10b981] bg-transparent">LIVE</span>
+                        ) : student.status === "SUSPENDED" ? (
+                          <span className="inline-flex items-center rounded-md border border-[#e11d48]/60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#e11d48] bg-transparent">SUSPENDED</span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-md border border-amber-500/60 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-amber-500 bg-transparent">{student.status}</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2.5">
+                        <Link
+                          href={`/dashboard/students/${student.user_id}`}
+                          className="inline-flex h-8 items-center justify-center gap-1.5 rounded-md border border-[#334155] bg-transparent px-3 text-xs font-semibold text-white transition-colors hover:bg-[#1e293b]"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          View
+                        </Link>
+
+                        {student.status === "SUSPENDED" ? (
+                          <Button
+                            size="sm"
+                            loading={isActivatePending}
+                            disabled={isSuspendPending || isDeletePending}
+                            icon={<RotateCcw className="h-3.5 w-3.5" />}
+                            onClick={() => activate.mutate(student.user_id)}
+                            className="h-8 !bg-[#4ade80] hover:!bg-[#22c55e] !border-none !text-white rounded-md px-3 text-xs font-semibold"
+                          >
+                            Activate
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            loading={isSuspendPending}
+                            disabled={isActivatePending || isDeletePending}
+                            icon={<ShieldAlert className="h-3.5 w-3.5" />}
+                            onClick={() => setSuspendTarget(student)}
+                            className="h-8 !bg-transparent !border border-[#334155] hover:!bg-[#1e293b] !text-white rounded-md px-3 text-xs font-semibold"
+                          >
+                            Suspend
+                          </Button>
+                        )}
+
+                        {isSuperAdmin && (
+                          <Button
+                            size="sm"
+                            loading={isDeletePending}
+                            disabled={isSuspendPending || isActivatePending}
+                            icon={<Trash2 className="h-3.5 w-3.5" />}
+                            onClick={() => setDeleteTarget(student)}
+                            className="h-8 !bg-[#fb7185] hover:!bg-[#f43f5e] !border-none !text-white rounded-md px-3 text-xs font-semibold"
+                          >
+                            Delete
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Result count */}

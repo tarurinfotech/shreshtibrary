@@ -39,3 +39,10 @@ tmp-next-*.log
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python / django (not part of this project)
+*.py
+*.pyc
+__pycache__/
+*.sqlite3
+requirements*.txt

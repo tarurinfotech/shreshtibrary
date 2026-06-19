@@ -48,6 +48,7 @@ export function StudentDetailClient({ id }: { id: string }) {
   const timeline = useQuery({ queryKey: ["student-timeline", id], queryFn: () => endpoints.studentTimeline(id) });
   const payments = useQuery({ queryKey: ["student-payments", id], queryFn: () => endpoints.studentPayments(id) });
   const attendance = useQuery({ queryKey: ["student-attendance", id], queryFn: () => endpoints.studentAttendance(id) });
+  const memberships = useQuery({ queryKey: ["student-memberships", id], queryFn: () => endpoints.studentMemberships(Number(id)) });
   const analytics = useQuery({
     queryKey: ["student-analytics", id, period],
     queryFn: () => endpoints.studentAnalytics(id, period),
@@ -55,9 +56,9 @@ export function StudentDetailClient({ id }: { id: string }) {
 
   const update = useMutation({
     mutationFn: (payload: StudentUpdatePayload) => endpoints.updateStudent(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["student", id] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+      await queryClient.invalidateQueries({ queryKey: ["student", id] });
       pushToast({ kind: "success", title: "Student updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) }),
@@ -65,10 +66,10 @@ export function StudentDetailClient({ id }: { id: string }) {
 
   const uploadPhoto = useMutation({
     mutationFn: (file: File) => endpoints.uploadStudentPhoto(id, file),
-    onSuccess: () => {
+    onSuccess: async () => {
       setPhoto(null);
-      queryClient.invalidateQueries({ queryKey: ["students"] });
-      queryClient.invalidateQueries({ queryKey: ["student", id] });
+      await queryClient.invalidateQueries({ queryKey: ["students"] });
+      await queryClient.invalidateQueries({ queryKey: ["student", id] });
       pushToast({ kind: "success", title: "Profile image updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Upload failed", message: getErrorMessage(error) }),
@@ -163,6 +164,42 @@ export function StudentDetailClient({ id }: { id: string }) {
         />
       </div>
 
+      <section className="surface rounded-lg p-5">
+        <h2 className="mb-4 font-semibold">Plan Details</h2>
+        <TableShell className="rounded-none border-0 bg-transparent">
+          <Table>
+            <thead>
+              <tr>
+                <Th>Plan Name</Th>
+                <Th>Status</Th>
+                <Th>Start Date</Th>
+                <Th>Expiry Date</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {(memberships.data?.data ?? []).map((membership) => (
+                <tr key={membership.id}>
+                  <Td className="font-medium">{membership.plan_name}</Td>
+                  <Td><Badge variant={statusVariant(membership.status)}>{membership.status}</Badge></Td>
+                  <Td>{formatDate(membership.start_date)}</Td>
+                  <Td>{formatDate(membership.end_date)}</Td>
+                </tr>
+              ))}
+              {memberships.isSuccess && memberships.data?.data?.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="text-center py-6 text-muted text-sm border-b border-border">No active or historical plans found for this student.</td>
+                </tr>
+              )}
+              {memberships.isLoading && (
+                <tr>
+                  <td colSpan={4} className="text-center py-6 text-muted text-sm border-b border-border">Loading plan details...</td>
+                </tr>
+              )}
+            </tbody>
+          </Table>
+        </TableShell>
+      </section>
+
       <div className="grid gap-5 xl:grid-cols-3">
         <section className="surface rounded-lg p-5">
           <h2 className="mb-4 font-semibold">Timeline</h2>
@@ -224,7 +261,7 @@ export function StudentDetailClient({ id }: { id: string }) {
           <div className="grid gap-4 xl:grid-cols-2">
             <ChartPanel title="Attendance" icon={<Activity className="h-4 w-4" />}>
               <div className="h-full">
-                <StudentAttendanceCalendar records={attendance.data ?? []} />
+                <StudentAttendanceCalendar records={attendance.data ?? []} joiningDate={student.data?.joining_date ?? undefined} />
               </div>
             </ChartPanel>
 

@@ -137,6 +137,7 @@ export type StudentProfile = {
   referral_code?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+  joining_date?: string | null;
   attendance_status?: string;
 };
 
@@ -203,6 +204,7 @@ export type Seat = {
   student_profile_photo?: string | null;
   assigned_at?: string | null;
   notes?: string | null;
+  is_reserved_for_girls?: boolean;
 };
 
 export type SeatRow = {

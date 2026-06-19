@@ -1,8 +1,8 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Download, Plus, RotateCcw } from "lucide-react";
+import { CheckCircle2, Download, Plus, RotateCcw, AlertTriangle } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { PromptDialog } from "@/components/ui/Dialog";
@@ -21,8 +21,9 @@ import type { PaymentRecord } from "@/types/api";
 
 const emptyPayment: PaymentPayload = {
   student_id: 0,
-  membership_id: undefined,
-  amount: "",
+  plan_id: undefined,
+  duration_type: "1_month",
+  duration_days: 30,
   payment_mode: "Cash",
   transaction_ref: "",
   notes: "",
@@ -46,6 +47,7 @@ export default function PaymentsPage() {
   const summary = useQuery({ queryKey: ["payment-summary"], queryFn: endpoints.paymentSummary });
   const pending = useQuery({ queryKey: ["pending-payments"], queryFn: endpoints.pendingPayments });
   const overdue = useQuery({ queryKey: ["overdue-payments"], queryFn: endpoints.overduePayments });
+  const plans = useQuery({ queryKey: ["public-plans"], queryFn: endpoints.publicPlans });
 
   // Student dropdown — load all students once
   const students = useQuery({
@@ -60,20 +62,24 @@ export default function PaymentsPage() {
     enabled: Boolean(form.student_id && form.student_id > 0),
   });
 
+  const hasActivePlan = useMemo(() => {
+    return membershipQuery.data?.data?.some((m) => m.status === "active") ?? false;
+  }, [membershipQuery.data]);
+
   // ── Invalidation ──────────────────────────────────────────────────────────
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["payments"] });
-    queryClient.invalidateQueries({ queryKey: ["payment-summary"] });
-    queryClient.invalidateQueries({ queryKey: ["pending-payments"] });
-    queryClient.invalidateQueries({ queryKey: ["overdue-payments"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+  const invalidate = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["payments"] });
+    await queryClient.invalidateQueries({ queryKey: ["payment-summary"] });
+    await queryClient.invalidateQueries({ queryKey: ["pending-payments"] });
+    await queryClient.invalidateQueries({ queryKey: ["overdue-payments"] });
+    await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
   };
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const create = useMutation({
     mutationFn: () => endpoints.createPayment(form),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setForm(emptyPayment);
       setOpen(false);
       pushToast({ kind: "success", title: "Payment recorded" });
@@ -86,8 +92,8 @@ export default function PaymentsPage() {
 
   const verify = useMutation({
     mutationFn: (id: number) => endpoints.verifyPayment(id),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       pushToast({ kind: "success", title: "Payment verified" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Verification failed", message: getErrorMessage(error) }),
@@ -96,8 +102,8 @@ export default function PaymentsPage() {
   const refund = useMutation({
     mutationFn: ({ id, reason }: { id: number; reason: string }) =>
       endpoints.refundPayment(id, { refund_reason: reason }),
-    onSuccess: () => {
-      invalidate();
+    onSuccess: async () => {
+      await invalidate();
       setRefundTarget(null);
       pushToast({ kind: "success", title: "Payment refunded" });
     },
@@ -122,9 +128,32 @@ export default function PaymentsPage() {
     setForm((cur) => ({
       ...cur,
       student_id: Number(v),
-      membership_id: undefined, // reset membership when student changes
+      plan_id: undefined,
+      duration_type: "1_month",
+      duration_days: 30,
     }));
   };
+
+  const handlePlanChange = (v: string) => {
+    setForm((cur) => ({ ...cur, plan_id: Number(v) }));
+  };
+
+  const handleDurationTypeChange = (v: string) => {
+    let days = 30;
+    if (v === "2_months") days = 60;
+    if (v === "3_months") days = 90;
+    if (v === "custom") days = Math.max(30, form.duration_days ?? 30);
+    setForm((cur) => ({ ...cur, duration_type: v as any, duration_days: days }));
+  };
+
+  const calculatedAmount = useMemo(() => {
+    if (!form.plan_id || !form.duration_days || !plans.data) return "0.00";
+    const plan = plans.data.find((p) => String(p.id) === String(form.plan_id));
+    if (!plan) return "0.00";
+    const baseDuration = Number(plan.duration_days || 30);
+    const pricePerDay = Number(plan.price) / baseDuration;
+    return (pricePerDay * Number(form.duration_days)).toFixed(2);
+  }, [form.plan_id, form.duration_days, plans.data]);
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -265,6 +294,12 @@ export default function PaymentsPage() {
       {/* ── Record Payment Modal ── */}
       <Modal open={open} title="Record Payment" onClose={() => { setOpen(false); setForm(emptyPayment); setFieldErrors({}); }}>
         <FormShell onSubmit={submit}>
+          {hasActivePlan && (
+            <div className="bg-amber-500/10 text-amber-500 p-3 rounded-lg flex items-center gap-2 mb-4 text-sm font-medium col-span-full">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>This student already has an active subscription. You cannot assign a new plan.</span>
+            </div>
+          )}
           <FormGrid columns={2}>
             {/* Student — required */}
             <Select
@@ -291,26 +326,51 @@ export default function PaymentsPage() {
               ]}
             />
 
-            {/* Membership — dynamic dropdown, only active after student selected */}
+            {/* Plan */}
             <Select
-              label={membershipQuery.isFetching ? "Membership (loading…)" : "Membership"}
-              value={String(form.membership_id ?? "")}
-              onChange={(v) => setForm((cur) => ({ ...cur, membership_id: v ? Number(v) : undefined }))}
-              options={membershipOptions}
-              error={fieldErrors.membership_id}
+              label="Plan"
+              value={String(form.plan_id || "")}
+              onChange={handlePlanChange}
+              error={fieldErrors.plan_id}
+              required
+              options={[
+                { value: "", label: "Select a plan" },
+                ...(plans.data ?? []).map((p) => ({ value: String(p.id), label: `${p.name} (${formatMoney(p.price)})` })),
+              ]}
             />
 
-            {/* Amount */}
-            <Input
-              label="Amount"
-              type="number"
-              min={0.01}
-              step="0.01"
-              value={form.amount}
-              onChange={(event) => setForm((cur) => ({ ...cur, amount: event.target.value }))}
-              error={fieldErrors.amount}
-              required
+            {/* Duration Type */}
+            <Select
+              label="Duration"
+              value={form.duration_type || "1_month"}
+              onChange={handleDurationTypeChange}
+              error={fieldErrors.duration_type}
+              options={[
+                { value: "1_month", label: "1 Month" },
+                { value: "2_months", label: "2 Months" },
+                { value: "3_months", label: "3 Months" },
+                { value: "custom", label: "Custom Duration" },
+              ]}
             />
+
+            {/* Custom Days */}
+            {form.duration_type === "custom" && (
+              <Input
+                label="Days (Min 30)"
+                type="number"
+                min={30}
+                value={form.duration_days}
+                onChange={(e) => setForm((cur) => ({ ...cur, duration_days: Number(e.target.value) }))}
+                error={fieldErrors.duration_days}
+                required
+              />
+            )}
+
+            {/* Calculated Amount */}
+            <div className="col-span-full mb-2 p-3 bg-panel border border-border rounded-lg flex items-center justify-between">
+              <span className="text-sm font-medium">Calculated Amount</span>
+              <span className="text-lg font-bold text-primary">{formatMoney(calculatedAmount)}</span>
+            </div>
 
             {/* Payment Mode */}
             <Select
@@ -344,7 +404,7 @@ export default function PaymentsPage() {
           </FormGrid>
 
           <FormActions>
-            <Button type="submit" loading={create.isPending} icon={<Plus className="h-4 w-4" />}>
+            <Button type="submit" loading={create.isPending} disabled={hasActivePlan} icon={<Plus className="h-4 w-4" />}>
               Save Payment
             </Button>
           </FormActions>

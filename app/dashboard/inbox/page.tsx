@@ -2,15 +2,19 @@
 
 import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Inbox, Trash2, MailOpen, Mail, UserPlus, CreditCard, MessageSquare, Clock, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Inbox, Trash2, MailOpen, Mail, UserPlus, CreditCard, MessageSquare, Clock, AlertTriangle, CheckCircle2, Search, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, LoadingBlock } from "@/components/ui/StateBlocks";
+import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
+import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
+import { Modal } from "@/components/ui/Modal";
+import { Badge } from "@/components/ui/Badge";
 import { endpoints } from "@/lib/endpoints";
 import { formatDateTime } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
-import { Badge } from "@/components/ui/Badge";
 import { useRouter } from "next/navigation";
 
 export default function AdminInboxPage() {
@@ -19,33 +23,32 @@ export default function AdminInboxPage() {
   const router = useRouter();
   
   const [filter, setFilter] = useState<"all" | "unread" | "read">("all");
+  const [search, setSearch] = useState("");
+  const [selectedNotification, setSelectedNotification] = useState<any | null>(null);
 
   const inbox = useQuery({ queryKey: ["admin-inbox"], queryFn: endpoints.adminInbox });
 
   const markAction = useMutation({
     mutationFn: ({ id, action }: { id: number; action: "read" | "unread" }) => endpoints.adminInboxAction(id, action),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-inbox"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-inbox-topbar"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-inbox"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-inbox-topbar"] });
     },
     onError: () => pushToast({ kind: "error", title: "Action failed" }),
   });
 
   const deleteAction = useMutation({
     mutationFn: (id: number) => endpoints.deleteAdminInbox(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-inbox"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-inbox-topbar"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["admin-inbox"] });
+      await queryClient.invalidateQueries({ queryKey: ["admin-inbox-topbar"] });
       pushToast({ kind: "success", title: "Notification deleted" });
+      setSelectedNotification(null);
     },
     onError: () => pushToast({ kind: "error", title: "Deletion failed" }),
   });
 
-  const handleNotificationClick = (n: any) => {
-    if (!n.is_read) {
-      markAction.mutate({ id: n.id, action: "read" });
-    }
-
+  const handleActionClick = (n: any) => {
     if (n.type === "NEW_STUDENT" && n.related_id) {
       router.push(`/dashboard/students/${n.related_id}`);
     } else if (n.type === "PAYMENT") {
@@ -82,232 +85,240 @@ export default function AdminInboxPage() {
     }
   };
 
-  const formatTimeAgo = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
-    const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours}h ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `${diffInDays}d ago`;
-    return formatDateTime(dateStr);
-  };
+  const notifications = inbox.data ?? [];
+  
+  const filteredNotifications = useMemo(() => {
+    let filtered = notifications;
 
-  const renderMessage = (msg: string, name: string) => {
-    if (!name) return <span className="text-muted-foreground">{msg}</span>;
-    
-    const startsWithNameRegex = new RegExp(`^(Student\\s+)?${name}\\s+`, 'i');
-    if (startsWithNameRegex.test(msg)) {
-      return (
-        <div className="text-[15px] leading-snug">
-          <span className="font-semibold text-foreground mr-1">{name}</span>
-          <span className="text-muted-foreground">{msg.replace(startsWithNameRegex, '')}</span>
-        </div>
+    if (filter === "unread") filtered = filtered.filter((n: any) => !n.is_read);
+    if (filter === "read") filtered = filtered.filter((n: any) => n.is_read);
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter((n: any) => 
+        (n.title && n.title.toLowerCase().includes(q)) ||
+        (n.message && n.message.toLowerCase().includes(q)) ||
+        (n.student_name && n.student_name.toLowerCase().includes(q))
       );
     }
     
-    const parts = msg.split(new RegExp(`(${name})`, 'gi'));
-    return (
-      <div className="text-[15px] leading-snug text-muted-foreground">
-        {parts.map((part, i) => 
-          part.toLowerCase() === name.toLowerCase() 
-            ? <span key={i} className="font-semibold text-foreground">{part}</span>
-            : part
-        )}
-      </div>
-    );
+    return filtered;
+  }, [notifications, filter, search]);
+
+  const columns: Array<DataTableColumn<any>> = [
+    {
+      id: "status",
+      header: "",
+      cell: (n) => (
+        <div className="flex items-center justify-center">
+          {!n.is_read ? (
+            <div className="h-2.5 w-2.5 rounded-full bg-primary ring-4 ring-primary/20" title="Unread"></div>
+          ) : (
+            <div className="h-2.5 w-2.5 rounded-full bg-slate-200" title="Read"></div>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "type",
+      header: "Type",
+      cell: (n) => (
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg shrink-0 ${
+            n.type === 'PAYMENT' ? 'bg-emerald-500/10' :
+            n.type === 'NEW_STUDENT' ? 'bg-blue-500/10' :
+            n.type === 'SUPPORT' ? 'bg-purple-500/10' :
+            n.type === 'EXPIRING_SOON' ? 'bg-amber-500/10' :
+            n.type === 'EXPIRED' ? 'bg-rose-500/10' : 'bg-slate-500/10'
+          }`}>
+            {getNotificationIcon(n.type)}
+          </div>
+          <Badge variant={getBadgeVariant(n.type) as any} className="text-[10px] uppercase tracking-widest px-2 font-bold whitespace-nowrap">
+            {n.type.replace('_', ' ')}
+          </Badge>
+        </div>
+      ),
+    },
+    {
+      id: "student",
+      header: "Student",
+      cell: (n) => (
+        <div className="flex items-center gap-3 min-w-[150px]">
+          <ProfileAvatar src={n.student_avatar} name={n.student_name || "System"} size="sm" />
+          <span className="font-semibold text-sm whitespace-nowrap">{n.student_name || "Automated"}</span>
+        </div>
+      ),
+    },
+    {
+      id: "message",
+      header: "Message",
+      cell: (n) => (
+        <div className="flex flex-col max-w-[400px]">
+          <span className={`text-sm font-bold truncate ${n.is_read ? "text-slate-600" : "text-foreground"}`}>{n.title}</span>
+          <span className="text-xs text-muted-foreground truncate">{n.message}</span>
+        </div>
+      ),
+    },
+    {
+      id: "date",
+      header: "Date",
+      cell: (n) => <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">{formatDateTime(n.created_at)}</span>,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: (n) => (
+        <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="!text-red-500 hover:!text-red-600 hover:!bg-red-50 dark:hover:!bg-red-500/10"
+            onClick={() => deleteAction.mutate(n.id)}
+            title="Delete"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const handleRowClick = (n: any) => {
+    setSelectedNotification(n);
+    if (!n.is_read) {
+      markAction.mutate({ id: n.id, action: "read" });
+    }
   };
 
-  if (inbox.isLoading) return <LoadingBlock />;
-
-  const notifications = inbox.data ?? [];
-  
-  const filteredNotifications = notifications.filter((n: any) => {
-    if (filter === "unread") return !n.is_read;
-    if (filter === "read") return n.is_read;
-    return true;
-  });
-
-  const unreadCount = notifications.filter((n: any) => !n.is_read).length;
-
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
-      <PageHeader 
-        title="Notification Center" 
-        eyebrow="Stay updated" 
-        actions={
-          <div className="flex bg-surface p-1 rounded-lg border border-border/50 shadow-sm mt-2 sm:mt-0">
-            <button
-              onClick={() => setFilter("all")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${filter === "all" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted hover:text-foreground hover:bg-panel"}`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setFilter("unread")}
-              className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${filter === "unread" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted hover:text-foreground hover:bg-panel"}`}
-            >
-              Unread
-              {unreadCount > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-xs ${filter === "unread" ? "bg-primary-foreground/20 text-primary-foreground" : "bg-primary/10 text-primary"}`}>
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => setFilter("read")}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${filter === "read" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted hover:text-foreground hover:bg-panel"}`}
-            >
-              Read
-            </button>
-          </div>
-        }
-      />
+    <>
+      <div className="w-full max-w-[95%] xl:max-w-[1400px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+        <PageHeader title="Notification Center" eyebrow="Inbox" />
 
-      <div className="space-y-4">
-        {filteredNotifications.length === 0 ? (
-          <div className="bg-surface/50 rounded-2xl border border-border/50 p-12 text-center shadow-sm">
-            <EmptyState 
-              title={filter === "all" ? "Inbox empty" : filter === "unread" ? "No unread notifications" : "No read notifications"} 
-              description="You're all caught up! Check back later." 
-              icon={
-                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto text-primary mb-4 shadow-inner">
-                  {filter === "unread" ? <CheckCircle2 className="h-10 w-10" /> : <Inbox className="h-10 w-10" />}
-                </div>
-              } 
+        <div className="flex flex-col sm:flex-row items-center gap-4 bg-surface p-4 rounded-xl border border-border/50 shadow-sm">
+          <div className="flex-1 w-full relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input 
+              hideLabel 
+              label="Search" 
+              placeholder="Search notifications..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              className="pl-9 w-full"
             />
           </div>
-        ) : (
-          <div className="grid gap-4">
-            {filteredNotifications.map((n: any) => (
-              <div 
-                key={n.id} 
-                className={`group relative overflow-hidden flex flex-col sm:flex-row rounded-2xl border transition-all duration-300 cursor-pointer ${
-                  n.is_read 
-                    ? 'bg-surface/40 border-border/40 hover:bg-surface hover:border-border/60 hover:shadow-sm opacity-85 hover:opacity-100' 
-                    : 'bg-background border-border shadow-md hover:shadow-lg'
-                }`}
-                onClick={() => handleNotificationClick(n)}
-              >
-                {/* Left Accent Bar */}
-                <div className={`hidden sm:flex w-16 shrink-0 flex-col items-center justify-start pt-5 border-r border-border/50 relative overflow-hidden ${
-                  n.type === 'PAYMENT' ? 'bg-emerald-500/10 text-emerald-600' :
-                  n.type === 'NEW_STUDENT' ? 'bg-blue-500/10 text-blue-600' :
-                  n.type === 'SUPPORT' ? 'bg-purple-500/10 text-purple-600' :
-                  n.type === 'EXPIRING_SOON' ? 'bg-amber-500/10 text-amber-600' :
-                  n.type === 'EXPIRED' ? 'bg-rose-500/10 text-rose-600' :
-                  'bg-primary/10 text-primary'
+          <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
+            <Select
+              hideLabel
+              label="Filter"
+              value={filter}
+              onChange={(v: any) => setFilter(v)}
+              options={[
+                { value: "all", label: "All Notifications" },
+                { value: "unread", label: "Unread Only" },
+                { value: "read", label: "Read Only" }
+              ]}
+              className="min-w-[160px]"
+            />
+          </div>
+        </div>
+
+        <div className="bg-surface border border-border/50 rounded-xl shadow-sm overflow-hidden">
+          <DataTable
+            data={filteredNotifications}
+            columns={columns}
+            getRowKey={(item) => item.id}
+            loading={inbox.isLoading}
+            onRowClick={handleRowClick}
+            minWidth={1100}
+            rowClassName={(n: any) => !n.is_read 
+              ? "group [&>td]:![background:var(--primary-soft)] [&>td:first-child]:!border-l-4 [&>td:first-child]:!border-[var(--primary)] hover:[&>td]:![background:var(--hover-strong)] transition-colors cursor-pointer [&>td]:!py-4"
+              : "group cursor-pointer [&>td]:!py-4"}
+            emptyTitle="Inbox is empty"
+            emptyMessage="You have no notifications matching the selected filters."
+          />
+        </div>
+      </div>
+
+      <Modal open={Boolean(selectedNotification)} onClose={() => setSelectedNotification(null)} title="Notification Details">
+        {selectedNotification && (
+          <div className="space-y-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-xl shadow-sm border ${
+                  selectedNotification.type === 'PAYMENT' ? 'bg-emerald-500/10 border-emerald-500/20' :
+                  selectedNotification.type === 'NEW_STUDENT' ? 'bg-blue-500/10 border-blue-500/20' :
+                  selectedNotification.type === 'SUPPORT' ? 'bg-purple-500/10 border-purple-500/20' :
+                  selectedNotification.type === 'EXPIRING_SOON' ? 'bg-amber-500/10 border-amber-500/20' :
+                  selectedNotification.type === 'EXPIRED' ? 'bg-rose-500/10 border-rose-500/20' : 'bg-slate-500/10 border-slate-500/20'
                 }`}>
-                  {!n.is_read && (
-                    <div className={`absolute top-0 right-0 left-0 h-1.5 ${
-                      n.type === 'PAYMENT' ? 'bg-emerald-500' :
-                      n.type === 'NEW_STUDENT' ? 'bg-blue-500' :
-                      n.type === 'SUPPORT' ? 'bg-purple-500' :
-                      n.type === 'EXPIRING_SOON' ? 'bg-amber-500' :
-                      n.type === 'EXPIRED' ? 'bg-rose-500' :
-                      'bg-primary'
-                    }`}></div>
-                  )}
-                  <div className="p-3 transition-transform duration-300 group-hover:scale-110">
-                    {getNotificationIcon(n.type)}
-                  </div>
+                  {getNotificationIcon(selectedNotification.type)}
                 </div>
-
-                {/* Main Content Area */}
-                <div className="flex-1 p-4 sm:p-5 min-w-0 flex flex-col justify-start">
-                  <div className="flex justify-between items-start mb-2 gap-4">
-                    <div className="flex items-center gap-2">
-                      <h3 className={`text-base font-bold tracking-tight ${n.is_read ? 'text-foreground/70' : 'text-foreground group-hover:text-primary transition-colors'}`}>
-                        {n.title}
-                      </h3>
-                      {!n.is_read && <span className="flex h-2 w-2 rounded-full bg-primary ring-4 ring-primary/20 shrink-0"></span>}
-                    </div>
-                    <span className="text-[12px] font-medium text-muted-foreground shrink-0 flex items-center gap-1.5 whitespace-nowrap bg-panel/50 px-2 py-1 rounded-md border border-border/40">
-                      <Clock className="h-3 w-3" />
-                      {formatTimeAgo(n.created_at)}
-                    </span>
-                  </div>
-
-                  <div className={`text-[14px] leading-relaxed mb-4 ${n.is_read ? 'opacity-80' : ''}`}>
-                    {renderMessage(n.message, n.student_name)}
-                  </div>
-
-                  {/* Payment Attachment Block */}
-                  {n.type === 'PAYMENT' && (
-                    <div className="mb-4 inline-flex items-center gap-4 py-2.5 px-4 rounded-xl border border-emerald-500/20 bg-emerald-500/5 shadow-sm">
-                      <div className="p-2 bg-emerald-500/10 rounded-lg text-emerald-600 shadow-inner shrink-0">
-                        <CreditCard className="h-4 w-4" />
-                      </div>
-                      <div className="shrink-0">
-                        <div className="text-[10px] font-bold tracking-widest uppercase text-emerald-600/80 mb-0.5">Amount Paid</div>
-                        <div className="text-sm font-semibold text-foreground">
-                          {n.message.match(/payment of (₹?\d+(?:\.\d+)?)/i)?.[1] ? `₹${n.message.match(/payment of (₹?\d+(?:\.\d+)?)/i)?.[1]}` : "₹0.00"}
-                        </div>
-                      </div>
-                      <div className="w-[1px] h-8 bg-emerald-500/20 mx-2 shrink-0"></div>
-                      <div className="shrink-0">
-                        <div className="text-[10px] font-bold tracking-widest uppercase text-emerald-600/80 mb-0.5">Method</div>
-                        <div className="text-sm font-semibold text-foreground">
-                          {n.message.match(/via (\w+)/i)?.[1] || "UPI"}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Footer & Actions */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 mt-auto pt-4 border-t border-border/40">
-                    <div className="flex items-center gap-3">
-                      <ProfileAvatar
-                        src={n.student_avatar}
-                        name={n.student_name || "System"}
-                        size="sm"
-                        shape="circle"
-                        className="ring-2 ring-background shadow-sm"
-                      />
-                      <span className="text-sm font-semibold text-foreground/90">{n.student_name || "System Automated"}</span>
-                      <span className="text-muted-foreground/40">•</span>
-                      <Badge variant={getBadgeVariant(n.type) as any} className="text-[10px] uppercase tracking-widest py-0.5 px-2.5 rounded-full font-bold shadow-sm">
-                        {n.type.replace('_', ' ')}
-                      </Badge>
-                    </div>
-
-                    <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                      <Button 
-                        variant="secondary"
-                        size="sm"
-                        className={`h-8 text-[11px] font-bold px-3 rounded-full uppercase tracking-wider shadow-sm transition-colors ${n.is_read ? 'bg-panel hover:bg-panel-strong text-muted-foreground' : ''}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          markAction.mutate({ id: n.id, action: n.is_read ? "unread" : "read" });
-                        }}
-                      >
-                        {n.is_read ? <Mail className="h-3.5 w-3.5 mr-1.5 opacity-70" /> : <MailOpen className="h-3.5 w-3.5 mr-1.5 text-primary" />}
-                        {n.is_read ? "Mark Unread" : "Mark Read"}
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 rounded-full text-danger/80 bg-danger/5 hover:bg-danger hover:text-white transition-colors shadow-sm border border-danger/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteAction.mutate(n.id);
-                        }}
-                        title="Delete notification"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground leading-tight">{selectedNotification.title}</h3>
+                  <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
+                    <Clock className="h-3 w-3" />
+                    {formatDateTime(selectedNotification.created_at)}
                   </div>
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="bg-panel rounded-xl p-5 border border-border/60 text-sm text-foreground/90 leading-relaxed shadow-inner">
+              {selectedNotification.message}
+              
+              {selectedNotification.type === 'PAYMENT' && selectedNotification.message.includes("payment of") && (
+                <div className="mt-4 flex flex-col gap-2 p-3 bg-emerald-500/5 border border-emerald-500/20 rounded-lg">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span className="text-emerald-700">Amount:</span>
+                    <span>{selectedNotification.message.match(/payment of (₹?\d+(?:\.\d+)?)/i)?.[1] ? `₹${selectedNotification.message.match(/payment of (₹?\d+(?:\.\d+)?)/i)?.[1]}` : "N/A"}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span className="text-emerald-700">Method:</span>
+                    <span>{selectedNotification.message.match(/via (\w+)/i)?.[1] || "UPI"}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-4 border-t border-border/50">
+              <div className="flex items-center gap-3">
+                <ProfileAvatar src={selectedNotification.student_avatar} name={selectedNotification.student_name || "System"} size="sm" />
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold">{selectedNotification.student_name || "System Automated"}</span>
+                  <span className="text-xs text-muted-foreground">Related Entity</span>
+                </div>
+              </div>
+              
+              {((selectedNotification.type === "NEW_STUDENT" && selectedNotification.related_id) || 
+                ((selectedNotification.type === "PAYMENT" || selectedNotification.type === "EXPIRING_SOON" || selectedNotification.type === "EXPIRED") && selectedNotification.student_id) ||
+                selectedNotification.type === "SUPPORT") && (
+                <Button 
+                  variant="primary" 
+                  size="sm" 
+                  icon={<ExternalLink className="h-4 w-4" />}
+                  onClick={() => {
+                    handleActionClick(selectedNotification);
+                    setSelectedNotification(null);
+                  }}
+                >
+                  Take Action
+                </Button>
+              )}
+            </div>
+
+            <div className="flex gap-3 justify-end pt-2">
+              <Button 
+                variant="danger" 
+                className="w-full sm:w-auto"
+                onClick={() => deleteAction.mutate(selectedNotification.id)}
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         )}
-      </div>
-    </div>
+      </Modal>
+    </>
   );
 }

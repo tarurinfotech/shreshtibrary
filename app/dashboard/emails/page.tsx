@@ -1,0 +1,355 @@
+"use client";
+
+import { useState } from "react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/Button";
+import { Send, Eye, Copy } from "lucide-react";
+import { useToastStore } from "@/store/toastStore";
+
+const emailTemplates = [
+  {
+    id: "congratulations",
+    name: "Congratulations",
+    description: "Send when a student achieves a milestone or wins a contest.",
+    subject: "Congratulations! You've unlocked a reward 🎉",
+    color: "from-indigo-500 to-purple-600",
+    image: "/images/emails/congratulations.png",
+    content: {
+      title: "Congratulations!",
+      subtitle: "Thank you for being with us, you have unlocked:",
+      reward: "25% Off Monthly Membership",
+      actionText: "Redeem Reward",
+      footer: "Thanks for being awesome!",
+    }
+  },
+  {
+    id: "reminder",
+    name: "Reminder",
+    description: "Send a reminder for expiring plans or inactive students.",
+    subject: "We miss you! ⏰",
+    color: "from-blue-500 to-cyan-500",
+    image: "/images/emails/reminder.png",
+    content: {
+      title: "We miss you ...!",
+      subtitle: "It has been 7 days since we last saw you.",
+      stats: [
+        { label: "Days Active", value: "280" },
+        { label: "Study Hours", value: "1,500" },
+        { label: "Points", value: "86" }
+      ],
+      actionText: "Come Back Now",
+      footer: "We hope to see you soon!",
+    }
+  },
+  {
+    id: "notification",
+    name: "Notification",
+    description: "General alerts and system notifications.",
+    subject: "Here is a quick update 📋",
+    color: "from-purple-500 to-indigo-500",
+    image: "/images/emails/notification.png",
+    content: {
+      title: "Here is a quick update",
+      subtitle: "Check out what's new in your library dashboard.",
+      stats: [
+        { label: "New Books", value: "24" },
+        { label: "Upcoming Events", value: "3" }
+      ],
+      actionText: "View Dashboard",
+      footer: "Stay updated with Shresht Library",
+    }
+  },
+  {
+    id: "plan_details",
+    name: "Plan Details",
+    description: "Send details about their current active plan.",
+    subject: "Your Subscription Details 📚",
+    color: "from-emerald-400 to-teal-500",
+    image: "/images/emails/plan_details.png",
+    content: {
+      title: "Your Premium Plan",
+      subtitle: "Here are the details of your active membership:",
+      stats: [
+        { label: "Plan Type", value: "Standard Monthly" },
+        { label: "Valid Until", value: "24 Oct 2026" },
+        { label: "Seat", value: "A-12" }
+      ],
+      actionText: "Manage Plan",
+      footer: "Enjoy your premium benefits!",
+    }
+  },
+  {
+    id: "otp",
+    name: "OTP Verification",
+    description: "One-time password for secure access.",
+    subject: "Your OTP Code 🔐",
+    color: "from-orange-400 to-red-500",
+    image: "/images/emails/otp.png",
+    content: {
+      title: "Verify Your Login",
+      subtitle: "Use the following OTP to complete your sign in. Valid for 10 mins.",
+      highlight: "8 4 2 9 1 5",
+      actionText: "Verify Now",
+      footer: "If you didn't request this, please ignore this email.",
+    }
+  },
+  {
+    id: "forgot_password",
+    name: "Forgot Password",
+    description: "Password reset instructions.",
+    subject: "Reset Your Password 🔑",
+    color: "from-rose-400 to-pink-500",
+    image: "/images/emails/forgot_password.png",
+    content: {
+      title: "Reset Password",
+      subtitle: "We received a request to reset your password. Click the button below to choose a new one.",
+      actionText: "Reset Password",
+      footer: "If you didn't request a reset, you can safely ignore this email.",
+    }
+  },
+  {
+    id: "suspended",
+    name: "Account Suspended",
+    description: "Sent when a student's account is suspended.",
+    subject: "Action Required: Account Suspended ⚠️",
+    color: "from-red-500 to-rose-600",
+    image: "/images/emails/suspended.png",
+    content: {
+      title: "Account Suspended",
+      subtitle: "Your library account has been suspended due to a policy violation or unpaid dues.",
+      actionText: "Contact Support",
+      footer: "Please reach out to resolve this issue.",
+    }
+  },
+  {
+    id: "receipt",
+    name: "Purchase Receipt",
+    description: "Sent when a student buys a plan or admin assigns one.",
+    subject: "Payment Receipt & Plan Activated ✅",
+    color: "from-emerald-500 to-green-600",
+    image: "/images/emails/receipt.png",
+    content: {
+      title: "Plan Activated!",
+      subtitle: "Your payment was successful and your premium plan is now active.",
+      stats: [
+        { label: "Amount Paid", value: "₹ 1,500" },
+        { label: "Plan Name", value: "Premium Monthly" },
+        { label: "Valid Until", value: "Next Month" }
+      ],
+      actionText: "View Dashboard",
+      footer: "Thank you for choosing Shresht Library!",
+    }
+  },
+  {
+    id: "seat_allocated",
+    name: "Seat Allocated",
+    description: "Sent when a seat is assigned to a student.",
+    subject: "Your Seat is Ready! 🪑",
+    color: "from-amber-400 to-orange-500",
+    image: "/images/emails/seat_allocated.png",
+    content: {
+      title: "Seat Allocated",
+      subtitle: "A desk has been assigned to you. Here are your seating details:",
+      highlight: "A - 12",
+      stats: [
+        { label: "Zone", value: "Quiet Study Area" },
+        { label: "Timing", value: "08:00 AM - 08:00 PM" }
+      ],
+      actionText: "Check Guidelines",
+      footer: "Please ensure you follow the seating rules.",
+    }
+  },
+  {
+    id: "holiday",
+    name: "Holiday Announcement",
+    description: "Sent for library closures and public holidays.",
+    subject: "Notice: Library Holiday 🌴",
+    color: "from-sky-400 to-blue-500",
+    image: "/images/emails/holiday.png",
+    content: {
+      title: "Holiday Notice",
+      subtitle: "The library will remain closed on account of the upcoming public holiday.",
+      stats: [
+        { label: "Occasion", value: "Independence Day" },
+        { label: "Date", value: "15 August 2026" }
+      ],
+      actionText: "View Calendar",
+      footer: "Plan your study schedule accordingly!",
+    }
+  }
+];
+
+export default function EmailSystemPage() {
+  const [activeTemplate, setActiveTemplate] = useState(emailTemplates[0]);
+  const addToast = useToastStore((state) => state.pushToast);
+
+  const handleSendTest = () => {
+    addToast({
+      kind: "success",
+      title: "Test Email Sent",
+      message: `A test email for "${activeTemplate.name}" has been sent to your inbox.`
+    });
+  };
+
+  return (
+    <>
+      <PageHeader title="Email System" eyebrow="Communications" />
+      
+      <div className="grid lg:grid-cols-[350px_1fr] gap-8 h-[calc(100vh-12rem)]">
+        {/* Sidebar */}
+        <div className="flex flex-col gap-4 bg-white rounded-2xl border p-4 shadow-sm overflow-y-auto">
+          <div className="mb-2 px-2">
+            <h2 className="font-semibold text-lg">Templates</h2>
+            <p className="text-xs text-slate-500 mt-1">Select a template to preview or edit.</p>
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            {emailTemplates.map((tpl) => (
+              <button
+                key={tpl.id}
+                onClick={() => setActiveTemplate(tpl)}
+                className={`text-left p-4 rounded-xl border transition-all ${
+                  activeTemplate.id === tpl.id 
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                  : "border-slate-100 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-sm overflow-hidden border`}>
+                    <img src={tpl.image} alt={tpl.name} className="w-full h-full object-cover mix-blend-multiply" />
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-sm text-slate-900">{tpl.name}</h3>
+                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{tpl.subject}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview Area */}
+        <div className="bg-slate-50 rounded-2xl border shadow-inner flex flex-col overflow-hidden relative">
+          {/* Top toolbar */}
+          <div className="h-14 bg-white border-b flex items-center justify-between px-6 shrink-0 z-10">
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-slate-400" />
+              <span className="text-sm font-medium text-slate-600">Preview Mode</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button size="sm" variant="secondary" icon={<Copy className="w-4 h-4" />}>
+                Copy HTML
+              </Button>
+              <Button size="sm" variant="primary" icon={<Send className="w-4 h-4" />} onClick={handleSendTest}>
+                Send Test
+              </Button>
+            </div>
+          </div>
+
+          {/* Email Canvas */}
+          <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-slate-100">
+            
+            {/* The Email Template Card */}
+            <div className="w-full max-w-[480px] bg-white rounded-t-2xl rounded-b-xl shadow-xl overflow-hidden mt-4 mb-12 flex flex-col relative border border-slate-100">
+              {/* Top Accent Line */}
+              <div className={`h-2 w-full bg-gradient-to-r ${activeTemplate.color}`}></div>
+              
+              {/* Header Branding */}
+              <div className="p-6 pb-2 flex items-center justify-center">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                    SL
+                  </div>
+                  <span className="font-bold text-lg text-slate-800 tracking-tight">ShreshtLibrary</span>
+                </div>
+              </div>
+
+              {/* Main Content */}
+              <div className="px-8 py-6 flex flex-col items-center text-center flex-1">
+                
+                {/* Illustration / Icon Box */}
+                <div className="mb-6 relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full scale-[2.5] -z-10"></div>
+                  <div className="w-40 h-40 flex items-center justify-center transition-transform hover:scale-105">
+                    <img src={activeTemplate.image} alt={activeTemplate.name} className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm" />
+                  </div>
+                </div>
+
+                <h1 className="text-2xl font-bold text-slate-900 mb-3">{activeTemplate.content.title}</h1>
+                <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-[280px]">
+                  {activeTemplate.content.subtitle}
+                </p>
+
+                {/* Optional Highlight/OTP */}
+                {activeTemplate.content.highlight && (
+                  <div className="mb-8 w-full">
+                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex justify-center">
+                      <span className="text-3xl font-mono font-bold tracking-[0.5em] text-slate-800 ml-[0.25em]">
+                        {activeTemplate.content.highlight}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Optional Reward Box */}
+                {activeTemplate.content.reward && (
+                  <div className="w-full bg-green-50/50 border border-green-100 rounded-xl p-4 mb-8 flex items-center gap-4">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 shrink-0">
+                      🎉
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-0.5">Unlocked</div>
+                      <div className="text-sm font-bold text-slate-800">{activeTemplate.content.reward}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Optional Stats/List */}
+                {activeTemplate.content.stats && (
+                  <div className="w-full space-y-3 mb-8">
+                    {activeTemplate.content.stats.map((stat, i) => (
+                      <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                            {i === 0 ? "📅" : i === 1 ? "⏱️" : "⭐"}
+                          </div>
+                          <span className="text-sm text-slate-600 font-medium">{stat.label}</span>
+                        </div>
+                        <span className="font-bold text-slate-900">{stat.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* CTA Button */}
+                <button className={`mt-auto w-full py-4 px-6 rounded-xl text-white font-bold text-sm shadow-lg shadow-indigo-200 transition-transform hover:-translate-y-0.5 bg-gradient-to-r ${activeTemplate.color}`}>
+                  {activeTemplate.content.actionText}
+                </button>
+              </div>
+
+              {/* Footer */}
+              <div className="bg-slate-50 border-t border-slate-100 p-8 text-center mt-auto">
+                <p className="text-slate-600 text-sm font-medium mb-6">
+                  {activeTemplate.content.footer}
+                </p>
+                
+                <div className="flex items-center justify-center gap-3 mb-6">
+                  {['facebook', 'twitter', 'instagram', 'linkedin'].map((social) => (
+                    <a key={social} href="#" className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
+                      <div className="w-3 h-3 bg-current opacity-50 rounded-sm"></div>
+                    </a>
+                  ))}
+                </div>
+                
+                <p className="text-xs text-slate-400 leading-relaxed max-w-[300px] mx-auto">
+                  If you would like to no longer receive updates, you may <a href="#" className="underline hover:text-slate-600">unsubscribe</a>.
+                </p>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

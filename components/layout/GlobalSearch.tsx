@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Search, X, ChevronRight } from "lucide-react";
 import { navItems } from "./nav";
 import { useAuthStore } from "@/store/authStore";
+import { useQuery } from "@tanstack/react-query";
+import { endpoints } from "@/lib/endpoints";
+import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
@@ -12,6 +15,18 @@ export function GlobalSearch() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const searchResults = useQuery({
+    queryKey: ["global-search", debouncedQuery],
+    queryFn: () => endpoints.globalSearch(debouncedQuery),
+    enabled: debouncedQuery.length >= 2,
+  });
 
   // Keyboard shortcut to open (Ctrl+K or Cmd+K)
   useEffect(() => {
@@ -108,6 +123,95 @@ export function GlobalSearch() {
                   <ChevronRight className="h-4 w-4 opacity-50" />
                 </button>
               )}
+              
+              {searchResults.isLoading && (
+                <div className="py-6 text-center text-sm text-muted">Searching...</div>
+              )}
+              
+              {searchResults.data && searchResults.data.students?.length > 0 && (
+                <>
+                  <div className="mb-2 mt-4 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                    Students
+                  </div>
+                  <div className="grid gap-1">
+                    {searchResults.data.students.map((student) => (
+                      <button
+                        key={student.id}
+                        type="button"
+                        onClick={() => handleSelect(`/dashboard/students/${student.id}`)}
+                        className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-[color:var(--hover)] hover:text-primary"
+                      >
+                        <div className="flex items-center gap-3">
+                          <ProfileAvatar src={student.profile_image} name={student.first_name || student.username} size="sm" shape="circle" />
+                          <div className="flex flex-col">
+                            <span className="font-medium text-foreground group-hover:text-primary">{student.first_name} {student.last_name}</span>
+                            <span className="text-xs text-muted">{student.mobile} • {student.student_id}</span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 opacity-50 transition group-hover:opacity-100 group-hover:translate-x-1" />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              
+              {searchResults.data && searchResults.data.seats?.length > 0 && (
+                <>
+                  <div className="mb-2 mt-4 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                    Seats
+                  </div>
+                  <div className="grid gap-1">
+                    {searchResults.data.seats.map((seat) => (
+                      <button
+                        key={seat.id}
+                        type="button"
+                        onClick={() => handleSelect(`/dashboard/seats?search=${seat.seat_number}`)}
+                        className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-[color:var(--hover)] hover:text-primary"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`grid h-8 w-8 place-items-center rounded-lg bg-primary/10 text-primary`}>
+                            <Search className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-foreground group-hover:text-primary">Seat {seat.seat_number}</span>
+                            <span className="text-xs text-muted">Floor: {seat.floor} • Row: {seat.row}</span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 opacity-50 transition group-hover:opacity-100 group-hover:translate-x-1" />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+              
+              {searchResults.data && searchResults.data.payments?.length > 0 && (
+                <>
+                  <div className="mb-2 mt-4 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                    Payments
+                  </div>
+                  <div className="grid gap-1">
+                    {searchResults.data.payments.map((payment) => (
+                      <button
+                        key={payment.id}
+                        type="button"
+                        onClick={() => handleSelect(`/dashboard/payments/${payment.id}`)}
+                        className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-[color:var(--hover)] hover:text-primary"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`grid h-8 w-8 place-items-center rounded-lg bg-green-500/10 text-green-500`}>
+                            <Search className="h-4 w-4" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-foreground group-hover:text-primary">{payment.transaction_id || `Payment #${payment.id}`}</span>
+                            <span className="text-xs text-muted">{payment.student_name} • ₹{payment.amount}</span>
+                          </div>
+                        </div>
+                        <ChevronRight className="h-4 w-4 opacity-50 transition group-hover:opacity-100 group-hover:translate-x-1" />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
 
               <div className="mb-2 mt-4 px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
                 Navigation
@@ -134,9 +238,11 @@ export function GlobalSearch() {
                     );
                   })
                 ) : (
-                  <div className="py-6 text-center text-sm text-muted">
-                    No matching pages found.
-                  </div>
+                  !searchResults.data && (
+                    <div className="py-6 text-center text-sm text-muted">
+                      No matching pages found.
+                    </div>
+                  )
                 )}
               </div>
             </div>

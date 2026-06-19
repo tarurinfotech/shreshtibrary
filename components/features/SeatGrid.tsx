@@ -59,8 +59,9 @@ export function SeatGrid({
                         <button
                           key={seat.id}
                           className={clsx(
-                            "focus-ring flex h-[92px] flex-col items-center justify-center rounded-lg border px-2 text-center text-sm font-semibold transition hover:scale-[1.02]",
+                            "relative focus-ring flex h-[92px] flex-col items-center justify-center rounded-lg border px-2 text-center text-sm font-semibold transition hover:scale-[1.02]",
                             statusClasses[normalizedStatus] ?? statusClasses.inactive,
+                            seat.is_reserved_for_girls && normalizedStatus === "available" ? "border-pink-400 bg-pink-500/10 text-pink-600" : ""
                           )}
                           title={
                             isOccupied && seat.student_name
@@ -72,6 +73,11 @@ export function SeatGrid({
                           {isOccupied ? <SeatOccupant seat={seat} /> : null}
                           <span className="block max-w-full truncate">{seat.seat_number}</span>
                           <span className="block max-w-full truncate text-[10px] font-bold uppercase">{seat.status}</span>
+                          {seat.is_reserved_for_girls && normalizedStatus !== "occupied" ? (
+                            <span className="mt-0.5 block max-w-full truncate text-[10px] font-bold text-pink-600">
+                              Girls Only
+                            </span>
+                          ) : null}
                           {isOccupied && seat.student_name ? (
                             <span className="mt-0.5 block max-w-full truncate text-[10px] font-medium text-muted">
                               {seat.student_name}

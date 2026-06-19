@@ -15,7 +15,8 @@ type OptionItem = {
   avatarSrc?: string | null;
   avatarFallback?: string | null;
   badge?: string;
-  badgeTone?: "green" | "amber" | "red" | "blue" | "slate";
+  badgeTone?: "green" | "amber" | "red" | "blue" | "slate" | "pink";
+  extraBadges?: Array<{ text: string; tone: "green" | "amber" | "red" | "blue" | "slate" | "pink" }>;
 };
 
 type SelectProps = {
@@ -145,11 +146,25 @@ export function Select({
                   selected.badgeTone === "amber" ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" :
                   selected.badgeTone === "red" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400" :
                   selected.badgeTone === "blue" ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" :
+                  selected.badgeTone === "pink" ? "bg-pink-500/15 text-pink-600 dark:text-pink-400" :
                   "bg-slate-500/15 text-slate-600 dark:text-slate-400"
                 )}>
                   {selected.badge}
                 </span>
               )}
+              {selected.extraBadges?.map((eb, i) => (
+                <span key={i} className={clsx(
+                  "ml-1.5 rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                  eb.tone === "green" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
+                  eb.tone === "amber" ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" :
+                  eb.tone === "red" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400" :
+                  eb.tone === "blue" ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" :
+                  eb.tone === "pink" ? "bg-pink-500/15 text-pink-600 dark:text-pink-400" :
+                  "bg-slate-500/15 text-slate-600 dark:text-slate-400"
+                )}>
+                  {eb.text}
+                </span>
+              ))}
             </>
           ) : (
             placeholder
@@ -226,11 +241,25 @@ export function Select({
                         opt.badgeTone === "amber" ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" :
                         opt.badgeTone === "red" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400" :
                         opt.badgeTone === "blue" ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" :
+                        opt.badgeTone === "pink" ? "bg-pink-500/15 text-pink-600 dark:text-pink-400" :
                         "bg-slate-500/15 text-slate-600 dark:text-slate-400"
                       )}>
                         {opt.badge}
                       </span>
                     )}
+                    {opt.extraBadges?.map((eb, i) => (
+                      <span key={i} className={clsx(
+                        "ml-1.5 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-semibold leading-none",
+                        eb.tone === "green" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" :
+                        eb.tone === "amber" ? "bg-amber-500/15 text-amber-700 dark:text-amber-400" :
+                        eb.tone === "red" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400" :
+                        eb.tone === "blue" ? "bg-sky-500/15 text-sky-600 dark:text-sky-400" :
+                        eb.tone === "pink" ? "bg-pink-500/15 text-pink-600 dark:text-pink-400" :
+                        "bg-slate-500/15 text-slate-600 dark:text-slate-400"
+                      )}>
+                        {eb.text}
+                      </span>
+                    ))}
                     {active && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
                   </button>
                 );

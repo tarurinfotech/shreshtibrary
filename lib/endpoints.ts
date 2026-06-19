@@ -169,8 +169,9 @@ export type MembershipPayload = {
 
 export type PaymentPayload = {
   student_id: number;
-  membership_id?: number;
-  amount: string | number;
+  plan_id?: number;
+  duration_days?: number;
+  duration_type?: '1_month' | '2_months' | '3_months' | 'custom';
   payment_mode?: string;
   transaction_ref?: string;
   notes?: string;
@@ -229,8 +230,8 @@ export const endpoints = {
 
   settings: () => getData<any>("/admin/settings/"),
 
-  updateSettings: (payload: any) =>
-    putData<any>("/admin/settings/", payload),
+  updateSettings: (payload: Record<string, unknown>) =>
+    putData<Record<string, unknown>>("/admin/settings/", payload),
 
   // Dashboard
   dashboardStats: () => getData<DashboardStats>("/dashboard/stats/"),
@@ -249,6 +250,8 @@ export const endpoints = {
   exportActivityLog: () => downloadFile("/dashboard/activity/export/", "activity-log.xlsx"),
 
   dashboardAlerts: () => getData<AlertItem[]>("/dashboard/alerts/"),
+  
+  globalSearch: (query: string) => getData<{ students: StudentProfile[]; seats: Seat[]; payments: PaymentRecord[] }>("/admin/search/", { q: query }),
 
   // Students
   students: (params?: ListParams) => getPage<StudentProfile>("/admin/students/", params),
@@ -452,6 +455,13 @@ export const endpoints = {
   seatHistory: (id: number) => getData<SeatHistoryItem[]>(`/admin/seats/${id}/history/`),
 
   seatStats: () => getData<SeatReport>("/admin/seats/stats/"),
+  
+  releaseAllSeats: () => postData<unknown>("/admin/seats/release-all/"),
+
+  reserveBulkSeats: (payload: { seat_ids: number[]; is_reserved_for_girls: boolean }) =>
+    postData<unknown>("/admin/seats/reserve-bulk/", payload),
+
+  deleteSeat: (id: number) => deleteData<unknown>(`/admin/seats/${id}/`),
 
   createFloor: (payload: { name: string; description?: string; order?: number }) =>
     postData<Floor>("/admin/floors/", payload),
@@ -633,4 +643,6 @@ export const endpoints = {
   deleteSlider: async (id: number) => {
     await api.delete(`/admin/sliders/${id}/`);
   },
+  
+  studyLeaderboard: (duration?: string, start_date?: string, end_date?: string) => getData<Array<{ rank: number; student: StudentProfile; total_minutes: number; hours_formatted: string; level_info?: {level: number; title: string; badge_color: string}; is_current_user?: boolean }>>("/study/leaderboard/", { duration, start_date, end_date }),
 };
