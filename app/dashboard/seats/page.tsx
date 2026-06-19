@@ -62,20 +62,18 @@ export default function SeatsPage() {
     queryFn: () => endpoints.allStudents({ page_size: 200 }),
   });
 
-  const invalidate = async () => {
-    await Promise.all([
-      await queryClient.invalidateQueries({ queryKey: ["flat-seats"] }),
-      await queryClient.invalidateQueries({ queryKey: ["seat-layout"] }),
-      await queryClient.invalidateQueries({ queryKey: ["seat-stats"] }),
-      await queryClient.invalidateQueries({ queryKey: ["available-seats"] }),
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] }),
-    ]);
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["flat-seats"] });
+    queryClient.invalidateQueries({ queryKey: ["seat-layout"] });
+    queryClient.invalidateQueries({ queryKey: ["seat-stats"] });
+    queryClient.invalidateQueries({ queryKey: ["available-seats"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
   };
 
   const addSeat = useMutation({
     mutationFn: () => endpoints.addSeat(draft),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setDraft(blankSeat);
       setAddOpen(false);
       pushToast({ kind: "success", title: "Seat added" });
@@ -93,8 +91,8 @@ export default function SeatsPage() {
       // We will use updateSeat to pass both.
       return endpoints.updateSeat(selected.id, { status, is_reserved_for_girls: isReservedForGirls });
     },
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setSelected(null);
       pushToast({ kind: "success", title: "Seat updated" });
     },
@@ -106,8 +104,8 @@ export default function SeatsPage() {
       if (!selected || !studentId) throw new Error("Seat and student are required.");
       return endpoints.assignSeat(selected.id, studentId);
     },
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setSelected(null);
       setStudentId("");
       pushToast({ kind: "success", title: "Seat assigned" });
@@ -120,8 +118,8 @@ export default function SeatsPage() {
       if (!selected) throw new Error("No seat selected.");
       return endpoints.unassignSeat(selected.id);
     },
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setSelected(null);
       pushToast({ kind: "success", title: "Seat unassigned" });
     },
@@ -130,8 +128,8 @@ export default function SeatsPage() {
 
   const createFloor = useMutation({
     mutationFn: () => endpoints.createFloor({ name: floorName }),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setFloorName("");
       pushToast({ kind: "success", title: "Floor added" });
     },
@@ -143,8 +141,8 @@ export default function SeatsPage() {
 
   const releaseAll = useMutation({
     mutationFn: () => endpoints.releaseAllSeats(),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       pushToast({ kind: "success", title: "All seats released successfully" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Failed to release seats", message: getErrorMessage(error) }),
@@ -152,8 +150,8 @@ export default function SeatsPage() {
 
   const createRow = useMutation({
     mutationFn: () => endpoints.createRow({ floor_id: Number(rowFloorId), label: rowLabel }),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setRowFloorId("");
       setRowLabel("");
       pushToast({ kind: "success", title: "Row added" });
@@ -166,20 +164,20 @@ export default function SeatsPage() {
 
   const deleteFloor = useMutation({
     mutationFn: (id: number) => endpoints.deleteFloor(id),
-    onSuccess: async () => { await invalidate(); pushToast({ kind: "success", title: "Floor deleted" }); },
+    onSuccess: () => { invalidate(); pushToast({ kind: "success", title: "Floor deleted" }); },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
   });
 
   const deleteRow = useMutation({
     mutationFn: (id: number) => endpoints.deleteRow(id),
-    onSuccess: async () => { await invalidate(); pushToast({ kind: "success", title: "Row deleted" }); },
+    onSuccess: () => { invalidate(); pushToast({ kind: "success", title: "Row deleted" }); },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
   });
 
   const deleteSeat = useMutation({
     mutationFn: (id: number) => endpoints.deleteSeat(id),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setSelected(null);
       pushToast({ kind: "success", title: "Seat deleted" });
     },
@@ -188,8 +186,8 @@ export default function SeatsPage() {
 
   const reserveBulk = useMutation({
     mutationFn: () => endpoints.reserveBulkSeats({ seat_ids: bulkSelectedIds, is_reserved_for_girls: bulkIsReserved }),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setBulkReserveOpen(false);
       setBulkSelectedIds([]);
       pushToast({ kind: "success", title: "Seats reserved successfully" });

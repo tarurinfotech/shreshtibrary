@@ -52,17 +52,17 @@ export default function AdminsPage() {
   const health = useQuery({ queryKey: ["system-health"], queryFn: endpoints.systemHealth });
   const activity = useQuery({ queryKey: ["super-activity-log"], queryFn: endpoints.superActivityLog });
 
-  const invalidate = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["admins"] });
-    await queryClient.invalidateQueries({ queryKey: ["backups"] });
-    await queryClient.invalidateQueries({ queryKey: ["super-activity-log"] });
-    await queryClient.invalidateQueries({ queryKey: ["system-health"] });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["admins"] });
+    queryClient.invalidateQueries({ queryKey: ["backups"] });
+    queryClient.invalidateQueries({ queryKey: ["super-activity-log"] });
+    queryClient.invalidateQueries({ queryKey: ["system-health"] });
   };
 
   const save = useMutation({
     mutationFn: () => selected ? endpoints.updateAdmin(selected.id, form) : endpoints.addAdmin(form),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setForm(emptyAdmin);
       setSelected(null);
       setOpen(false);
@@ -76,8 +76,8 @@ export default function AdminsPage() {
 
   const remove = useMutation({
     mutationFn: (id: number) => endpoints.removeAdmin(id),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       setRemoveTarget(null);
       pushToast({ kind: "success", title: "Admin removed" });
     },
@@ -86,8 +86,8 @@ export default function AdminsPage() {
 
   const deactivate = useMutation({
     mutationFn: (id: number) => endpoints.deactivateAdmin(id),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       pushToast({ kind: "success", title: "Admin deactivated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Deactivate failed", message: getErrorMessage(error) }),
@@ -95,8 +95,8 @@ export default function AdminsPage() {
 
   const assignPermissions = useMutation({
     mutationFn: ({ id, key }: { id: number; key: string }) => endpoints.assignPermissions(id, { [key]: true }),
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       pushToast({ kind: "success", title: "Permissions assigned" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Permissions failed", message: getErrorMessage(error) }),
@@ -104,8 +104,8 @@ export default function AdminsPage() {
 
   const createBackup = useMutation({
     mutationFn: endpoints.createBackup,
-    onSuccess: async () => {
-      await invalidate();
+    onSuccess: () => {
+      invalidate();
       pushToast({ kind: "success", title: "Backup created" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Backup failed", message: getErrorMessage(error) }),

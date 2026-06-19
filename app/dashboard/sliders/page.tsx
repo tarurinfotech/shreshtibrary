@@ -24,8 +24,8 @@ export default function SlidersPage() {
 
   const deleteSlider = useMutation({
     mutationFn: endpoints.deleteSlider,
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["sliders"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sliders"] });
       pushToast({ kind: "success", title: "Slider deleted successfully" });
     },
     onError: (err) => pushToast({ kind: "error", title: "Failed to delete slider", message: getErrorMessage(err) }),

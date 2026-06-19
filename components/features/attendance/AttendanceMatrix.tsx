@@ -1,7 +1,7 @@
 "use client";
 
 import { type ReactNode, useState } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { EmptyState, LoadingBlock } from "@/components/ui/StateBlocks";
@@ -131,11 +131,12 @@ export function AttendanceMatrix({
               key={holiday.id}
               size="sm"
               variant="secondary"
-              className="h-6 rounded-full px-2.5 text-[10px]"
+              className="group h-6 rounded-full px-2.5 pl-3 pr-2 text-[10px] flex items-center gap-1.5 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
               tooltip="Click to delete holiday"
               onClick={() => onDeleteHoliday(holiday.id)}
             >
-              {holiday.date.slice(-2)} {holiday.title}
+              <span>{holiday.date.slice(-2)} {holiday.title}</span>
+              <X className="h-3 w-3 opacity-50 group-hover:opacity-100" />
             </Button>
           ))}
         </div>

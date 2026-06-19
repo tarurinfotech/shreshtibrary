@@ -56,9 +56,9 @@ export function StudentDetailClient({ id }: { id: string }) {
 
   const update = useMutation({
     mutationFn: (payload: StudentUpdatePayload) => endpoints.updateStudent(id, payload),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["students"] });
-      await queryClient.invalidateQueries({ queryKey: ["student", id] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["student", id] });
       pushToast({ kind: "success", title: "Student updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) }),
@@ -66,10 +66,10 @@ export function StudentDetailClient({ id }: { id: string }) {
 
   const uploadPhoto = useMutation({
     mutationFn: (file: File) => endpoints.uploadStudentPhoto(id, file),
-    onSuccess: async () => {
+    onSuccess: () => {
       setPhoto(null);
-      await queryClient.invalidateQueries({ queryKey: ["students"] });
-      await queryClient.invalidateQueries({ queryKey: ["student", id] });
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["student", id] });
       pushToast({ kind: "success", title: "Profile image updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Upload failed", message: getErrorMessage(error) }),

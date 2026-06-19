@@ -32,11 +32,11 @@ export default function AdminProfilePage() {
 
   const update = useMutation({
     mutationFn: () => endpoints.updateAdminProfile(form, profileImage),
-    onSuccess: async (updated) => {
+    onSuccess: (updated) => {
       setForm({});
       setProfileImage(null);
       setUser(updated);
-      await queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-profile"] });
       pushToast({ kind: "success", title: "Profile updated" });
     },
     onError: (error) => {

@@ -78,8 +78,8 @@ export function SliderModal({ isOpen, onClose, slider }: Props) {
         return endpoints.createSlider(form);
       }
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["sliders"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sliders"] });
       pushToast({ kind: "success", title: slider ? "Slider updated" : "Slider created" });
       onClose();
     },
