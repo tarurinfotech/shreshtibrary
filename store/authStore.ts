@@ -34,7 +34,6 @@ export const useAuthStore = create<AuthState>()(
       name: "shresht-admin-auth",
       partialize: (state) => ({
         user: state.user,
-        access: state.access, // Persist access token for instant UI load
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);

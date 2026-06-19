@@ -1,11 +1,11 @@
 # Next.js Admin Frontend API Verification Report
 
 ## Executive Summary
-- Total API call sites discovered: 140
-- Unique endpoints/call expressions discovered: 107
-- Schema comparison failures: 3
+- Total API call sites discovered: 151
+- Unique endpoints/call expressions discovered: 114
+- Schema comparison failures: 8
 - Environment/config failures: 2
-- Live probe failures: 6 | blocked: 64
+- Live probe failures: 5 | blocked: 66
 - Overall frontend API health: Critical
 - Backend API base URL used: https://shreshtlibrary.onrender.com/api/v1
 - Node/package manager: nextjs with npm
@@ -38,9 +38,14 @@
 ## Schema Failures
 | Endpoint | Method | File | Evidence |
 |---|---|---|---|
+| /study/leaderboard/ | GET | app/dashboard/leaderboard/page.tsx:17 | /api/v1/study/leaderboard/ not found in schema.yml. |
+| /admin/seats/release-all/ | POST | app/dashboard/seats/page.tsx:143 | /api/v1/admin/seats/release-all/ not found in schema.yml. |
+| /admin/seats/${id}/ | DELETE | app/dashboard/seats/page.tsx:178 | /api/v1/admin/seats/{id}/ exists, but schema methods are GET, PUT. |
+| /admin/seats/reserve-bulk/ | POST | app/dashboard/seats/page.tsx:188 | /api/v1/admin/seats/reserve-bulk/ not found in schema.yml. |
 | /admin/students/${id}/timeline/ | GET | app/dashboard/students/[id]/StudentDetailClient.tsx:48 | /api/v1/admin/students/{id}/timeline/ not found in schema.yml. |
 | /admin/students/${id}/payments/ | GET | app/dashboard/students/[id]/StudentDetailClient.tsx:49 | /api/v1/admin/students/{id}/payments/ not found in schema.yml. |
 | /admin/students/${id}/attendance/ | GET | app/dashboard/students/[id]/StudentDetailClient.tsx:50 | /api/v1/admin/students/{id}/attendance/ not found in schema.yml. |
+| /admin/search/ | GET | components/layout/GlobalSearch.tsx:27 | /api/v1/admin/search/ not found in schema.yml. |
 
 ## Live Probe Results
 | Endpoint | Method | Status | Elapsed ms | Grade | Verdict | Shape |
@@ -55,6 +60,7 @@
 | /dashboard/activity/recent/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /dashboard/activity/log/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /dashboard/alerts/ | GET | SKIPPED | — | — | BLOCKED | — |
+| /admin/search/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/students/?page_size=5 | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/students/?page_size=5 | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/students/1/ | GET | SKIPPED | — | — | BLOCKED | — |
@@ -63,7 +69,7 @@
 | /admin/students/1/attendance/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/students/1/analytics/?period=monthly | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/students/counts/ | GET | SKIPPED | — | — | BLOCKED | — |
-| /plans/ | GET | 0 | 390.8 | Good | FAIL | network error |
+| /plans/ | GET | 200 | 2152.1 | Very Slow | FAIL | PASS |
 | /admin/plans/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/plans/stats/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/plans/1/students/ | GET | SKIPPED | — | — | BLOCKED | — |
@@ -80,7 +86,7 @@
 | /admin/attendance/daily-summary/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/attendance/absentees/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/attendance/streak/ | GET | SKIPPED | — | — | BLOCKED | — |
-| /holidays/?is_active=true | GET | 0 | 17.8 | Excellent | FAIL | network error |
+| /holidays/?is_active=true | GET | 401 | 478.3 | Good | PASS | 401 unauthorized |
 | /admin/payments/?page_size=5 | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/payments/1/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/payments/summary/ | GET | SKIPPED | — | — | BLOCKED | — |
@@ -98,12 +104,12 @@
 | /admin/notifications/scheduled/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/notifications/templates/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/inbox/ | GET | SKIPPED | — | — | BLOCKED | — |
-| /library/info/ | GET | 0 | 27.0 | Excellent | FAIL | network error |
+| /library/info/ | GET | 200 | 2237.3 | Very Slow | FAIL | PASS |
 | /admin/library/facilities/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/library/achievers/ | GET | SKIPPED | — | — | BLOCKED | — |
-| /library/achievers/ | GET | 0 | 14.3 | Excellent | FAIL | network error |
-| /library/reviews/ | GET | 0 | 3.2 | Excellent | FAIL | network error |
-| /library/reviews/summary/ | GET | 0 | 4.4 | Excellent | FAIL | network error |
+| /library/achievers/ | GET | 200 | 1722.7 | Slow | FAIL | PASS |
+| /library/reviews/ | GET | 200 | 1794.6 | Slow | FAIL | PASS |
+| /library/reviews/summary/ | GET | 200 | 2876.2 | Very Slow | FAIL | PASS |
 | /admin/reviews/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/reviews/pending/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /reports/attendance/?page_size=5 | GET | SKIPPED | — | — | BLOCKED | — |
@@ -115,25 +121,26 @@
 | /superadmin/activity-log/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /superadmin/health/ | GET | SKIPPED | — | — | BLOCKED | — |
 | /admin/sliders/ | GET | SKIPPED | — | — | BLOCKED | — |
+| /study/leaderboard/ | GET | SKIPPED | — | — | BLOCKED | — |
 
 ## Speed Rankings
 | Rank | Endpoint | Status | Elapsed ms | Grade | Verdict |
 |---|---|---|---|---|---|
-| 1 | /plans/ | 0 | 390.8 | Good | FAIL |
-| 2 | /library/info/ | 0 | 27.0 | Excellent | FAIL |
-| 3 | /holidays/?is_active=true | 0 | 17.8 | Excellent | FAIL |
-| 4 | /library/achievers/ | 0 | 14.3 | Excellent | FAIL |
-| 5 | /library/reviews/summary/ | 0 | 4.4 | Excellent | FAIL |
-| 6 | /library/reviews/ | 0 | 3.2 | Excellent | FAIL |
+| 1 | /library/reviews/summary/ | 200 | 2876.2 | Very Slow | FAIL |
+| 2 | /library/info/ | 200 | 2237.3 | Very Slow | FAIL |
+| 3 | /plans/ | 200 | 2152.1 | Very Slow | FAIL |
+| 4 | /library/reviews/ | 200 | 1794.6 | Slow | FAIL |
+| 5 | /library/achievers/ | 200 | 1722.7 | Slow | FAIL |
+| 6 | /holidays/?is_active=true | 401 | 478.3 | Good | PASS |
 
 ## API Efficiency Findings
 | Endpoint | Call Sites | Finding | Recommendation |
 |---|---|---|---|
 | /admin/students/ | 9 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /admin/settings/ | 6 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
+| /admin/memberships/ | 4 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /admin/attendance/ | 3 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /holidays/ | 3 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
-| /admin/memberships/ | 3 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /admin/payments/ | 3 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /admin/students/${id}/ | 3 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /superadmin/admins/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
@@ -141,9 +148,9 @@
 | /admin/library/facilities/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /admin/library/achievers/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /library/reviews/summary/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
+| /admin/library/facilities/${id}/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
+| /admin/library/achievers/${id}/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 | /dashboard/alerts/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
-| /admin/profile/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
-| /admin/seats/ | 2 | Endpoint is used from multiple page/component call sites. | Confirm React Query keys dedupe shared data and set staleTime for stable reference data. |
 
 ## Authentication & Authorization Findings
 - High: `store/authStore.ts` persists the admin access token in localStorage via Zustand persist.
@@ -164,6 +171,6 @@
 
 ## Sign-off
 - Verified by: Next.js Admin Frontend API Verification Agent
-- Date: 2026-06-18
+- Date: 2026-06-19
 - Frontend version: package `0.1.0`
 - Backend version: `schema.yml` local snapshot
