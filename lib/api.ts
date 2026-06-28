@@ -117,20 +117,23 @@ export function unwrap<T>(response: { data: ApiResponse<T> }, schema?: z.ZodType
     try {
       return schema.parse(data);
     } catch (error) {
-      console.warn("Zod validation failed for response data:", error);
+      // Zod validation failed for response data
     }
   }
   return data;
 }
 
-export function unwrapPage<T>(response: { data: PaginatedResponse<T> }, itemSchema?: z.ZodType<T>) {
-  const page = response.data;
+export function unwrapPage<T>(response: { data: any }, itemSchema?: z.ZodType<T>) {
+  const page = (response.data && "success" in response.data && "data" in response.data)
+    ? (response.data.data as PaginatedResponse<T>)
+    : (response.data as PaginatedResponse<T>);
+    
   if (itemSchema && page.data) {
     try {
       // Validate array of items
       z.array(itemSchema).parse(page.data);
     } catch (error) {
-      console.warn("Zod validation failed for paginated data:", error);
+      // Zod validation failed for paginated data
     }
   }
   return page;
@@ -150,7 +153,7 @@ export async function downloadFile(url: string, filename: string, params?: Recor
     anchor.click();
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
-    console.error("Failed to download file:", error);
+    // Failed to download file
   }
 }
 
@@ -159,6 +162,10 @@ export function getErrorMessage(error: unknown) {
     if (error.code === 'ECONNABORTED') return "Request timed out.";
     if (axios.isCancel(error)) return "Request cancelled.";
     
+    if (error.response?.status === 501) {
+      return "Feature Coming Soon";
+    }
+
     const payload = error.response?.data;
     if (payload?.message) {
       return payload.message;

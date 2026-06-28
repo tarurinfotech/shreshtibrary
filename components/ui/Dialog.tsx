@@ -5,6 +5,9 @@ import { Button, type ButtonVariant } from "./Button";
 import { Input } from "./Input";
 import { Modal } from "./Modal";
 
+import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import clsx from "clsx";
+
 export function ConfirmDialog({
   open,
   title,
@@ -26,22 +29,56 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  const isDanger = variant === "danger";
+  const Icon = isDanger ? undefined : variant === "success" ? CheckCircle2 : Info;
+  const iconColor = isDanger ? "" : variant === "success" ? "text-success border-success/30" : "text-primary border-primary/30";
+
   return (
     <Modal
       open={open}
       title={title}
       description={message}
-      className="max-w-[95vw] sm:max-w-fit sm:min-w-[32rem]"
+      layout="centered"
+      icon={
+        isDanger ? (
+          <img src="/trash-illustration.svg" alt="Warning" className="h-28 w-28 drop-shadow-md" />
+        ) : (
+          <div className={clsx("flex h-16 w-16 items-center justify-center rounded-full bg-background border shadow-sm", iconColor)}>
+            <Icon className="h-8 w-8" />
+          </div>
+        )
+      }
+      className="max-w-[95vw] sm:max-w-fit sm:min-w-[24rem]"
       onClose={onClose}
       footer={
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>{cancelLabel}</Button>
-          <Button type="button" variant={variant} loading={loading} onClick={onConfirm}>{confirmLabel}</Button>
+        <div className="flex w-full justify-center gap-4 px-2">
+          <Button 
+            type="button" 
+            variant="ghost" 
+            className={clsx(
+              "flex-1 py-5 text-base font-bold shadow-sm border",
+              isDanger 
+                ? "!border-danger !text-danger hover:!bg-danger/10" 
+                : variant === "success" 
+                  ? "!border-success !text-success hover:!bg-success/10"
+                  : "!border-primary !text-primary hover:!bg-primary/10"
+            )} 
+            onClick={onClose}
+          >
+            {cancelLabel}
+          </Button>
+          <Button 
+            type="button" 
+            variant={variant} 
+            className="flex-1 py-5 text-base font-bold drop-shadow-md" 
+            loading={loading} 
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </Button>
         </div>
       }
-    >
-      <p className="text-sm text-muted">{message}</p>
-    </Modal>
+    />
   );
 }
 
@@ -83,10 +120,10 @@ export function PromptDialog({
       open={open}
       title={title}
       description={message}
-      className="max-w-[95vw] sm:max-w-fit sm:min-w-[32rem]"
+      className="max-w-[95vw] sm:max-w-fit sm:min-w-[28rem]"
       onClose={close}
       footer={
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-3">
           <Button type="button" variant="secondary" onClick={close}>{cancelLabel}</Button>
           <Button
             type="button"
@@ -99,8 +136,7 @@ export function PromptDialog({
         </div>
       }
     >
-      <div className="grid gap-4">
-        {message ? <p className="text-sm text-muted">{message}</p> : null}
+      <div className="grid gap-4 py-2">
         <Input
           autoFocus
           label={label}

@@ -8,6 +8,25 @@ import { useToastStore } from "@/store/toastStore";
 
 const emailTemplates = [
   {
+    id: "welcome",
+    name: "Welcome to Shresht",
+    description: "Send when a new student registers or is added by an admin.",
+    subject: "Welcome to Shresht Library! 🎉",
+    color: "from-blue-500 to-indigo-600",
+    image: "/images/emails/welcome.png",
+    content: {
+      title: "Welcome {{first_name}} {{last_name}}!",
+      subtitle: "We are thrilled to have you join Shresht Library. Your journey to excellence starts here.",
+      highlight: "WELCOME",
+      stats: [
+        { label: "Access", value: "24/7 Library" },
+        { label: "Wi-Fi", value: "High-Speed" }
+      ],
+      actionText: "Explore Your Dashboard",
+      footer: "Let's make studying great!",
+    }
+  },
+  {
     id: "congratulations",
     name: "Congratulations",
     description: "Send when a student achieves a milestone or wins a contest.",
@@ -197,10 +216,10 @@ export default function EmailSystemPage() {
       
       <div className="grid lg:grid-cols-[350px_1fr] gap-8 h-[calc(100vh-12rem)]">
         {/* Sidebar */}
-        <div className="flex flex-col gap-4 bg-white rounded-2xl border p-4 shadow-sm overflow-y-auto">
+        <div className="flex flex-col gap-4 bg-panel rounded-2xl border border-border p-4 shadow-sm overflow-y-auto">
           <div className="mb-2 px-2">
             <h2 className="font-semibold text-lg">Templates</h2>
-            <p className="text-xs text-slate-500 mt-1">Select a template to preview or edit.</p>
+            <p className="text-xs text-muted mt-1">Select a template to preview or edit.</p>
           </div>
           
           <div className="flex flex-col gap-2">
@@ -211,16 +230,16 @@ export default function EmailSystemPage() {
                 className={`text-left p-4 rounded-xl border transition-all ${
                   activeTemplate.id === tpl.id 
                   ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
-                  : "border-slate-100 hover:border-slate-300 hover:bg-slate-50"
+                  : "border-border hover:border-primary/50 hover:bg-hover"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-white shadow-sm overflow-hidden border`}>
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center bg-panel-strong shadow-sm overflow-hidden border border-border`}>
                     <img src={tpl.image} alt={tpl.name} className="w-full h-full object-cover mix-blend-multiply" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-sm text-slate-900">{tpl.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">{tpl.subject}</p>
+                    <h3 className="font-medium text-sm text-foreground">{tpl.name}</h3>
+                    <p className="text-xs text-muted mt-0.5 line-clamp-1">{tpl.subject}</p>
                   </div>
                 </div>
               </button>
@@ -229,12 +248,12 @@ export default function EmailSystemPage() {
         </div>
 
         {/* Preview Area */}
-        <div className="bg-slate-50 rounded-2xl border shadow-inner flex flex-col overflow-hidden relative">
+        <div className="bg-panel-strong rounded-2xl border border-border shadow-inner flex flex-col overflow-hidden relative">
           {/* Top toolbar */}
-          <div className="h-14 bg-white border-b flex items-center justify-between px-6 shrink-0 z-10">
+          <div className="h-14 bg-panel border-b border-border flex items-center justify-between px-6 shrink-0 z-10">
             <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-slate-400" />
-              <span className="text-sm font-medium text-slate-600">Preview Mode</span>
+              <Eye className="w-4 h-4 text-muted" />
+              <span className="text-sm font-medium text-foreground">Preview Mode</span>
             </div>
             <div className="flex items-center gap-3">
               <Button size="sm" variant="secondary" icon={<Copy className="w-4 h-4" />}>
@@ -247,44 +266,44 @@ export default function EmailSystemPage() {
           </div>
 
           {/* Email Canvas */}
-          <div className="flex-1 overflow-y-auto p-8 flex justify-center bg-slate-100">
+          <div className="flex-1 overflow-hidden p-4 sm:p-8 flex justify-center items-center bg-background">
             
             {/* The Email Template Card */}
-            <div className="w-full max-w-[480px] bg-white rounded-t-2xl rounded-b-xl shadow-xl overflow-hidden mt-4 mb-12 flex flex-col relative border border-slate-100">
+            <div className="w-full max-w-[400px] max-h-full bg-panel rounded-t-2xl rounded-b-xl shadow-xl overflow-y-auto flex flex-col relative border border-border hide-scrollbar">
               {/* Top Accent Line */}
-              <div className={`h-2 w-full bg-gradient-to-r ${activeTemplate.color}`}></div>
+              <div className={`h-1.5 w-full shrink-0 bg-gradient-to-r ${activeTemplate.color}`}></div>
               
               {/* Header Branding */}
-              <div className="p-6 pb-2 flex items-center justify-center">
+              <div className="p-4 pb-1 flex items-center justify-center shrink-0">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                  <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center text-primary-contrast font-bold text-xs shadow-sm">
                     SL
                   </div>
-                  <span className="font-bold text-lg text-slate-800 tracking-tight">ShreshtLibrary</span>
+                  <span className="font-bold text-base text-foreground tracking-tight">ShreshtLibrary</span>
                 </div>
               </div>
 
               {/* Main Content */}
-              <div className="px-8 py-6 flex flex-col items-center text-center flex-1">
+              <div className="px-6 py-4 flex flex-col items-center text-center flex-1">
                 
                 {/* Illustration / Icon Box */}
-                <div className="mb-6 relative">
+                <div className="mb-4 relative">
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-full scale-[2.5] -z-10"></div>
-                  <div className="w-40 h-40 flex items-center justify-center transition-transform hover:scale-105">
+                  <div className="w-24 h-24 flex items-center justify-center transition-transform hover:scale-105">
                     <img src={activeTemplate.image} alt={activeTemplate.name} className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm" />
                   </div>
                 </div>
 
-                <h1 className="text-2xl font-bold text-slate-900 mb-3">{activeTemplate.content.title}</h1>
-                <p className="text-slate-500 text-sm leading-relaxed mb-8 max-w-[280px]">
+                <h1 className="text-xl font-bold text-foreground mb-1">{activeTemplate.content.title}</h1>
+                <p className="text-muted text-[13px] leading-relaxed mb-5 max-w-[280px]">
                   {activeTemplate.content.subtitle}
                 </p>
 
                 {/* Optional Highlight/OTP */}
                 {activeTemplate.content.highlight && (
-                  <div className="mb-8 w-full">
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 flex justify-center">
-                      <span className="text-3xl font-mono font-bold tracking-[0.5em] text-slate-800 ml-[0.25em]">
+                  <div className="mb-5 w-full">
+                    <div className="bg-panel-strong border border-border rounded-xl p-3 flex justify-center">
+                      <span className="text-2xl font-mono font-bold tracking-[0.4em] text-foreground ml-[0.2em]">
                         {activeTemplate.content.highlight}
                       </span>
                     </div>
@@ -293,56 +312,56 @@ export default function EmailSystemPage() {
 
                 {/* Optional Reward Box */}
                 {activeTemplate.content.reward && (
-                  <div className="w-full bg-green-50/50 border border-green-100 rounded-xl p-4 mb-8 flex items-center gap-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 shrink-0">
+                  <div className="w-full bg-green-500/10 border border-green-500/20 rounded-xl p-3 mb-5 flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center text-green-600 shrink-0 text-sm">
                       🎉
                     </div>
                     <div className="text-left">
-                      <div className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-0.5">Unlocked</div>
-                      <div className="text-sm font-bold text-slate-800">{activeTemplate.content.reward}</div>
+                      <div className="text-[11px] font-semibold text-green-600 uppercase tracking-wider mb-0.5">Unlocked</div>
+                      <div className="text-[13px] font-bold text-foreground">{activeTemplate.content.reward}</div>
                     </div>
                   </div>
                 )}
 
                 {/* Optional Stats/List */}
                 {activeTemplate.content.stats && (
-                  <div className="w-full space-y-3 mb-8">
+                  <div className="w-full space-y-1 mb-5">
                     {activeTemplate.content.stats.map((stat, i) => (
-                      <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+                      <div key={i} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                          <div className="w-6 h-6 rounded-full bg-panel-strong flex items-center justify-center text-muted text-xs">
                             {i === 0 ? "📅" : i === 1 ? "⏱️" : "⭐"}
                           </div>
-                          <span className="text-sm text-slate-600 font-medium">{stat.label}</span>
+                          <span className="text-[13px] text-muted font-medium">{stat.label}</span>
                         </div>
-                        <span className="font-bold text-slate-900">{stat.value}</span>
+                        <span className="font-bold text-[13px] text-foreground">{stat.value}</span>
                       </div>
                     ))}
                   </div>
                 )}
 
                 {/* CTA Button */}
-                <button className={`mt-auto w-full py-4 px-6 rounded-xl text-white font-bold text-sm shadow-lg shadow-indigo-200 transition-transform hover:-translate-y-0.5 bg-gradient-to-r ${activeTemplate.color}`}>
+                <button className={`mt-auto w-full py-3 px-6 rounded-xl text-white font-bold text-[13px] shadow-lg shadow-indigo-200 transition-transform hover:-translate-y-0.5 bg-gradient-to-r ${activeTemplate.color}`}>
                   {activeTemplate.content.actionText}
                 </button>
               </div>
 
               {/* Footer */}
-              <div className="bg-slate-50 border-t border-slate-100 p-8 text-center mt-auto">
-                <p className="text-slate-600 text-sm font-medium mb-6">
+              <div className="bg-panel-strong border-t border-border p-5 text-center shrink-0">
+                <p className="text-muted text-[13px] font-medium mb-4">
                   {activeTemplate.content.footer}
                 </p>
                 
-                <div className="flex items-center justify-center gap-3 mb-6">
+                <div className="flex items-center justify-center gap-3 mb-4">
                   {['facebook', 'twitter', 'instagram', 'linkedin'].map((social) => (
-                    <a key={social} href="#" className="w-8 h-8 rounded-full bg-white border shadow-sm flex items-center justify-center text-slate-400 hover:text-primary transition-colors">
-                      <div className="w-3 h-3 bg-current opacity-50 rounded-sm"></div>
+                    <a key={social} href="#" className="w-7 h-7 rounded-full bg-panel border-border border shadow-sm flex items-center justify-center text-muted hover:text-primary transition-colors">
+                      <div className="w-2.5 h-2.5 bg-current opacity-50 rounded-sm"></div>
                     </a>
                   ))}
                 </div>
                 
-                <p className="text-xs text-slate-400 leading-relaxed max-w-[300px] mx-auto">
-                  If you would like to no longer receive updates, you may <a href="#" className="underline hover:text-slate-600">unsubscribe</a>.
+                <p className="text-[11px] text-muted leading-relaxed max-w-[280px] mx-auto">
+                  If you would like to no longer receive updates, you may <a href="#" className="underline hover:text-foreground">unsubscribe</a>.
                 </p>
               </div>
             </div>

@@ -36,7 +36,21 @@ import { formatDateTime, formatMoney } from "@/lib/format";
 import { useAuthStore } from "@/store/authStore";
 
 const chartDomains = ["attendance", "revenue", "students", "memberships", "seats", "study"];
-const donutColors = ["#5b8cff", "#ffd166", "#ff7f63"];
+const donutColors = ["#22c55e", "#f59e0b", "#dc2626", "#f97316"];
+
+function formatActivityDescription(description?: string, targetModel?: string) {
+  if (!description) return targetModel;
+  try {
+    const parsed = JSON.parse(description);
+    if (parsed.path && parsed.method) {
+      return "";
+    }
+    return description;
+  } catch {
+    return description;
+  }
+}
+
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -67,7 +81,7 @@ export default function DashboardPage() {
     queryKey: ["dashboard-chart", chartDomain],
     queryFn: () => endpoints.dashboardChart(chartDomain),
   });
-  const alerts = useQuery({ queryKey: ["dashboard-alerts"], queryFn: endpoints.dashboardAlerts });
+  const attendanceSummary = useQuery({ queryKey: ["dashboard-attendance-summary"], queryFn: () => endpoints.attendanceDailySummary() });
   const activity = useQuery({
     queryKey: ["dashboard-activity-recent"],
     queryFn: endpoints.dashboardActivityRecent,
@@ -84,6 +98,7 @@ export default function DashboardPage() {
     () =>
       [
         { name: "Live", value: stats.data?.students?.live ?? 0, chartValue: Math.max(stats.data?.students?.live ?? 0, 0) },
+        { name: "Pending", value: stats.data?.students?.pending ?? 0, chartValue: Math.max(stats.data?.students?.pending ?? 0, 0) },
         { name: "Expired", value: stats.data?.students?.expired ?? 0, chartValue: Math.max(stats.data?.students?.expired ?? 0, 0) },
         { name: "Suspended", value: stats.data?.students?.suspended ?? 0, chartValue: Math.max(stats.data?.students?.suspended ?? 0, 0) },
       ].map((item) => ({
@@ -91,6 +106,7 @@ export default function DashboardPage() {
         chartValue: totalStudents > 0 ? item.chartValue : item.name === "Live" ? 1 : 0,
       })),
     [
+      stats.data?.students?.pending,
       stats.data?.students?.expired,
       stats.data?.students?.live,
       stats.data?.students?.suspended,
@@ -188,8 +204,8 @@ export default function DashboardPage() {
           {chart.isLoading ? <LoadingBlock label="Loading chart" /> : null}
           {chart.error ? <ErrorState message="Unable to load chart." /> : null}
           {chartRows.length > 0 ? (
-            <div className="h-[340px]">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[340px] w-full min-w-0">
+              <ResponsiveContainer width="100%" height={340}>
                 <AreaChart data={chartRows} margin={{ left: 4, right: 16, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="reportLine" x1="0" x2="1" y1="0" y2="0">
@@ -237,8 +253,8 @@ export default function DashboardPage() {
         {canStudents && (
           <ChartCard title="Analytics" className="lg:col-span-1">
             <div className="grid place-items-center">
-              <div className="relative h-[220px] w-full max-w-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="relative h-[220px] w-full max-w-[280px] min-w-[220px]">
+                <ResponsiveContainer width="100%" height={220}>
                   <PieChart>
                     <Pie
                       data={donutData}
@@ -318,9 +334,10 @@ export default function DashboardPage() {
                 {/* Content */}
                 <div className="flex flex-col pt-0.5">
                   <p className="text-sm font-semibold text-foreground">{item.action}</p>
-                  <p className="mt-0.5 text-sm text-muted">
-                    {item.description || item.target_model}
-                  </p>
+                  {(() => {
+                    const desc = formatActivityDescription(item.description, item.target_model);
+                    return desc ? <p className="mt-0.5 text-sm text-muted">{desc}</p> : null;
+                  })()}
                   <div className="mt-1.5 flex items-center gap-2 text-xs text-muted">
                     <span className="font-medium text-foreground">{item.admin_name}</span>
                     <span>&bull;</span>
@@ -336,26 +353,53 @@ export default function DashboardPage() {
           )}
         </ChartCard>
 
-        <ChartCard title="Alerts">
-          {alerts.isLoading ? <LoadingBlock label="Loading alerts" /> : null}
-          {alerts.error ? <ErrorState message="Unable to load alerts." /> : null}
-          {alerts.data && (
-          <div className="grid gap-4">
-            {alerts.data.map((alert) => (
-              <div key={alert.type} className="flex items-center justify-between rounded-lg border border-border bg-panel-strong p-4">
-                <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-[color:var(--primary-soft)] text-primary">
-                    <Bell className="h-5 w-5" />
-                  </span>
-                  <span className="font-medium">{alert.label}</span>
+        <ChartCard title="Today's Attendance">
+          {attendanceSummary.isLoading ? <LoadingBlock label="Loading summary" /> : null}
+          {attendanceSummary.error ? <ErrorState message="Unable to load summary." /> : null}
+          {attendanceSummary.data && (
+            <div className="grid place-items-center py-4">
+              <div className="relative h-[220px] w-full max-w-[280px] min-w-[220px]">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Present", value: attendanceSummary.data.present, chartValue: Math.max(attendanceSummary.data.present, 0) || 1 },
+                        { name: "Absent", value: attendanceSummary.data.absent, chartValue: Math.max(attendanceSummary.data.absent, 0) }
+                      ].map((item, _, arr) => ({
+                        ...item,
+                        chartValue: (arr[0].value === 0 && arr[1].value === 0) ? (item.name === "Present" ? 1 : 0) : item.chartValue
+                      }))}
+                      dataKey="chartValue"
+                      innerRadius={72}
+                      outerRadius={96}
+                      paddingAngle={8}
+                      cornerRadius={18}
+                      startAngle={90}
+                      endAngle={-270}
+                    >
+                      <Cell fill="#22c55e" /> {/* Present */}
+                      <Cell fill="#dc2626" /> {/* Absent */}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+                  <div>
+                    <p className="text-3xl font-black">{attendanceSummary.data.present + attendanceSummary.data.absent}</p>
+                    <p className="mt-2 text-sm text-muted">Total Marked</p>
+                  </div>
                 </div>
-                <Badge variant={alert.count > 0 ? "warning" : "success"}>{alert.count}</Badge>
               </div>
-            ))}
-            {alerts.data.length === 0 && (
-              <div className="py-4 text-sm text-muted">No new alerts.</div>
-            )}
-          </div>
+              <div className="mt-4 flex flex-wrap justify-center gap-5 text-sm" role="list" aria-label="Attendance status breakdown">
+                <span className="inline-flex items-center gap-2" role="listitem">
+                  <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#22c55e" }} aria-hidden="true" />
+                  Present <span className="font-bold text-foreground">{attendanceSummary.data.present}</span>
+                </span>
+                <span className="inline-flex items-center gap-2" role="listitem">
+                  <span className="h-3 w-3 rounded-sm" style={{ backgroundColor: "#dc2626" }} aria-hidden="true" />
+                  Absent <span className="font-bold text-foreground">{attendanceSummary.data.absent}</span>
+                </span>
+              </div>
+            </div>
           )}
         </ChartCard>
       </div>

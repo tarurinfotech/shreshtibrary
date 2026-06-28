@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { endpoints } from "@/lib/endpoints";
 import { useToastStore } from "@/store/toastStore";
 import { getErrorMessage } from "@/lib/api";
+import { mediaUrl } from "@/lib/media";
 import { SliderModal } from "./components/SliderModal";
 import type { HomeSlider } from "@/types/api";
 
@@ -58,7 +59,7 @@ export default function SlidersPage() {
               <div key={slider.id} className="group relative flex flex-col overflow-hidden rounded-xl border border-border bg-panel shadow-sm transition-all hover:shadow-md">
                 <div className="aspect-[21/9] w-full bg-muted relative">
                   {slider.image ? (
-                    <img src={slider.image} alt={slider.title} className="h-full w-full object-cover" />
+                    <img src={mediaUrl(slider.image) ?? ""} alt={slider.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                       <ImageIcon className="h-8 w-8 opacity-20" />

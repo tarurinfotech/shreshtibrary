@@ -46,18 +46,18 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-6rem)] rounded-3xl bg-[#0f172a] text-slate-200 p-6 sm:p-10 font-sans relative overflow-hidden">
+    <div className="min-h-[calc(100vh-6rem)] rounded-3xl bg-background border border-border text-foreground p-6 sm:p-10 font-sans relative overflow-hidden">
       {/* Background visual effects */}
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-yellow-500/5 to-transparent pointer-events-none"></div>
       
       {/* Header & Filters */}
       <div className="relative z-10 flex flex-col sm:flex-row justify-between items-center mb-12 gap-6">
         <div>
-          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Leaderboard</h1>
-          <p className="text-slate-400 text-sm mt-1">Top students ranked by their total study hours.</p>
+          <h1 className="text-3xl font-black text-foreground tracking-tight uppercase">Leaderboard</h1>
+          <p className="text-muted text-sm mt-1">Top students ranked by their total study hours.</p>
         </div>
         
-        <div className="flex bg-slate-800/80 p-1 rounded-xl backdrop-blur-sm border border-slate-700/50">
+        <div className="flex bg-panel-strong p-1 rounded-xl backdrop-blur-sm border border-border">
           {["today", "week", "month", "year"].map((opt) => (
             <button
               key={opt}
@@ -68,7 +68,7 @@ export default function LeaderboardPage() {
               className={`px-5 py-2 rounded-lg text-sm font-bold capitalize transition-all ${
                 duration === opt 
                   ? "bg-yellow-500 text-slate-900 shadow-[0_0_15px_rgba(234,179,8,0.3)]" 
-                  : "text-slate-400 hover:text-white hover:bg-slate-700/50"
+                  : "text-muted hover:text-foreground hover:bg-hover"
               }`}
             >
               {opt}
@@ -96,12 +96,12 @@ export default function LeaderboardPage() {
                         className="sm:!h-16 sm:!w-16 sm:!text-base"
                       />
                     </div>
-                    <span className="font-bold text-white mt-2 sm:mt-3 text-sm sm:text-base text-center truncate w-full px-1 pb-2 sm:pb-3">
+                    <span className="font-bold text-foreground mt-2 sm:mt-3 text-sm sm:text-base text-center truncate w-full px-1 pb-2 sm:pb-3">
                       {top3[0].student.first_name || top3[0].student.username}
                     </span>
                   </div>
                   
-                  <div className="w-full max-w-[120px] rounded-t-2xl sm:rounded-t-3xl bg-slate-800/80 border-t border-slate-700/50 flex flex-col items-center justify-end h-28 sm:h-36 overflow-hidden shadow-xl relative z-10">
+                  <div className="w-full max-w-[120px] rounded-t-2xl sm:rounded-t-3xl bg-panel-strong border-t border-border flex flex-col items-center justify-end h-28 sm:h-36 overflow-hidden shadow-xl relative z-10">
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-500 text-emerald-950 font-black flex items-center justify-center mb-4 sm:mb-6 shadow-[0_0_15px_rgba(16,185,129,0.5)] z-10">
                       2
                     </div>
@@ -127,12 +127,12 @@ export default function LeaderboardPage() {
                         className="sm:!h-24 sm:!w-24 sm:!text-2xl"
                       />
                     </div>
-                    <span className="font-bold text-white mt-2 sm:mt-4 text-base sm:text-xl text-center truncate w-full px-1 drop-shadow-md pb-2 sm:pb-4">
+                    <span className="font-bold text-foreground mt-2 sm:mt-4 text-base sm:text-xl text-center truncate w-full px-1 drop-shadow-md pb-2 sm:pb-4">
                       {top3[1].student.first_name || top3[1].student.username}
                     </span>
                   </div>
                   
-                  <div className="w-full max-w-[140px] rounded-t-2xl sm:rounded-t-3xl bg-slate-800/90 border-t border-slate-600/50 flex flex-col items-center justify-end h-36 sm:h-48 overflow-hidden shadow-2xl relative z-10">
+                  <div className="w-full max-w-[140px] rounded-t-2xl sm:rounded-t-3xl bg-panel-strong border-t border-border flex flex-col items-center justify-end h-36 sm:h-48 overflow-hidden shadow-2xl relative z-10">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-yellow-500 text-yellow-950 font-black text-base sm:text-lg flex items-center justify-center mb-5 sm:mb-8 shadow-[0_0_20px_rgba(234,179,8,0.6)] z-10">
                       1
                     </div>
@@ -158,13 +158,13 @@ export default function LeaderboardPage() {
                         className="sm:!h-16 sm:!w-16 sm:!text-base"
                       />
                     </div>
-                    <span className="font-bold text-white mt-2 sm:mt-3 text-sm sm:text-base text-center truncate w-full px-1 pb-2 sm:pb-3">
+                    <span className="font-bold text-foreground mt-2 sm:mt-3 text-sm sm:text-base text-center truncate w-full px-1 pb-2 sm:pb-3">
                       {top3[2].student.first_name || top3[2].student.username}
                     </span>
                   </div>
                   
-                  <div className="w-full max-w-[120px] rounded-t-2xl sm:rounded-t-3xl bg-slate-800/80 border-t border-slate-700/50 flex flex-col items-center justify-end h-24 sm:h-28 overflow-hidden shadow-xl relative z-10">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center mb-3 sm:mb-5 shadow-[0_0_15px_rgba(16,185,129,0.4)] z-10">
+                  <div className="w-full max-w-[120px] rounded-t-2xl sm:rounded-t-3xl bg-panel-strong border-t border-border flex flex-col items-center justify-end h-24 sm:h-28 overflow-hidden shadow-xl relative z-10">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-emerald-600 text-foreground font-bold flex items-center justify-center mb-3 sm:mb-5 shadow-[0_0_15px_rgba(16,185,129,0.4)] z-10">
                       3
                     </div>
                     <div className="w-full py-2 sm:py-2.5 bg-emerald-700 text-center z-10">
@@ -184,28 +184,28 @@ export default function LeaderboardPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="w-3 h-3 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.8)]"></div>
-            <h3 className="text-xl font-bold text-white">{getTitle()}</h3>
+            <h3 className="text-xl font-bold text-foreground">{getTitle()}</h3>
           </div>
-          <div className="bg-slate-800 border border-slate-700 rounded-lg px-4 py-1.5 text-xs font-semibold text-slate-300">
+          <div className="bg-panel-strong border border-border rounded-lg px-4 py-1.5 text-xs font-semibold text-muted">
             Top {leaderboardData.length} Students
           </div>
         </div>
 
-        <div className="bg-slate-800/40 rounded-2xl border border-slate-700/50 overflow-hidden backdrop-blur-sm">
-          <div className="grid grid-cols-[60px_1fr_120px_120px] sm:grid-cols-[80px_1fr_150px_150px] gap-4 p-4 border-b border-slate-700/50 text-xs font-bold text-slate-400 uppercase tracking-wider">
+        <div className="bg-panel rounded-2xl border border-border overflow-hidden backdrop-blur-sm">
+          <div className="grid grid-cols-[60px_1fr_120px_120px] sm:grid-cols-[80px_1fr_150px_150px] gap-4 p-4 border-b border-border text-xs font-bold text-muted uppercase tracking-wider">
             <div className="text-center">#</div>
             <div>Player</div>
             <div className="text-right">Level</div>
             <div className="text-right">Study Time</div>
           </div>
 
-          <div className="divide-y divide-slate-800/80">
+          <div className="divide-y divide-border/50">
             {paginatedOthers.map((item: any, index: number) => (
               <div 
                 key={item.student.id} 
-                className={`grid grid-cols-[60px_1fr_120px_120px] sm:grid-cols-[80px_1fr_150px_150px] gap-4 p-4 items-center transition-colors hover:bg-slate-700/30 ${item.is_current_user ? 'bg-slate-700/40' : ''}`}
+                className={`grid grid-cols-[60px_1fr_120px_120px] sm:grid-cols-[80px_1fr_150px_150px] gap-4 p-4 items-center transition-colors hover:bg-hover ${item.is_current_user ? 'bg-primary-soft' : ''}`}
               >
-                <div className="text-center font-black text-slate-500 text-sm sm:text-base">
+                <div className="text-center font-black text-muted text-sm sm:text-base">
                   {item.rank}
                 </div>
                 
@@ -216,11 +216,11 @@ export default function LeaderboardPage() {
                     size="sm" 
                   />
                   <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-white truncate text-sm">
+                    <span className="font-bold text-foreground truncate text-sm">
                       {item.student.first_name} {item.student.last_name}
                       {item.is_current_user && <span className="ml-2 text-[10px] bg-yellow-500/20 text-yellow-500 px-1.5 py-0.5 rounded uppercase tracking-wider border border-yellow-500/30">You</span>}
                     </span>
-                    <span className="text-xs text-slate-500 truncate">{item.student.student_id}</span>
+                    <span className="text-xs text-muted truncate">{item.student.student_id}</span>
                   </div>
                 </div>
 
@@ -230,10 +230,10 @@ export default function LeaderboardPage() {
                       <span className="text-xs font-bold" style={{ color: item.level_info.badge_color }}>
                         {item.level_info.title}
                       </span>
-                      <span className="text-[10px] text-slate-400">Level {item.level_info.level}</span>
+                      <span className="text-[10px] text-muted">Level {item.level_info.level}</span>
                     </>
                   ) : (
-                    <span className="text-xs text-slate-500">-</span>
+                    <span className="text-xs text-muted">-</span>
                   )}
                 </div>
 
@@ -244,35 +244,35 @@ export default function LeaderboardPage() {
             ))}
 
             {others.length === 0 && leaderboardData.length > 0 && (
-              <div className="p-8 text-center text-slate-400">
+              <div className="p-8 text-center text-muted">
                 Only the top 3 players are on the leaderboard right now!
               </div>
             )}
             
             {leaderboardData.length === 0 && (
-              <div className="p-8 text-center text-slate-400">
+              <div className="p-8 text-center text-muted">
                 No study sessions recorded for this period.
               </div>
             )}
           </div>
           
           {totalOthers > limit && (
-            <div className="flex items-center justify-between p-4 border-t border-slate-700/50 bg-slate-800/60">
-              <span className="text-xs text-slate-400">
+            <div className="flex items-center justify-between p-4 border-t border-border bg-panel-strong">
+              <span className="text-xs text-muted">
                 Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, totalOthers)} of {totalOthers} players
               </span>
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-1.5 rounded-md bg-slate-700 text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 transition-colors"
+                  className="px-3 py-1.5 rounded-md bg-panel-strong text-foreground text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover-strong transition-colors"
                 >
                   Previous
                 </button>
                 <button 
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="px-3 py-1.5 rounded-md bg-slate-700 text-white text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-600 transition-colors"
+                  className="px-3 py-1.5 rounded-md bg-panel-strong text-foreground text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-hover-strong transition-colors"
                 >
                   Next
                 </button>

@@ -3,7 +3,7 @@
 import { FormEvent, useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarPlus, CheckSquare, Eye, Plus, QrCode, RefreshCcw, TimerOff } from "lucide-react";
+import { CalendarPlus, CheckSquare, Eye, Plus, QrCode, RefreshCcw, TimerOff, Trash2 } from "lucide-react";
 import { AttendanceMatrix, MatrixOptionSelect } from "@/components/features/attendance/AttendanceMatrix";
 import { QRCodeDisplay } from "@/components/features/QRCodeDisplay";
 import { Badge } from "@/components/ui/Badge";
@@ -108,8 +108,13 @@ export default function AttendancePage() {
   const [manualOverrides, setManualOverrides] = useState<Record<number, boolean>>({});
   const [selectedQr, setSelectedQr] = useState<QRCodeRecord | null>(null);
   const [holidayOpen, setHolidayOpen] = useState(false);
-  const [holidayErrors, setHolidayErrors] = useState<Record<string, string>>({});
+  const [holidayErrors, setHolidayErrors] = useState<Record<string, string>>({}); 
+  const [qrExpiryDuration, setQrExpiryDuration] = useState("1day");
 
+  const [absenteePage, setAbsenteePage] = useState(1);
+  const absenteePageSize = 10;
+  const [streakPage, setStreakPage] = useState(1);
+  const streakPageSize = 10;
   useEffect(() => {
     setSelectedMonth(getMonthKey());
     setSelectedWeek(getCurrentWeekWindow());
@@ -130,7 +135,7 @@ export default function AttendancePage() {
   });
   const matrixStudents = useQuery({
     queryKey: ["attendance-matrix-students"],
-    queryFn: () => endpoints.allStudents({ page_size: 100 }),
+    queryFn: () => endpoints.allStudents({ page_size: 100, status: "LIVE" }),
     enabled: mounted && tab === "logs",
   });
   const attendanceMatrix = useQuery({
@@ -167,7 +172,7 @@ export default function AttendancePage() {
 
   const manualStudents = useQuery({
     queryKey: ["manual-attendance-students"],
-    queryFn: () => endpoints.allStudents(),
+    queryFn: () => endpoints.allStudents({ status: "LIVE" }),
     enabled: mounted && manualOpen,
   });
   const manualRecords = useQuery({
@@ -256,18 +261,18 @@ export default function AttendancePage() {
   const manual = useMutation({
     mutationFn: async () => {
       const rows = manualStudents.data ?? [];
-      for (const student of rows) {
-        await endpoints.manualAttendance({
-          student_id: student.user_id,
-          date: manualDate,
-          is_present: getManualPresence(student.user_id),
-        });
-      }
+      const payload = rows.map((student) => ({
+        student_id: student.user_id,
+        date: manualDate,
+        is_present: getManualPresence(student.user_id),
+      }));
+      await endpoints.manualAttendanceBulk(payload);
       return rows.length;
     },
     onSuccess: async () => {
       await invalidate();
       setManualOverrides({});
+      setManualOpen(false);
       pushToast({ kind: "success", title: "Attendance saved" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Manual entry failed", message: getErrorMessage(error) }),
@@ -275,9 +280,9 @@ export default function AttendancePage() {
 
   const qrAction = useMutation({
     mutationFn: (action: "generate" | "regenerate" | "expire") => {
-      if (action === "regenerate") return endpoints.regenerateQr();
+      if (action === "regenerate") return endpoints.regenerateQr({ expiry_duration: qrExpiryDuration });
       if (action === "expire") return endpoints.expireQr();
-      return endpoints.generateQr();
+      return endpoints.generateQr({ expiry_duration: qrExpiryDuration });
     },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["current-qr"] });
@@ -285,6 +290,15 @@ export default function AttendancePage() {
       pushToast({ kind: "success", title: "QR updated" });
     },
     onError: (error) => pushToast({ kind: "error", title: "QR action failed", message: getErrorMessage(error) }),
+  });
+
+  const deleteQrAction = useMutation({
+    mutationFn: (id: number) => endpoints.deleteQr(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["qr-history"] });
+      pushToast({ kind: "success", title: "QR deleted" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
   });
 
   const saveHoliday = useMutation({
@@ -410,6 +424,32 @@ export default function AttendancePage() {
                 </Button>
               </div>
             </div>
+
+            {/* Expiry Duration Selector */}
+            <div className="mb-4 flex items-center gap-2">
+              <span className="text-xs font-medium text-muted">Expiry:</span>
+              <div className="flex rounded-lg border border-border bg-[color:var(--field)] p-0.5">
+                {[
+                  { value: "1day", label: "1 Day" },
+                  { value: "7day", label: "7 Days" },
+                  { value: "1month", label: "1 Month" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`rounded-md px-3 py-1 text-[11px] font-semibold transition-colors ${
+                      qrExpiryDuration === option.value
+                        ? "bg-primary text-[color:var(--primary-contrast)] shadow-sm"
+                        : "text-muted hover:text-foreground hover:bg-[color:var(--hover)]"
+                    }`}
+                    onClick={() => setQrExpiryDuration(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="flex justify-center py-2">
               {currentQr.isLoading ? <LoadingBlock label="Fetching QR..." /> : (currentQr.data ? <QRCodeDisplay qr={currentQr.data} /> : <EmptyState title="No active QR" />)}
             </div>
@@ -439,9 +479,16 @@ export default function AttendancePage() {
                         </Td>
                         <Td className="whitespace-nowrap py-2 text-muted">{formatDateTime(qr.expires_at ?? qr.expiry_timestamp)}</Td>
                         <Td className="whitespace-nowrap py-2 text-right">
-                          <Button size="sm" variant="secondary" aria-label={`View scans for ${formatDate(qr.valid_date)}`} className="h-6 px-2 text-[10px]" icon={<Eye className="h-3 w-3" />} onClick={() => setSelectedQr(qr)}>
-                            View Scans
-                          </Button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button size="sm" variant="secondary" aria-label={`View scans for ${formatDate(qr.valid_date)}`} className="h-6 px-2 text-[10px]" icon={<Eye className="h-3 w-3" />} onClick={() => setSelectedQr(qr)}>
+                              View Scans
+                            </Button>
+                            {!qr.is_active && (
+                              <Button size="sm" variant="danger" aria-label={`Delete QR`} className="h-6 px-2 text-[10px]" icon={<Trash2 className="h-3 w-3" />} onClick={() => { if(confirm("Are you sure you want to delete this QR code?")) deleteQrAction.mutate(qr.id); }}>
+                                Delete
+                              </Button>
+                            )}
+                          </div>
                         </Td>
                       </tr>
                     ))}
@@ -519,19 +566,32 @@ export default function AttendancePage() {
               <h2 className="mb-4 font-semibold">Absentees</h2>
               {absentees.isLoading ? <LoadingBlock label="Loading absentees" /> : (
                 <div className="grid gap-2">
-                  {(absentees.data ?? []).slice(0, 12).map((student) => (
+                  {(absentees.data ?? []).slice((absenteePage - 1) * absenteePageSize, absenteePage * absenteePageSize).map((student) => (
                     <EntityListItem
                       key={student.user_id}
-                      title={fullName(student.first_name, student.last_name)}
+                      title={fullName(student.first_name, student.last_name, student.username)}
                       trailing={
                         <div className="flex flex-col items-end gap-1">
-                          {student.attendance_status === 'pending' && <Badge variant="warning">Pending</Badge>}
-                          <span className="text-xs text-muted">{student.mobile}</span>
+                          {student.attendance_status === 'pending' ? (
+                            <Badge variant="warning">Pending</Badge>
+                          ) : (
+                            <Badge variant="danger">Absent</Badge>
+                          )}
+                          {student.student_id && <span className="text-xs text-muted">ID: {student.student_id}</span>}
                         </div>
                       }
                     />
                   ))}
                   {(absentees.data?.length === 0) && <EmptyState title="No absentees found" />}
+                  {absentees.data && absentees.data.length > absenteePageSize && (
+                    <div className="mt-2 flex items-center justify-between border-t border-border pt-4">
+                      <Button variant="secondary" size="sm" disabled={absenteePage === 1} onClick={() => setAbsenteePage(p => Math.max(1, p - 1))}>Previous</Button>
+                      <span className="text-xs font-medium text-muted">
+                        Page {absenteePage} of {Math.ceil(absentees.data.length / absenteePageSize)}
+                      </span>
+                      <Button variant="secondary" size="sm" disabled={absenteePage >= Math.ceil(absentees.data.length / absenteePageSize)} onClick={() => setAbsenteePage(p => p + 1)}>Next</Button>
+                    </div>
+                  )}
                 </div>
               )}
             </section>
@@ -539,10 +599,19 @@ export default function AttendancePage() {
               <h2 className="mb-4 font-semibold">Streaks</h2>
               {streak.isLoading ? <LoadingBlock label="Loading streaks" /> : (
                 <div className="grid gap-2">
-                  {(streak.data ?? []).slice(0, 12).map((item) => (
+                  {(streak.data ?? []).slice((streakPage - 1) * streakPageSize, streakPage * streakPageSize).map((item) => (
                     <EntityListItem key={item.student.user_id} title={fullName(item.student.first_name, item.student.last_name)} trailing={<Badge variant="info">{item.streak} days</Badge>} />
                   ))}
                   {(streak.data?.length === 0) && <EmptyState title="No streaks currently active" />}
+                  {streak.data && streak.data.length > streakPageSize && (
+                    <div className="mt-2 flex items-center justify-between border-t border-border pt-4">
+                      <Button variant="secondary" size="sm" disabled={streakPage === 1} onClick={() => setStreakPage(p => Math.max(1, p - 1))}>Previous</Button>
+                      <span className="text-xs font-medium text-muted">
+                        Page {streakPage} of {Math.ceil(streak.data.length / streakPageSize)}
+                      </span>
+                      <Button variant="secondary" size="sm" disabled={streakPage >= Math.ceil(streak.data.length / streakPageSize)} onClick={() => setStreakPage(p => p + 1)}>Next</Button>
+                    </div>
+                  )}
                 </div>
               )}
             </section>

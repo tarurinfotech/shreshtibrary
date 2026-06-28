@@ -26,7 +26,7 @@ const emptyPlan: PlanUpdatePayload = {
   name: "",
   duration_months: 1,
   duration_days: 30,
-  price: "",
+  price: 0,
   benefits: [],
   description: "",
   is_active: true,
@@ -119,7 +119,7 @@ export default function MembershipsPage() {
       duration_months: plan.duration_months,
       duration_days: plan.duration_days,
       price: plan.price,
-      benefits: plan.benefits,
+      benefits: Array.isArray(plan.benefits) ? plan.benefits : (typeof plan.benefits === 'string' && plan.benefits ? (plan.benefits as string).split(',').map(s => s.trim()).filter(Boolean) : []),
       description: plan.description,
       is_active: plan.is_active,
       sort_order: plan.sort_order,
@@ -192,8 +192,8 @@ export default function MembershipsPage() {
           {!plans.isLoading && !plans.error && (plans.data ?? []).length === 0 ? <EmptyState title="No plans found" /> : null}
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {(plans.data ?? []).map((plan) => {
-              const stats = planStats.data?.find((item) => item.id === plan.id);
+            {(Array.isArray(plans.data) ? plans.data : []).map((plan) => {
+              const stats = Array.isArray(planStats.data) ? planStats.data.find((item) => item.id === plan.id) : null;
               return (
                 <PlanCard
                   key={plan.id}
@@ -244,12 +244,12 @@ export default function MembershipsPage() {
       )}
 
       <Modal open={planOpen} title={selected ? "Edit Plan" : "Add Plan"} onClose={() => setPlanOpen(false)}>
-        <FormShell onSubmit={submitPlan}>
+        <FormShell onSubmit={submitPlan} noValidate>
           <Input label="Name" value={planForm.name ?? ""} onChange={(event) => setPlanForm((current) => ({ ...current, name: event.target.value }))} required />
           <FormGrid columns={2}>
             <Input label="Duration Months" type="number" min={1} value={planForm.duration_months ?? 1} onChange={(event) => setPlanForm((current) => ({ ...current, duration_months: Number(event.target.value), duration_days: Number(event.target.value) * 30 }))} required />
             <Input label="Duration Days" type="number" min={1} value={planForm.duration_days ?? 30} onChange={(event) => setPlanForm((current) => ({ ...current, duration_days: Number(event.target.value) }))} required />
-            <Input label="Price" type="number" min={0} step="0.01" value={planForm.price ?? ""} onChange={(event) => setPlanForm((current) => ({ ...current, price: event.target.value }))} required />
+            <Input label="Price" type="number" min={0} step="0.01" value={planForm.price ?? ""} onChange={(event) => setPlanForm((current) => ({ ...current, price: event.target.value ? Number(event.target.value) : 0 }))} required />
             <Input label="Sort Order" type="number" value={planForm.sort_order ?? 0} onChange={(event) => setPlanForm((current) => ({ ...current, sort_order: Number(event.target.value) }))} />
           </FormGrid>
           <Textarea label="Description" value={planForm.description ?? ""} onChange={(event) => setPlanForm((current) => ({ ...current, description: event.target.value }))} />
@@ -270,7 +270,7 @@ export default function MembershipsPage() {
       </Modal>
 
       <Modal open={membershipOpen} title={`${membershipMode} Membership`} onClose={() => setMembershipOpen(false)}>
-        <FormShell onSubmit={submitMembership}>
+        <FormShell onSubmit={submitMembership} noValidate>
           <FormGrid columns={2}>
             <Select
               label="Student"
@@ -281,7 +281,7 @@ export default function MembershipsPage() {
               options={[
                 { value: "", label: "Select student" },
                 ...(students.data ?? []).map((student) => {
-                  const name = fullName(student.first_name, student.last_name) || student.username;
+                  const name = fullName(student.first_name, student.last_name, student.username);
                   return {
                     value: String(student.user_id),
                     label: `${name}${student.student_id ? ` (${student.student_id})` : ""}${student.mobile ? ` · ${student.mobile}` : ""}`,
@@ -317,7 +317,7 @@ export default function MembershipsPage() {
           {(planStudents.data ?? []).map((student) => (
             <EntityListItem
               key={student.user_id}
-              title={fullName(student.first_name, student.last_name)}
+              title={fullName(student.first_name, student.last_name, student.username)}
               trailing={<Badge variant={statusVariant(student.status)}>{student.status}</Badge>}
             />
           ))}

@@ -9,6 +9,7 @@ import { Input, Switch } from "@/components/ui/Input";
 import { endpoints } from "@/lib/endpoints";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { useToastStore } from "@/store/toastStore";
+import { mediaUrl } from "@/lib/media";
 import type { HomeSlider } from "@/types/api";
 
 type Props = {
@@ -38,7 +39,7 @@ export function SliderModal({ isOpen, onClose, slider }: Props) {
         setLinkUrl(slider.link_url);
         setIsActive(slider.is_active);
         setSortOrder(slider.sort_order.toString());
-        setPreviewUrl(slider.image);
+        setPreviewUrl(mediaUrl(slider.image) ?? null);
       } else {
         setTitle("");
         setSubtitle("");

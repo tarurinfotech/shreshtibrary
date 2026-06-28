@@ -30,6 +30,6 @@ export function formatMoney(value?: string | number | null) {
   }).format(Number.isFinite(amount) ? amount : 0);
 }
 
-export function fullName(first?: string, last?: string) {
-  return [first, last].filter(Boolean).join(" ") || "Unnamed";
+export function fullName(first?: string | null, last?: string | null, fallback?: string | null) {
+  return [first, last].filter(Boolean).join(" ") || fallback || "Unnamed";
 }

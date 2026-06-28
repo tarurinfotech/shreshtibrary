@@ -341,7 +341,7 @@ export default function ReportsPage() {
               <ListItem
                 key={student.user_id}
                 icon={<Users className="h-4 w-4" />}
-                title={fullName(student.first_name, student.last_name)}
+                title={fullName(student.first_name, student.last_name, student.username)}
                 meta={`${student.student_id ?? student.username} / ${student.goal}`}
                 value={student.status}
                 tone={palette[(index + 2) % palette.length]}
@@ -393,7 +393,7 @@ export default function ReportsPage() {
                 {studentRows.slice(0, 5).map((student) => (
                   <tr key={student.user_id}>
                     <Td>{student.student_id}</Td>
-                    <Td>{fullName(student.first_name, student.last_name)}</Td>
+                    <Td>{fullName(student.first_name, student.last_name, student.username)}</Td>
                     <Td>{student.goal}</Td>
                     <Td><Badge variant={statusVariant(student.status)}>{student.status}</Badge></Td>
                   </tr>

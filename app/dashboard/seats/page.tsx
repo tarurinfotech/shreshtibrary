@@ -21,6 +21,7 @@ import { endpoints } from "@/lib/endpoints";
 import { formatDateTime, fullName } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
 import type { Seat, SeatHistoryItem } from "@/types/api";
+import { seatCreateSchema, getZodFieldErrors } from "@/lib/validations";
 
 const blankSeat: Partial<Seat> = {
   floor: "",
@@ -208,6 +209,11 @@ export default function SeatsPage() {
 
   const submitAdd = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const result = seatCreateSchema.safeParse(draft);
+    if (!result.success) {
+      setFieldErrors(getZodFieldErrors(result.error));
+      return;
+    }
     setFieldErrors({});
     addSeat.mutate();
   };
@@ -254,7 +260,7 @@ export default function SeatsPage() {
       />
 
       <div className="flex gap-3 overflow-x-auto pb-1">
-        {(stats.data ?? []).map((floor) => (
+        {(Array.isArray(stats.data) ? stats.data : []).map((floor) => (
           <MetricTile key={floor.floor} className="min-w-[220px] flex-1" label={floor.floor} value={`${floor.occupied}/${floor.total}`} size="sm" />
         ))}
         <MetricTile className="min-w-[220px] flex-1" label="Available" value={available.data?.length ?? 0} size="sm" tone="green" />
@@ -293,9 +299,9 @@ export default function SeatsPage() {
               </div>
               <div className="mt-4 flex flex-col gap-2">
                 {floor.rows.map((row) => (
-                  <div key={row.id} className="flex items-center justify-between text-sm text-slate-300 hover:text-slate-100 transition-colors px-1">
+                  <div key={row.id} className="flex items-center justify-between text-sm text-muted hover:text-foreground transition-colors px-1">
                     <span>Row {row.label}</span>
-                    <button type="button" className="text-rose-500 hover:text-rose-400 transition-colors disabled:opacity-50" disabled={deleteRow.isPending} onClick={() => { if(confirm("Delete row?")) deleteRow.mutate(row.id); }} title="Delete Row">
+                    <button type="button" className="text-danger hover:text-danger/80 transition-colors disabled:opacity-50" disabled={deleteRow.isPending} onClick={() => { if(confirm("Delete row?")) deleteRow.mutate(row.id); }} title="Delete Row">
                       {deleteRow.isPending && deleteRow.variables === row.id ? (
                         <div className="h-4 w-4 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
                       ) : (
@@ -319,8 +325,28 @@ export default function SeatsPage() {
       <Modal open={addOpen} title="Add Seat" onClose={() => setAddOpen(false)}>
         <FormShell onSubmit={submitAdd}>
           <FormGrid columns={2}>
-            <Input label="Floor" value={draft.floor ?? ""} onChange={(event) => setDraft((current) => ({ ...current, floor: event.target.value }))} error={fieldErrors.floor} required />
-            <Input label="Row" value={draft.row ?? ""} onChange={(event) => setDraft((current) => ({ ...current, row: event.target.value }))} error={fieldErrors.row} required />
+            <Select
+              label="Floor"
+              value={draft.floor ?? ""}
+              onChange={(v) => setDraft((current) => ({ ...current, floor: v, row: "" }))}
+              error={fieldErrors.floor}
+              required
+              options={[
+                { value: "", label: "Select Floor" },
+                ...(layout.data ?? []).map((floor) => ({ value: floor.name, label: floor.name })),
+              ]}
+            />
+            <Select
+              label="Row"
+              value={draft.row ?? ""}
+              onChange={(v) => setDraft((current) => ({ ...current, row: v }))}
+              error={fieldErrors.row}
+              required
+              options={[
+                { value: "", label: "Select Row" },
+                ...(layout.data?.find((f) => f.name === draft.floor)?.rows ?? []).map((row) => ({ value: String(row.label), label: String(row.label) })),
+              ]}
+            />
             <Input label="Seat Number" value={draft.seat_number ?? ""} onChange={(event) => setDraft((current) => ({ ...current, seat_number: event.target.value }))} error={fieldErrors.seat_number} required />
             <Select
               label="Status"
@@ -390,7 +416,7 @@ export default function SeatsPage() {
                   })
                   .map((student) => {
                     const assignedSeat = seats.data?.find((s) => s.student === student.user_id && s.status.toLowerCase() === "occupied");
-                    const name = fullName(student.first_name, student.last_name) || student.username;
+                    const name = fullName(student.first_name, student.last_name, student.username);
                     const baseLabel = `${name}${student.student_id ? ` (${student.student_id})` : ""}${student.mobile ? ` · ${student.mobile}` : ""}`;
                     
                     const genderStr = student.gender?.toLowerCase();
@@ -454,7 +480,7 @@ export default function SeatsPage() {
               }, {} as Record<string, Record<string, typeof available.data>>)
             ).map(([floorName, rowsMap]) => (
               <div key={floorName} className="rounded-xl border border-border bg-panel p-4">
-                <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-white/90 border-b border-border pb-2">{floorName}</h4>
+                <h4 className="mb-4 text-sm font-bold uppercase tracking-widest text-foreground border-b border-border pb-2">{floorName}</h4>
                 <div className="space-y-5">
                   {Object.entries(rowsMap).map(([rowLabel, rowSeats]) => (
                     <div key={rowLabel}>
@@ -473,7 +499,7 @@ export default function SeatsPage() {
                                 ? "border-primary bg-primary text-white shadow-[0_0_10px_rgba(var(--color-primary),0.3)]"
                                 : seat.is_reserved_for_girls
                                   ? "border-pink-400 bg-pink-500/10 text-pink-600"
-                                  : "border-border bg-panel-strong text-slate-300 hover:border-slate-500 hover:text-white"
+                                  : "border-border bg-panel-strong text-muted hover:border-primary/50 hover:text-foreground"
                             }`}
                           >
                             {seat.seat_number}

@@ -55,6 +55,7 @@ export function Select({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [dropUp, setDropUp] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const labelId = useId();
@@ -76,7 +77,19 @@ export function Select({
 
     const updateRect = () => {
       if (wrapperRef.current) {
-        setRect(wrapperRef.current.getBoundingClientRect());
+        const currentRect = wrapperRef.current.getBoundingClientRect();
+        setRect(currentRect);
+        
+        // Calculate if we should drop up
+        const spaceBelow = window.innerHeight - currentRect.bottom;
+        const spaceAbove = currentRect.top;
+        const dropdownHeight = 300; // approximate max height of dropdown
+        
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+          setDropUp(true);
+        } else {
+          setDropUp(false);
+        }
       }
     };
     updateRect();
@@ -186,10 +199,11 @@ export function Select({
           aria-labelledby={inputId}
           className="fixed z-[120] mt-1.5 overflow-hidden rounded-xl border border-border bg-panel shadow-[0_12px_40px_rgba(0,0,0,0.13)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
           style={{
-            top: rect ? rect.bottom : 0,
+            top: rect ? (dropUp ? "auto" : rect.bottom) : 0,
+            bottom: rect ? (dropUp ? window.innerHeight - rect.top + 4 : "auto") : "auto",
             left: rect ? rect.left : 0,
             width: rect ? rect.width : "auto",
-            animation: "selectDropIn 140ms cubic-bezier(0.22, 1, 0.36, 1) both",
+            animation: dropUp ? "selectDropUp 140ms cubic-bezier(0.22, 1, 0.36, 1) both" : "selectDropIn 140ms cubic-bezier(0.22, 1, 0.36, 1) both",
           }}
         >
           {searchable && (
@@ -305,6 +319,7 @@ export function FilterSelect({
 }: FilterSelectProps) {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  const [dropUp, setDropUp] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -315,7 +330,19 @@ export function FilterSelect({
 
     const updateRect = () => {
       if (wrapperRef.current) {
-        setRect(wrapperRef.current.getBoundingClientRect());
+        const currentRect = wrapperRef.current.getBoundingClientRect();
+        setRect(currentRect);
+        
+        // Calculate if we should drop up
+        const spaceBelow = window.innerHeight - currentRect.bottom;
+        const spaceAbove = currentRect.top;
+        const dropdownHeight = 250; // max-h-56 + padding
+        
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+          setDropUp(true);
+        } else {
+          setDropUp(false);
+        }
       }
     };
     updateRect();
@@ -376,10 +403,11 @@ export function FilterSelect({
           role="listbox"
           className="fixed z-[120] mt-1.5 overflow-hidden rounded-xl border border-border bg-panel shadow-[0_12px_40px_rgba(0,0,0,0.13)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.35)]"
           style={{
-            top: rect ? rect.bottom : 0,
+            top: rect ? (dropUp ? "auto" : rect.bottom) : 0,
+            bottom: rect ? (dropUp ? window.innerHeight - rect.top + 4 : "auto") : "auto",
             left: rect ? rect.left : 0,
             minWidth: rect ? rect.width : "100%",
-            animation: "selectDropIn 140ms cubic-bezier(0.22, 1, 0.36, 1) both",
+            animation: dropUp ? "selectDropUp 140ms cubic-bezier(0.22, 1, 0.36, 1) both" : "selectDropIn 140ms cubic-bezier(0.22, 1, 0.36, 1) both",
           }}
         >
           <div className="max-h-56 overflow-y-auto overscroll-contain p-1.5">

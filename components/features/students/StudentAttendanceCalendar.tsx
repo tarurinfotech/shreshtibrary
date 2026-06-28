@@ -43,7 +43,9 @@ export function StudentAttendanceCalendar({ records, joiningDate }: Props) {
 
   const holidayMap = useMemo(() => {
     const map = new Map<string, HolidayRecord>();
-    (holidays.data ?? []).forEach(h => map.set(h.date, h));
+    const data = holidays.data;
+    const array = Array.isArray(data) ? data : (data && typeof data === 'object' && 'data' in data && Array.isArray((data as any).data)) ? (data as any).data : [];
+    array.forEach((h: any) => map.set(h.date, h));
     return map;
   }, [holidays.data]);
 
@@ -102,7 +104,7 @@ export function StudentAttendanceCalendar({ records, joiningDate }: Props) {
 
           if (isHoliday) {
              titleStr = `${dateStr}: Holiday (${holiday?.title})`;
-             bgClass = "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300 font-semibold shadow-sm border border-indigo-200/50 dark:border-indigo-800/50";
+             bgClass = "bg-primary/10 text-primary font-bold shadow-sm border border-primary/20";
           } else if (isFuture) {
              bgClass = "bg-[color:var(--attendance-empty)] text-muted border border-border/20 opacity-60";
           } else if (joiningDate && cellDate.getTime() < new Date(`${joiningDate.substring(0, 10)}T00:00:00`).getTime()) {
@@ -115,7 +117,7 @@ export function StudentAttendanceCalendar({ records, joiningDate }: Props) {
              );
           } else if (isPresent) {
              titleStr = `${dateStr}: Present`;
-             bgClass = "bg-[color:var(--attendance-present-cell)] text-emerald-800 dark:text-emerald-300 font-semibold shadow-sm";
+             bgClass = "bg-[color:var(--attendance-present-cell)] text-success font-bold shadow-sm border border-success/20";
           } else {
              let isPending = false;
              const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -133,10 +135,10 @@ export function StudentAttendanceCalendar({ records, joiningDate }: Props) {
 
              if (isPending) {
                 titleStr = `${dateStr}: Pending`;
-                bgClass = "bg-[color:var(--attendance-pending-cell)] text-amber-800 dark:text-amber-300 font-semibold shadow-sm";
+                bgClass = "bg-[color:var(--attendance-pending-cell)] text-warning font-bold shadow-sm border border-warning/20";
              } else {
                 titleStr = `${dateStr}: Absent`;
-                bgClass = "bg-[color:var(--attendance-absent-cell)] text-rose-800 dark:text-rose-300 font-semibold shadow-sm";
+                bgClass = "bg-[color:var(--attendance-absent-cell)] text-danger font-bold shadow-sm border border-danger/20";
              }
           }
 
@@ -155,11 +157,11 @@ export function StudentAttendanceCalendar({ records, joiningDate }: Props) {
         })}
       </div>
       
-      <div className="mt-auto pt-2 flex flex-wrap items-center justify-center gap-4 text-xs">
-         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-[color:var(--attendance-present-cell)]" /> Present</div>
-         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-[color:var(--attendance-absent-cell)]" /> Absent</div>
-         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-[color:var(--attendance-pending-cell)]" /> Pending</div>
-         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded-sm bg-indigo-200 dark:bg-indigo-800" /> Holiday</div>
+      <div className="mt-auto pt-2 flex flex-wrap items-center justify-center gap-4 text-xs font-medium">
+         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-success/20 bg-[color:var(--attendance-present-cell)]" /> Present</div>
+         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-danger/20 bg-[color:var(--attendance-absent-cell)]" /> Absent</div>
+         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-warning/20 bg-[color:var(--attendance-pending-cell)]" /> Pending</div>
+         <div className="flex items-center gap-1.5"><span className="h-3 w-3 rounded border border-primary/20 bg-primary/10" /> Holiday</div>
       </div>
     </div>
   );

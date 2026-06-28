@@ -22,11 +22,28 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
   const inbox = useQuery({ queryKey: ["admin-inbox-topbar"], queryFn: endpoints.adminInbox, refetchInterval: 30000 });
 
   const alertCount = useMemo(
-    () => (alerts.data ?? []).reduce((sum, item) => sum + item.count, 0),
+    () => {
+      try {
+        return (alerts.data ?? []).reduce((sum, item) => sum + item.count, 0);
+      } catch (e) {
+        console.error("DEBUG: Reduce failed on alerts.data:", alerts.data);
+        return 0;
+      }
+    },
     [alerts.data],
   );
+  
+  console.log("DEBUG: inbox.data is", inbox.data, "typeof:", typeof inbox.data, "isArray:", Array.isArray(inbox.data));
+  
   const unreadInboxCount = useMemo(
-    () => (inbox.data ?? []).filter(n => !n.is_read).length,
+    () => {
+      try {
+        return (inbox.data ?? []).filter(n => !n.is_read).length;
+      } catch (e) {
+        console.error("DEBUG: Filter failed on inbox.data:", inbox.data);
+        return 0;
+      }
+    },
     [inbox.data],
   );
 
@@ -44,7 +61,7 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
         </Button>
         <button
           type="button"
-          className="focus-ring hidden h-11 w-11 place-items-center rounded-lg text-muted transition hover:bg-[color:var(--hover)] hover:text-foreground md:grid"
+          className="focus-ring hidden h-11 w-11 place-items-center rounded-lg text-muted transition hover:bg-hover hover:text-foreground md:grid"
           onClick={onDesktopMenu}
         >
           <Menu className="h-6 w-6" />
@@ -69,7 +86,7 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
         >
           {theme === "dark" ? "Light theme" : "Dark theme"}
         </Button>
-        <Link href="/dashboard/inbox" className="focus-ring relative grid h-11 w-11 place-items-center rounded-lg text-muted transition hover:bg-[color:var(--hover)] hover:text-foreground" title="Notifications Inbox">
+        <Link href="/dashboard/inbox" className="focus-ring relative grid h-11 w-11 place-items-center rounded-lg text-muted transition hover:bg-hover hover:text-foreground" title="Notifications Inbox">
           <Bell className="h-5 w-5" />
           {unreadInboxCount > 0 ? (
             <span className="absolute right-1 top-1 grid h-5 min-w-5 place-items-center rounded-full bg-danger px-1 text-[11px] font-bold text-white">

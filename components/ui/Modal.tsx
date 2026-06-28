@@ -7,6 +7,7 @@ import { Button } from "./Button";
 export function Modal({
   open,
   title,
+  icon,
   children,
   onClose,
   footer,
@@ -14,16 +15,19 @@ export function Modal({
   description,
   closeLabel = "Close",
   iconOnlyClose = false,
+  layout = "default",
 }: {
   open: boolean;
   title: string;
-  children: React.ReactNode;
+  icon?: React.ReactNode;
+  children?: React.ReactNode;
   onClose: () => void;
   footer?: React.ReactNode;
   className?: string;
   description?: string;
   closeLabel?: string;
   iconOnlyClose?: boolean;
+  layout?: "default" | "centered";
 }) {
   const titleId = useId();
   const descriptionId = useId();
@@ -106,13 +110,13 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4 transition-all duration-300 animate-in fade-in"
       role="presentation"
       onClick={onClose}
     >
       <div
         ref={dialogRef}
-        className={`surface max-h-[95vh] flex flex-col w-full sm:w-auto sm:min-w-[32rem] md:min-w-[36rem] overflow-hidden rounded-lg ${className ?? "max-w-[95vw] md:max-w-fit"}`}
+        className={`surface max-h-[95vh] flex flex-col w-full sm:w-auto sm:min-w-[32rem] md:min-w-[36rem] overflow-hidden rounded-2xl shadow-2xl animate-modal-in relative ${className ?? "max-w-[95vw] md:max-w-fit"}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -121,17 +125,37 @@ export function Modal({
         onClick={(event) => event.stopPropagation()}
         onKeyDown={trapFocus}
       >
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <div>
-            <h2 id={titleId} className="text-lg font-semibold">{title}</h2>
-            {description ? <p id={descriptionId} className="mt-1 text-sm text-muted">{description}</p> : null}
+        <button 
+          onClick={onClose}
+          className="absolute right-4 top-4 rounded-full p-2 text-muted hover:bg-hover hover:text-foreground transition-colors outline-none focus-ring"
+          aria-label={closeLabel}
+        >
+          <X className="h-5 w-5" />
+        </button>
+
+        {layout === "centered" ? (
+          <div className="px-6 pt-10 pb-2 flex flex-col items-center text-center">
+            {icon ? <div className="mb-6">{icon}</div> : null}
+            <h2 id={titleId} className="text-xl font-bold tracking-tight text-foreground">{title}</h2>
+            {description ? <p id={descriptionId} className="mt-3 text-sm text-muted leading-relaxed max-w-xs">{description}</p> : null}
           </div>
-          <Button variant="secondary" size={iconOnlyClose ? "icon" : "sm"} onClick={onClose} type="button" icon={<X className="h-4 w-4" />}>
-            {closeLabel}
-          </Button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5">{children}</div>
-        {footer ? <div className="border-t border-border px-5 py-4">{footer}</div> : null}
+        ) : (
+          <div className="px-6 pt-6 pb-4 flex gap-4">
+            {icon ? (
+              <div className="shrink-0 flex items-center justify-center mt-0.5">
+                {icon}
+              </div>
+            ) : null}
+            <div className="flex-1">
+              <h2 id={titleId} className="text-xl font-bold tracking-tight text-foreground pr-8">{title}</h2>
+              {description ? <p id={descriptionId} className="mt-2 text-sm text-muted leading-relaxed">{description}</p> : null}
+            </div>
+          </div>
+        )}
+        
+        {children ? <div className={layout === "centered" ? "flex-1 overflow-y-auto px-6 py-2 flex flex-col items-center text-center" : "flex-1 overflow-y-auto px-6 py-2"}>{children}</div> : null}
+        
+        {footer ? <div className={layout === "centered" ? "px-6 py-6 pb-8 bg-transparent" : "px-6 py-5 mt-2 bg-panel-strong/30"}>{footer}</div> : null}
       </div>
     </div>
   );

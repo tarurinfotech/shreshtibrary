@@ -1,5 +1,6 @@
 import { BarChart3 } from "lucide-react";
 import type { ReactNode } from "react";
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatMoney } from "@/lib/format";
 
 export function ChartPanel({
@@ -101,6 +102,50 @@ export function ProgressBar({
       <div className="h-2 overflow-hidden rounded-full bg-panel-strong">
         <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, background: color }} />
       </div>
+    </div>
+  );
+}
+
+export interface SharedAreaChartProps {
+  data: any[];
+  xKey: string;
+  yKeys: Array<{ key: string; name: string; color: string; fillOpacity?: number }>;
+  height?: number;
+}
+
+export function SharedAreaChart({ data, xKey, yKeys, height = 300 }: SharedAreaChartProps) {
+  return (
+    <div style={{ height }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ left: -20, right: 10 }}>
+          <defs>
+            {yKeys.map((y, idx) => (
+              <linearGradient key={`grad-${y.key}-${idx}`} id={`grad-${y.key}`} x1="0" x2="0" y1="0" y2="1">
+                <stop offset="5%" stopColor={y.color} stopOpacity={y.fillOpacity ?? 0.35} />
+                <stop offset="95%" stopColor={y.color} stopOpacity={0.02} />
+              </linearGradient>
+            ))}
+          </defs>
+          <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+          <XAxis dataKey={xKey} tick={{ fill: "var(--muted)", fontSize: 12 }} tickLine={false} axisLine={false} />
+          <YAxis tick={{ fill: "var(--muted)", fontSize: 12 }} tickLine={false} axisLine={false} />
+          <Tooltip
+            cursor={{ stroke: "var(--border)", strokeWidth: 1, strokeDasharray: "4 4", fill: "transparent" }}
+            contentStyle={{ background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 8 }}
+          />
+          {yKeys.map((y, idx) => (
+            <Area
+              key={`area-${y.key}-${idx}`}
+              type="monotone"
+              dataKey={y.key}
+              name={y.name}
+              stroke={y.color}
+              strokeWidth={y.fillOpacity === 0 ? 2 : 3}
+              fill={y.fillOpacity === 0 ? "transparent" : `url(#grad-${y.key})`}
+            />
+          ))}
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 }

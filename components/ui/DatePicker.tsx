@@ -121,8 +121,13 @@ function parseDateTime(value?: string | number | readonly string[]) {
 function formatDateTimeLabel(
   value?: string | number | readonly string[],
   showTime?: boolean,
+  timeOnly?: boolean
 ) {
   const { date, hours, minutes, ampm } = parseDateTime(value);
+  if (timeOnly) {
+    if (!value) return "";
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${ampm}`;
+  }
   if (!date) return "";
   const datePart = `${String(date.getDate()).padStart(2, "0")} ${MONTH_NAMES_SHORT[date.getMonth()]} ${date.getFullYear()}`;
   if (showTime) {
@@ -244,6 +249,8 @@ export interface DatePickerProps {
   placeholder?: string;
   /** When true, shows a side-by-side time-scroll picker (hour / minute / AM-PM) */
   showTime?: boolean;
+  /** When true, ONLY shows the time picker */
+  timeOnly?: boolean;
 }
 
 export function DatePicker({
@@ -262,6 +269,7 @@ export function DatePicker({
   max,
   placeholder = "Select date",
   showTime = false,
+  timeOnly = false,
 }: DatePickerProps) {
   const generatedId = useId();
   const labelId = id ?? generatedId;
@@ -286,7 +294,7 @@ export function DatePicker({
   const [viewMonth, setViewMonth] = useState(initialView.getMonth());
   const [showMonthOverlay, setShowMonthOverlay] = useState(false);
 
-  const displayValue = useMemo(() => formatDateTimeLabel(value, showTime), [value, showTime]);
+  const displayValue = useMemo(() => formatDateTimeLabel(value, showTime, timeOnly), [value, showTime, timeOnly]);
   const cells = useMemo(() => monthDays(viewYear, viewMonth), [viewYear, viewMonth]);
   const currentDate = todayKey();
 
@@ -297,12 +305,12 @@ export function DatePicker({
   const updatePosition = () => {
     if (!wrapperRef.current) return;
     const rect = wrapperRef.current.getBoundingClientRect();
-    const popupHeight = showTime ? 340 : 380;
+    const popupHeight = timeOnly ? 240 : (showTime ? 340 : 380);
     const spaceBelow = window.innerHeight - rect.bottom;
     const flipUp = spaceBelow < popupHeight + 16 && rect.top > popupHeight + 16;
     setCoords({
       top: flipUp ? rect.top - popupHeight - 8 : rect.bottom + 8,
-      left: Math.min(rect.left, window.innerWidth - (showTime ? 480 : 320) - 8),
+      left: Math.min(rect.left, window.innerWidth - (timeOnly ? 200 : (showTime ? 480 : 320)) - 8),
       flipUp,
     });
   };
@@ -334,7 +342,7 @@ export function DatePicker({
 
   /* ── Scroll time columns to selected ── */
   useEffect(() => {
-    if (!open || !showTime) return;
+    if (!open || (!showTime && !timeOnly)) return;
     const timer = setTimeout(() => {
       for (const ref of [hourRef, minuteRef, ampmRef]) {
         const container = ref.current;
@@ -346,7 +354,7 @@ export function DatePicker({
       }
     }, 50);
     return () => clearTimeout(timer);
-  }, [open, showTime, selectedHours, selectedMinutes, selectedAmPm]);
+  }, [open, showTime, timeOnly, selectedHours, selectedMinutes, selectedAmPm]);
 
   const moveMonth = (offset: number) => {
     const next = new Date(viewYear, viewMonth + offset, 1);
@@ -382,7 +390,12 @@ export function DatePicker({
     const h = type === "hour" ? Number(raw) : selectedHours;
     const m = type === "minute" ? Number(raw) : selectedMinutes;
     const ap = type === "ampm" ? raw : selectedAmPm;
-    emitChange(onChange, name, toDateTimeString(targetDate, h, m, ap));
+    if (timeOnly) {
+      const h24 = to24Hour(h, ap);
+      emitChange(onChange, name, `${String(h24).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+    } else {
+      emitChange(onChange, name, toDateTimeString(targetDate, h, m, ap));
+    }
   };
 
   /* ── Popup JSX ── */
@@ -395,9 +408,9 @@ export function DatePicker({
       className={clsx(
         // layout
         "fixed z-[9999] select-none",
-        showTime ? "flex gap-0" : "",
+        showTime && !timeOnly ? "flex gap-0" : "",
         // sizing
-        showTime ? "w-[480px]" : "w-[308px]",
+        timeOnly ? "w-[200px]" : (showTime ? "w-[480px]" : "w-[308px]"),
         // theming — use CSS design tokens so it works in both light & dark
         "rounded-2xl border border-[color:var(--border)]",
         "bg-[color:var(--panel)] text-[color:var(--foreground)]",
@@ -407,6 +420,7 @@ export function DatePicker({
       )}
     >
       {/* ── Calendar pane ── */}
+      {!timeOnly && (
       <div className={clsx("p-4", showTime ? "w-[280px] shrink-0" : "w-full")}>
 
         {showMonthOverlay ? (
@@ -564,13 +578,14 @@ export function DatePicker({
           </>
         )}
       </div>
+      )}
 
       {/* ── Vertical divider ── */}
-      {showTime && <div className="w-px bg-[color:var(--border)] self-stretch my-3 shrink-0" />}
+      {showTime && !timeOnly && <div className="w-px bg-[color:var(--border)] self-stretch my-3 shrink-0" />}
 
       {/* ── Time picker pane ── */}
-      {showTime && (
-        <div className="flex gap-0 p-2 bg-[color:var(--field)] rounded-r-2xl flex-1 justify-around items-start">
+      {(showTime || timeOnly) && (
+        <div className={clsx("flex gap-0 p-2 bg-[color:var(--field)] justify-around items-start", timeOnly ? "rounded-2xl" : "rounded-r-2xl flex-1")}>
           {/* Hour */}
           <TimeColumn
             containerRef={hourRef}

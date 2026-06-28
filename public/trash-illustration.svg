@@ -1,0 +1,23 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Soft background glow/shadow -->
+  <ellipse cx="60" cy="100" rx="40" ry="4" fill="#ff4d4f" fill-opacity="0.1"/>
+  
+  <!-- Trash Can Body -->
+  <path d="M38 45L42 90C42.5 94 46 96 50 96H70C74 96 77.5 94 78 90L82 45H38Z" fill="#ff4d4f"/>
+  <path d="M44 45L47.5 90C47.8 93 50 95 53 95H67C70 95 72.2 93 72.5 90L76 45H44Z" fill="#ff7875"/>
+  
+  <!-- Vertical lines on trash can -->
+  <line x1="53" y1="52" x2="55" y2="88" stroke="#ff4d4f" stroke-width="3" stroke-linecap="round"/>
+  <line x1="60" y1="52" x2="60" y2="88" stroke="#ff4d4f" stroke-width="3" stroke-linecap="round"/>
+  <line x1="67" y1="52" x2="65" y2="88" stroke="#ff4d4f" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Lid -->
+  <rect x="34" y="36" width="52" height="6" rx="3" fill="#ff4d4f"/>
+  <path d="M52 36V32C52 30 54 28 56 28H64C66 28 68 30 68 32V36H52Z" fill="#ff4d4f"/>
+  
+  <!-- Sparkles -->
+  <path d="M28 60L32 61L33 65L34 61L38 60L34 59L33 55L32 59L28 60Z" fill="#ff4d4f"/>
+  <path d="M85 70L87 70.5L87.5 72.5L88 70.5L90 70L88 69.5L87.5 67.5L87 69.5L85 70Z" fill="#ff4d4f"/>
+  <path d="M32 30L34 30.5L34.5 32.5L35 30.5L37 30L35 29.5L34.5 27.5L34 29.5L32 30Z" fill="#ff4d4f"/>
+  <path d="M78 22L80 22.5L80.5 24.5L81 22.5L83 22L81 21.5L80.5 19.5L80 21.5L78 22Z" fill="#ff4d4f"/>
+</svg>

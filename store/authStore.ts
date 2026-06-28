@@ -1,7 +1,7 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { AuthUser } from "@/types/api";
 
 type AuthState = {
@@ -32,7 +32,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "shresht-admin-auth",
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
+        access: state.access,
         user: state.user,
       }),
       onRehydrateStorage: () => (state) => {

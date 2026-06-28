@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, Loader } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LoadingBlock } from "@/components/ui/StateBlocks";
 import { useAuthStore } from "@/store/authStore";
@@ -64,8 +64,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   if (!hydrated || isRefreshingSession || !access || !user) {
     return (
-      <main className="grid min-h-screen place-items-center p-6">
-        <LoadingBlock label="Checking session" />
+      <main className="grid min-h-screen place-items-center p-6 bg-transparent">
+        <Loader className="h-12 w-12 animate-spin text-primary" />
       </main>
     );
   }

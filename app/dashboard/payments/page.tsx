@@ -39,10 +39,17 @@ export default function PaymentsPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [refundTarget, setRefundTarget] = useState<PaymentRecord | null>(null);
 
+  const [page, setPage] = useState(1);
+
+  // Reset page when search or status filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
   // ── Data queries ──────────────────────────────────────────────────────────
   const payments = useQuery({
-    queryKey: ["payments", statusFilter],
-    queryFn: () => endpoints.payments({ status: statusFilter || undefined, page_size: 80 }),
+    queryKey: ["payments", statusFilter, search, page],
+    queryFn: () => endpoints.payments({ status: statusFilter || undefined, search: search || undefined, page, page_size: 15 }),
   });
   const summary = useQuery({ queryKey: ["payment-summary"], queryFn: endpoints.paymentSummary });
   const pending = useQuery({ queryKey: ["pending-payments"], queryFn: endpoints.pendingPayments });
@@ -63,7 +70,11 @@ export default function PaymentsPage() {
   });
 
   const hasActivePlan = useMemo(() => {
-    return membershipQuery.data?.data?.some((m) => m.status === "active") ?? false;
+    return membershipQuery.data?.data?.some((m) => {
+      const isStatusActive = m.status === "active" || m.status === "LIVE";
+      const isNotExpired = new Date(m.end_date) >= new Date(new Date().setHours(0,0,0,0));
+      return isStatusActive && isNotExpired;
+    }) ?? false;
   }, [membershipQuery.data]);
 
   // ── Invalidation ──────────────────────────────────────────────────────────
@@ -111,18 +122,7 @@ export default function PaymentsPage() {
   });
 
   // ── Helpers ───────────────────────────────────────────────────────────────
-  const filtered = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return (payments.data?.data ?? []).filter(
-      (payment) =>
-        !term ||
-        [payment.student_name, payment.plan_name, payment.transaction_id, payment.transaction_ref, payment.payment_mode, payment.payment_id]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(term),
-    );
-  }, [payments.data, search]);
+  const filtered = payments.data?.data ?? [];
 
   const handleStudentChange = (v: string) => {
     setForm((cur) => ({
@@ -253,8 +253,9 @@ export default function PaymentsPage() {
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <MetricTile label="Today" value={formatMoney(summary.data?.today_amount)} size="sm" />
+        <MetricTile label="All Time" value={formatMoney(summary.data?.all_time_amount)} size="sm" tone="purple" />
         <MetricTile label="This Month" value={formatMoney(summary.data?.month_amount)} size="sm" tone="green" />
         <MetricTile label="Pending" value={pending.data?.length ?? summary.data?.pending_count ?? 0} size="sm" tone="amber" />
         <MetricTile label="Overdue" value={overdue.data?.length ?? 0} size="sm" tone="red" />
@@ -289,20 +290,30 @@ export default function PaymentsPage() {
         error={payments.error ? "Unable to load payments." : false}
         emptyTitle="No payments found"
         rowClassName="table-row-hover"
+        pagination={
+          payments.data
+            ? {
+                currentPage: payments.data.current_page ?? page,
+                totalPages: payments.data.total_pages ?? 1,
+                onPageChange: setPage,
+              }
+            : undefined
+        }
       />
 
       {/* ── Record Payment Modal ── */}
       <Modal open={open} title="Record Payment" onClose={() => { setOpen(false); setForm(emptyPayment); setFieldErrors({}); }}>
         <FormShell onSubmit={submit}>
           {hasActivePlan && (
-            <div className="bg-amber-500/10 text-amber-500 p-3 rounded-lg flex items-center gap-2 mb-4 text-sm font-medium col-span-full">
+            <div className="bg-blue-500/10 text-blue-500 p-3 rounded-lg flex items-center gap-2 mb-4 text-sm font-medium col-span-full">
               <AlertTriangle className="h-4 w-4 shrink-0" />
-              <span>This student already has an active subscription. You cannot assign a new plan.</span>
+              <span>This student already has an active subscription. Creating this payment will assign an additional plan.</span>
             </div>
           )}
           <FormGrid columns={2}>
             {/* Student — required */}
             <Select
+              className="md:col-span-2"
               label="Student"
               value={String(form.student_id || "")}
               onChange={handleStudentChange}
@@ -312,10 +323,8 @@ export default function PaymentsPage() {
               options={[
                 { value: "", label: "Select student" },
                 ...(students.data ?? []).map((student) => {
-                  const name =
-                    [student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") ||
-                    fullName(student.first_name, student.last_name) ||
-                    student.username;
+                  const namePart = [student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ");
+                  const name = namePart || fullName(student.first_name, student.last_name, student.username);
                   return {
                     value: String(student.user_id),
                     label: `${name}${student.student_id ? ` (${student.student_id})` : ""}${student.mobile ? ` · ${student.mobile}` : ""}`,
@@ -323,19 +332,6 @@ export default function PaymentsPage() {
                     avatarFallback: name,
                   };
                 }),
-              ]}
-            />
-
-            {/* Plan */}
-            <Select
-              label="Plan"
-              value={String(form.plan_id || "")}
-              onChange={handlePlanChange}
-              error={fieldErrors.plan_id}
-              required
-              options={[
-                { value: "", label: "Select a plan" },
-                ...(plans.data ?? []).map((p) => ({ value: String(p.id), label: `${p.name} (${formatMoney(p.price)})` })),
               ]}
             />
 
@@ -353,9 +349,23 @@ export default function PaymentsPage() {
               ]}
             />
 
+            {/* Plan */}
+            <Select
+              label="Plan"
+              value={String(form.plan_id || "")}
+              onChange={handlePlanChange}
+              error={fieldErrors.plan_id}
+              required
+              options={[
+                { value: "", label: "Select a plan" },
+                ...(plans.data ?? []).map((p) => ({ value: String(p.id), label: `${p.name} (${formatMoney(p.price)})` })),
+              ]}
+            />
+
             {/* Custom Days */}
             {form.duration_type === "custom" && (
               <Input
+                className="md:col-span-2"
                 label="Days (Min 30)"
                 type="number"
                 min={30}
@@ -404,7 +414,7 @@ export default function PaymentsPage() {
           </FormGrid>
 
           <FormActions>
-            <Button type="submit" loading={create.isPending} disabled={hasActivePlan} icon={<Plus className="h-4 w-4" />}>
+            <Button type="submit" loading={create.isPending} icon={<Plus className="h-4 w-4" />}>
               Save Payment
             </Button>
           </FormActions>

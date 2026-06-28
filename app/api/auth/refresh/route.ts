@@ -15,8 +15,8 @@ export async function POST() {
       );
     }
 
-    // Call the Django backend to refresh the token
-    const res = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+    // Call the ASP.NET Core backend to refresh the token
+    const res = await fetch(`${API_BASE_URL}/auth/token/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),
@@ -30,22 +30,20 @@ export async function POST() {
       return NextResponse.json(data, { status: res.status });
     }
 
-    // Optionally set a new refresh token if Django rotates it
-    const payload = data.data || data;
-    if (payload?.refresh) {
-      cookieStore.set({
-        name: "shresht_refresh_token",
-        value: payload.refresh,
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        path: "/",
-        maxAge: 30 * 24 * 60 * 60,
-      });
-      delete payload.refresh;
+    // ASP.NET Core returns { access: "..." } directly (not wrapped).
+    // Normalize into { success: true, data: { access } } so that
+    // the frontend api.ts interceptor at response.data.data.access works.
+    const accessToken = data.access ?? data.data?.access;
+
+    if (!accessToken) {
+      cookieStore.delete("shresht_refresh_token");
+      return NextResponse.json(
+        { success: false, message: "No access token in refresh response." },
+        { status: 401 }
+      );
     }
 
-    return NextResponse.json({ success: true, data: payload });
+    return NextResponse.json({ success: true, data: { access: accessToken } });
   } catch (error) {
     return NextResponse.json(
       { success: false, message: "Internal server error during token refresh." },

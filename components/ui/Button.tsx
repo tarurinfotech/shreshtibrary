@@ -22,11 +22,11 @@ export function buttonClasses({
     size === "md" && "h-12 md:h-10 px-4 text-sm",
     size === "icon" && "h-11 w-11 md:h-10 md:w-10",
     variant === "primary" &&
-      "border-primary bg-primary text-[color:var(--primary-contrast)] hover:brightness-110",
+      "border-primary bg-primary text-primary-contrast hover:brightness-110",
     variant === "secondary" &&
-      "border-border bg-panel text-foreground hover:border-primary/35 hover:bg-[color:var(--hover)]",
+      "border-border bg-panel text-foreground hover:border-primary/35 hover:bg-hover",
     variant === "ghost" &&
-      "border-transparent bg-transparent text-muted shadow-none hover:bg-[color:var(--hover)] hover:text-foreground",
+      "border-transparent bg-transparent text-muted shadow-none hover:bg-hover hover:text-foreground",
     variant === "danger" &&
       "border-danger bg-danger text-white hover:brightness-110",
     variant === "success" &&

@@ -1,11 +1,11 @@
-import { AlertCircle, Inbox } from "lucide-react";
+import { AlertCircle, Inbox, Loader } from "lucide-react";
 import clsx from "clsx";
 
 export function LoadingBlock({ label = "Loading", className }: { label?: string; className?: string }) {
   return (
     <div className={clsx("surface grid min-h-40 place-items-center rounded-lg p-6 text-muted", className)}>
       <div className="flex items-center gap-3">
-        <span className="h-3 w-3 animate-pulse rounded-full bg-primary" />
+        <Loader className="h-5 w-5 animate-spin text-primary" />
         <span>{label}</span>
       </div>
     </div>

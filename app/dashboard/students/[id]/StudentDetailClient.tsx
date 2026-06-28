@@ -3,23 +3,12 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { Activity, ArrowLeft, Camera, Clock, Upload } from "lucide-react";
 import { StudentEditForm } from "@/components/features/students/StudentEditForm";
 import { StudentAttendanceCalendar } from "@/components/features/students/StudentAttendanceCalendar";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
-import { ChartPanel } from "@/components/ui/ChartWidgets";
+import { ChartPanel, SharedAreaChart } from "@/components/ui/ChartWidgets";
 import { FileInput } from "@/components/ui/FileInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
@@ -266,25 +255,17 @@ export function StudentDetailClient({ id }: { id: string }) {
             </ChartPanel>
 
             <ChartPanel title="Study Hours" icon={<Clock className="h-4 w-4" />}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={analytics.data?.study ?? []} margin={{ left: -20, right: 10 }}>
-                  <defs>
-                    <linearGradient id="studyHoursGradient" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.35} />
-                      <stop offset="95%" stopColor="var(--primary)" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: "var(--muted)", fontSize: 12 }} tickLine={false} axisLine={false} />
-                  <YAxis tick={{ fill: "var(--muted)", fontSize: 12 }} tickLine={false} axisLine={false} />
-                  <Tooltip
-                    cursor={{ stroke: "var(--border)", strokeWidth: 1, strokeDasharray: "4 4", fill: "transparent" }}
-                    contentStyle={{ background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 8 }}
-                  />
-                  <Area type="monotone" dataKey="hours" name="Study hours" stroke="var(--primary)" strokeWidth={3} fill="url(#studyHoursGradient)" />
-                  <Area type="monotone" dataKey="target_hours" name="Target hours" stroke="var(--success)" strokeWidth={2} fill="transparent" />
-                </AreaChart>
-              </ResponsiveContainer>
+              <div className="h-[300px]">
+                <SharedAreaChart
+                  data={analytics.data?.study ?? []}
+                  xKey="label"
+                  yKeys={[
+                    { key: "hours", name: "Study hours", color: "var(--primary)" },
+                    { key: "target_hours", name: "Target hours", color: "var(--success)", fillOpacity: 0 },
+                  ]}
+                  height={300}
+                />
+              </div>
             </ChartPanel>
           </div>
         ) : null}

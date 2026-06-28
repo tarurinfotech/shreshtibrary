@@ -154,7 +154,7 @@ export function AttendanceMatrix({
                 return (
                   <th
                     key={day}
-                    className={`sticky top-0 z-20 min-w-[48px] border-b border-border px-1 py-3 text-center text-xs font-bold uppercase tracking-wider ${holiday ? "bg-indigo-50/50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400" : "bg-panel-strong text-muted"
+                    className={`sticky top-0 z-20 min-w-[48px] border-b border-border px-1 py-3 text-center text-xs font-bold uppercase tracking-wider ${holiday ? "bg-primary/10 text-primary border-l border-primary/20" : "bg-panel-strong text-muted"
                       }`}
                     title={holiday?.title}
                   >
@@ -173,10 +173,7 @@ export function AttendanceMatrix({
           <tbody className="divide-y divide-border">
             {students.map((student) => {
               const studentRecords = records.get(student.user_id);
-              const name =
-                [student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") ||
-                fullName(student.first_name, student.last_name) ||
-                student.username;
+              const name = fullName(student.first_name, student.last_name, student.username);
 
               const totals = days.reduce(
                 (acc, day) => {
@@ -259,14 +256,14 @@ export function AttendanceMatrix({
                       <td
                         key={day}
                         className={`border-b border-border p-2 text-center align-middle font-black ${isHoliday
-                            ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-300"
+                            ? "bg-primary/10 text-primary"
                             : (isFuture || isBeforeJoin)
                               ? "text-muted"
                               : isPresent
-                                ? "bg-[color:var(--attendance-present-cell)] text-emerald-800 dark:text-emerald-300"
+                                ? "bg-[color:var(--attendance-present-cell)] text-success"
                                 : isPending
-                                  ? "bg-[color:var(--attendance-pending-cell)] text-amber-800 dark:text-amber-300"
-                                  : "bg-[color:var(--attendance-absent-cell)] text-rose-800 dark:text-rose-300"
+                                  ? "bg-[color:var(--attendance-pending-cell)] text-warning"
+                                  : "bg-[color:var(--attendance-absent-cell)] text-danger"
                           }`}
                         title={isPending ? "Pending" : holiday?.title}
                       >
@@ -276,10 +273,10 @@ export function AttendanceMatrix({
                   })}
 
                   {/* ── Totals ──────────────────────────────────────────────── */}
-                  <td className="sticky right-[80px] z-10 border-b border-l border-border bg-[color:var(--attendance-present-cell)] p-2 text-center align-middle font-black text-emerald-800 shadow-[-1px_0_0_0_var(--border)] dark:text-emerald-300">
+                  <td className="sticky right-[80px] z-10 border-b border-l border-border bg-[color:var(--attendance-present-cell)] p-2 text-center align-middle font-black text-success shadow-[-1px_0_0_0_var(--border)]">
                     {totals.present}
                   </td>
-                  <td className="sticky right-0 z-10 border-b border-l border-border bg-[color:var(--attendance-absent-cell)] p-2 text-center align-middle font-black text-rose-800 shadow-[-1px_0_0_0_var(--border)] dark:text-rose-300">
+                  <td className="sticky right-0 z-10 border-b border-l border-border bg-[color:var(--attendance-absent-cell)] p-2 text-center align-middle font-black text-danger shadow-[-1px_0_0_0_var(--border)]">
                     {totals.absent}
                   </td>
                 </tr>

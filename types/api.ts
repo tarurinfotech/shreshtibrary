@@ -55,6 +55,7 @@ export type DashboardStats = {
   students?: {
     total: number;
     live: number;
+    pending: number;
     expired: number;
     suspended: number;
     girls?: number;
@@ -108,7 +109,7 @@ export type DashboardChart = {
   items?: Array<Record<string, string | number | null>>;
 };
 
-export type StudentStatus = "LIVE" | "EXPIRED" | "SUSPENDED";
+export type StudentStatus = "LIVE" | "EXPIRED" | "SUSPENDED" | "PENDING";
 
 export type StudentProfile = {
   id: number;

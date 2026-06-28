@@ -111,9 +111,15 @@ async function getAllPages<T>(url: string, params?: Query) {
 
   const maxPages = Math.min(firstPage.total_pages, 20); // Hard cap to prevent infinite loops / DoS
 
-  for (let page = 2; page <= maxPages; page += 1) {
-    const nextPage = await getPage<T>(url, { ...params, page, page_size: pageSize });
-    rows.push(...nextPage.data);
+  if (maxPages > 1) {
+    const promises = [];
+    for (let page = 2; page <= maxPages; page += 1) {
+      promises.push(getPage<T>(url, { ...params, page, page_size: pageSize }));
+    }
+    const nextPages = await Promise.all(promises);
+    for (const nextPage of nextPages) {
+      rows.push(...nextPage.data);
+    }
   }
 
   return rows;
@@ -215,9 +221,7 @@ export const endpoints = {
   adminProfile: () => getData<AdminProfile>("/admin/profile/"),
 
   updateAdminProfile: (payload: Partial<AdminProfile>, image?: File | null) =>
-    image
-      ? putMultipart<AdminProfile>("/admin/profile/", toFormData(payload, { profile_image: image }))
-      : putData<AdminProfile>("/admin/profile/", payload),
+    putMultipart<AdminProfile>("/admin/profile/", toFormData(payload, { profile_image: image })),
 
   changePassword: (payload: {
     old_password: string;
@@ -291,7 +295,7 @@ export const endpoints = {
     getData<StudentAnalytics>(`/admin/students/${id}/analytics/`, { period }),
 
   studentCounts: () =>
-    getData<{ total: number; live: number; expired: number; suspended: number; girls?: number; boys?: number; other?: number }>(
+    getData<{ total: number; live: number; expired: number; suspended: number; pending: number; girls?: number; boys?: number; other?: number }>(
       "/admin/students/counts/",
     ),
 
@@ -351,11 +355,13 @@ export const endpoints = {
 
   qrHistory: (params?: ListParams) => getPage<QRCodeRecord>("/admin/qr/history/", params),
 
-  generateQr: () => postData<QRCodeRecord>("/admin/qr/generate/"),
+  generateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/generate/", payload ?? {}),
 
-  regenerateQr: () => postData<QRCodeRecord>("/admin/qr/regenerate/"),
+  regenerateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/regenerate/", payload ?? {}),
 
   expireQr: () => postData<unknown>("/admin/qr/expire/"),
+  
+  deleteQr: (id: number) => deleteData<unknown>(`/admin/qr/${id}/`),
 
   qrScans: (id: number) => getData<AttendanceRecord[]>(`/admin/qr/${id}/scans/`),
 
@@ -371,6 +377,14 @@ export const endpoints = {
     is_present?: boolean;
     note?: string;
   }) => postData<AttendanceRecord>("/admin/attendance/manual/", payload),
+
+  manualAttendanceBulk: (payload: Array<{
+    student_id?: number;
+    student_mobile?: string;
+    date?: string;
+    is_present?: boolean;
+    note?: string;
+  }>) => postData<{ success: boolean; message: string }>("/admin/attendance/manual/bulk/", payload),
 
   updateAttendance: (id: number, payload: Partial<AttendanceRecord>) =>
     putData<AttendanceRecord>(`/admin/attendance/${id}/`, payload),
@@ -422,6 +436,7 @@ export const endpoints = {
       today_count: number;
       month_amount: string;
       year_amount: string;
+      all_time_amount: string;
       pending_count: number;
     }>("/admin/payments/summary/"),
 
@@ -434,7 +449,7 @@ export const endpoints = {
 
   seats: (params?: ListParams) => getPage<Seat>("/admin/seats/", params),
 
-  flatSeats: async () => (await getPage<Seat>("/admin/seats/", { page_size: 200 })).data,
+  flatSeats: async () => (await getPage<Seat>("/admin/seats/", { page_size: 200 })).data ?? [],
 
   addSeat: (payload: Partial<Seat>) => postData<Seat>("/admin/seats/", payload),
 
@@ -508,7 +523,7 @@ export const endpoints = {
   deleteAdminInbox: (id: number) => deleteData<unknown>(`/admin/inbox/${id}/`),
 
   // Library Content
-  libraryInfo: () => getData<LibraryInfo>("/library/info/"),
+  libraryInfo: () => getData<LibraryInfo>("/admin/library/info/"),
 
   updateLibraryInfo: (payload: Partial<LibraryInfo>, featureImage?: File | null) =>
     featureImage
@@ -557,11 +572,11 @@ export const endpoints = {
   reorderAchievers: (items: Array<{ id: number; order: number }>) =>
     patchData<unknown>("/admin/library/achievers/reorder/", { items }),
 
-  publicReviews: () => getData<Review[]>("/library/reviews/"),
+  publicReviews: () => getData<Review[]>("/admin/library/reviews/"),
 
   reviewSummary: () =>
     getData<{ average_rating: number; count: number; breakdown: Record<number, number> }>(
-      "/library/reviews/summary/",
+      "/admin/library/reviews/summary/",
     ),
 
   reviews: () => getData<Review[]>("/admin/reviews/"),
@@ -590,24 +605,24 @@ export const endpoints = {
     downloadFile(`/reports/${kind}/export/`, `${kind}.${format}`, { format }),
 
   // Super Admin
-  admins: () => getData<AdminUser[]>("/superadmin/admins/"),
+  admins: () => getData<AdminUser[]>("/superadmin/admins"),
 
   addAdmin: (payload: Partial<AdminUser> & { password: string }) =>
-    postData<AdminUser>("/superadmin/admins/", payload),
+    postData<AdminUser>("/superadmin/admins", payload),
 
   updateAdmin: (id: number, payload: Partial<AdminUser> & { password?: string }) =>
-    putData<AdminUser>(`/superadmin/admins/${id}/`, payload),
+    putData<AdminUser>(`/superadmin/admins/${id}`, payload),
 
-  removeAdmin: (id: number) => deleteData<unknown>(`/superadmin/admins/${id}/remove/`),
+  removeAdmin: (id: number) => deleteData<unknown>(`/superadmin/admins/${id}/remove`),
 
   deactivateAdmin: (id: number) =>
-    postData<AdminUser>(`/superadmin/admins/${id}/deactivate/`),
+    postData<AdminUser>(`/superadmin/admins/${id}/deactivate`),
 
   permissionGroups: () =>
-    getData<Array<{ key: string; label: string }>>("/superadmin/permissions/"),
+    getData<Array<{ key: string; label: string }>>("/superadmin/permissions"),
 
   assignPermissions: (admin_id: number, permissions: Record<string, unknown>) =>
-    postData<AdminUser>("/superadmin/permissions/assign/", { admin_id, permissions }),
+    postData<AdminUser>("/superadmin/permissions/assign", { admin_id, permissions }),
 
   createBackup: () =>
     postData<{ id: string; status: string }>("/superadmin/backup/create/"),

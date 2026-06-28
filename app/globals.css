@@ -84,12 +84,32 @@ html[data-theme="dark"] {
   --color-foreground: var(--foreground);
   --color-panel: var(--panel);
   --color-panel-strong: var(--panel-strong);
+  --color-field: var(--field);
+  --color-field-strong: var(--field-strong);
+  --color-sidebar: var(--sidebar);
   --color-border: var(--border);
   --color-muted: var(--muted);
   --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-contrast: var(--primary-contrast);
+  --color-hover: var(--hover);
+  --color-hover-strong: var(--hover-strong);
+  --color-table-row-hover: var(--table-row-hover);
+  --color-attendance-empty: var(--attendance-empty);
+  --color-attendance-empty-hover: var(--attendance-empty-hover);
+  --color-attendance-present-cell: var(--attendance-present-cell);
+  --color-attendance-present-hover: var(--attendance-present-hover);
+  --color-attendance-absent-cell: var(--attendance-absent-cell);
+  --color-attendance-absent-hover: var(--attendance-absent-hover);
+  --color-attendance-pending-cell: var(--attendance-pending-cell);
+  --color-attendance-pending-hover: var(--attendance-pending-hover);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
+  --color-accent-sky: var(--accent-sky);
+  --color-accent-violet: var(--accent-violet);
+  --color-accent-rose: var(--accent-rose);
+  --color-accent-yellow: var(--accent-yellow);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -254,3 +274,63 @@ textarea {
 .report-card > * {
   position: relative;
 }
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-toast-in {
+  animation: toast-slide-in 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-toast-out {
+  animation: toast-slide-out 400ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-toast-progress {
+  animation: toast-progress 4200ms linear forwards;
+  transform-origin: left;
+}
+
+.animate-modal-in {
+  animation: modal-in 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

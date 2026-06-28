@@ -24,11 +24,11 @@ export function Input({
 
   return (
     <label className="grid gap-2 text-sm text-foreground" htmlFor={inputId}>
-      <span className={hideLabel ? "sr-only" : "text-xs font-semibold uppercase tracking-normal text-muted"}>{label}</span>
+      <span className={hideLabel ? "sr-only" : clsx("text-xs font-semibold uppercase tracking-normal", error ? "text-danger" : "text-muted")}>{label}</span>
       <input
         id={inputId}
         className={clsx(
-          "focus-ring h-11 rounded-lg border border-border bg-[color:var(--field)] px-3.5 text-sm text-foreground shadow-sm transition placeholder:text-muted hover:border-primary/45 hover:bg-[color:var(--hover)]",
+          "focus-ring h-11 rounded-lg border border-border bg-field px-3.5 text-sm text-foreground shadow-sm transition placeholder:text-muted hover:border-primary/45 hover:bg-hover",
           error && "border-danger",
           className,
         )}
@@ -84,6 +84,41 @@ export function DateInput({
   );
 }
 
+export function TimeInput({
+  label,
+  error,
+  helper,
+  hideLabel = false,
+  className,
+  id,
+  value,
+  onChange,
+  name,
+  required,
+  disabled,
+  placeholder = "Select time",
+  ...props
+}: FieldProps & Omit<InputHTMLAttributes<HTMLInputElement>, "type">) {
+  return (
+    <DatePicker
+      id={id}
+      name={name}
+      label={label}
+      value={value}
+      onChange={onChange}
+      required={required}
+      disabled={disabled}
+      placeholder={placeholder}
+      error={error}
+      helper={helper}
+      hideLabel={hideLabel}
+      className={className}
+      timeOnly={true}
+      {...props}
+    />
+  );
+}
+
 export function Textarea({
   label,
   error,
@@ -97,11 +132,11 @@ export function Textarea({
 
   return (
     <label className="grid gap-2 text-sm text-foreground" htmlFor={inputId}>
-      <span className={hideLabel ? "sr-only" : "text-xs font-semibold uppercase tracking-normal text-muted"}>{label}</span>
+      <span className={hideLabel ? "sr-only" : clsx("text-xs font-semibold uppercase tracking-normal", error ? "text-danger" : "text-muted")}>{label}</span>
       <textarea
         id={inputId}
         className={clsx(
-          "focus-ring min-h-24 rounded-lg border border-border bg-[color:var(--field)] px-3.5 py-2.5 text-sm text-foreground shadow-sm transition placeholder:text-muted hover:border-primary/45 hover:bg-[color:var(--hover)]",
+          "focus-ring min-h-24 rounded-lg border border-border bg-field px-3.5 py-2.5 text-sm text-foreground shadow-sm transition placeholder:text-muted hover:border-primary/45 hover:bg-hover",
           error && "border-danger",
           className,
         )}

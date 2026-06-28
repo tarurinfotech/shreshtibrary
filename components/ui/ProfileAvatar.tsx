@@ -90,19 +90,21 @@ export type AvatarShape = "circle" | "rounded" | "square";
 // ─── Status colours ───────────────────────────────────────────────────────────
 
 const statusDotColor: Record<string, string> = {
-  LIVE:      "bg-emerald-500 shadow-[0_0_6px_1px_rgba(16,185,129,0.55)]",
-  ACTIVE:    "bg-emerald-500 shadow-[0_0_6px_1px_rgba(16,185,129,0.55)]",
-  EXPIRED:   "bg-amber-400  shadow-[0_0_6px_1px_rgba(251,191,36,0.55)]",
-  SUSPENDED: "bg-rose-500   shadow-[0_0_6px_1px_rgba(244,63,94,0.55)]",
+  LIVE:      "bg-[#22c55e] shadow-[0_0_6px_1px_rgba(34,197,94,0.55)]",
+  ACTIVE:    "bg-[#22c55e] shadow-[0_0_6px_1px_rgba(34,197,94,0.55)]",
+  PENDING:   "bg-[#f59e0b] shadow-[0_0_6px_1px_rgba(245,158,11,0.55)]",
+  EXPIRED:   "bg-[#dc2626] shadow-[0_0_6px_1px_rgba(220,38,38,0.55)]",
+  SUSPENDED: "bg-[#f97316] shadow-[0_0_6px_1px_rgba(249,115,22,0.55)]",
   INACTIVE:  "bg-slate-400  shadow-none",
 };
 
 /** Gradient used for the initials / icon fallback */
 const statusGradient: Record<string, string> = {
-  LIVE:      "from-emerald-500/20 to-teal-500/20",
-  ACTIVE:    "from-emerald-500/20 to-teal-500/20",
-  EXPIRED:   "from-amber-400/20  to-orange-400/20",
-  SUSPENDED: "from-rose-500/20   to-pink-500/20",
+  LIVE:      "from-[#22c55e]/20 to-[#22c55e]/10",
+  ACTIVE:    "from-[#22c55e]/20 to-[#22c55e]/10",
+  PENDING:   "from-[#f59e0b]/20 to-[#f59e0b]/10",
+  EXPIRED:   "from-[#dc2626]/20 to-[#dc2626]/10",
+  SUSPENDED: "from-[#f97316]/20 to-[#f97316]/10",
   INACTIVE:  "from-slate-400/20  to-slate-500/20",
 };
 

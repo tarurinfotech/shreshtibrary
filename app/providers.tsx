@@ -24,9 +24,9 @@ export function AppProviders({
         defaultOptions: {
           queries: {
             retry: 1,
-            refetchOnWindowFocus: true, // Keep sync but less aggressive
-            staleTime: 60 * 1000, // 60 seconds for freshness (faster response)
-            gcTime: 10 * 60 * 1000, // 10 minutes
+            refetchOnWindowFocus: false, // Disabled to prevent excessive API calls on tab switch
+            staleTime: 5 * 60 * 1000, // 5 minutes for freshness (mutations invalidate cache)
+            gcTime: 15 * 60 * 1000, // 15 minutes
           },
         },
       }),

@@ -336,34 +336,71 @@ export default function LibraryPage() {
         <FormShell onSubmit={(event) => { event.preventDefault(); setFacilityErrors({}); facilityForm.id ? updateFacility.mutate() : createFacility.mutate(); }}>
           <Input label="Name" value={facilityForm.name ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, name: event.target.value }))} error={facilityErrors.name} required />
           <Input label="Icon Key" value={facilityForm.icon_key ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, icon_key: event.target.value }))} error={facilityErrors.icon_key} />
-          <FileInput 
-            label="Facility Image" 
-            accept="image/*" 
-            fileName={facilityImage ? `${facilityImage.name} selected` : null}
-            onChange={(event) => setFacilityImage(event.target.files?.[0] ?? null)} 
-          />
+          <div className="flex items-center gap-4">
+            {(facilityImage || facilityForm.image) && (
+              <div 
+                className="h-16 w-16 shrink-0 rounded-lg bg-panel-strong bg-cover bg-center border border-border"
+                style={{ backgroundImage: `url(${facilityImage ? URL.createObjectURL(facilityImage) : mediaUrl(facilityForm.image)})` }}
+              />
+            )}
+            <div className="flex-1">
+              <FileInput 
+                label="Facility Image" 
+                accept="image/*" 
+                fileName={facilityImage ? `${facilityImage.name} selected` : null}
+                onChange={(event) => setFacilityImage(event.target.files?.[0] ?? null)} 
+              />
+            </div>
+          </div>
           <Textarea label="Description" value={facilityForm.description ?? ""} onChange={(event) => setFacilityForm((current) => ({ ...current, description: event.target.value }))} error={facilityErrors.description} />
           <FormActions><Button type="submit" loading={createFacility.isPending || updateFacility.isPending} icon={<Save className="h-4 w-4" />}>{facilityForm.id ? "Save Changes" : "Add Facility"}</Button></FormActions>
         </FormShell>
       </Modal>
 
-      <Modal open={achieverOpen} title={achieverForm.id ? "Edit Achiever" : "Add Achiever"} onClose={() => setAchieverOpen(false)}>
+      <Modal open={achieverOpen} title={achieverForm.id ? "Edit Achiever" : "Add Achiever"} onClose={() => setAchieverOpen(false)} maxWidth="2xl">
         <FormShell onSubmit={(event) => { event.preventDefault(); setAchieverErrors({}); achieverForm.id ? updateAchiever.mutate() : createAchiever.mutate(); }}>
-          <FormGrid columns={2}>
-            <Input label="Name" value={achieverForm.name ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, name: event.target.value }))} error={achieverErrors.name} required />
-            <Input label="Goal" value={achieverForm.goal ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, goal: event.target.value }))} error={achieverErrors.goal} />
-            <Input label="Year" type="number" value={achieverForm.year ?? new Date().getFullYear()} onChange={(event) => setAchieverForm((current) => ({ ...current, year: Number(event.target.value) }))} error={achieverErrors.year} />
-            <Input label="Order" type="number" value={achieverForm.order ?? 0} onChange={(event) => setAchieverForm((current) => ({ ...current, order: Number(event.target.value) }))} error={achieverErrors.order} />
-          </FormGrid>
-          <Textarea label="Achievement" value={achieverForm.achievement ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, achievement: event.target.value }))} error={achieverErrors.achievement} required />
-          <FileInput
-            accept="image/*"
-            label="Photo"
-            fileName={achieverPhoto ? `${achieverPhoto.name} selected` : null}
-            helper="Optional image, compressed on upload."
-            onChange={(event) => setAchieverPhoto(event.target.files?.[0] ?? null)}
-          />
-          <FormActions><Button type="submit" loading={createAchiever.isPending || updateAchiever.isPending} icon={<Save className="h-4 w-4" />}>{achieverForm.id ? "Save Changes" : "Add Achiever"}</Button></FormActions>
+          <div className="flex flex-col gap-8 sm:flex-row">
+            {/* Left side: Avatar */}
+            <div className="shrink-0 flex flex-col items-center">
+              <div className="relative">
+                <div 
+                  className="flex h-40 w-40 sm:h-52 sm:w-52 items-center justify-center overflow-hidden rounded-[24px] bg-panel-strong bg-cover bg-center text-muted shadow-inner border border-border/50"
+                  style={{ backgroundImage: (achieverPhoto || achieverForm.photo) ? `url(${achieverPhoto ? URL.createObjectURL(achieverPhoto) : mediaUrl(achieverForm.photo)})` : undefined }}
+                >
+                  {!(achieverPhoto || achieverForm.photo) && <ImagePlus className="h-10 w-10 opacity-40" />}
+                </div>
+                {/* Edit Button Overlay */}
+                <label className="absolute -bottom-3 -right-3 flex h-12 w-12 cursor-pointer items-center justify-center rounded-full bg-panel shadow-[0_2px_10px_rgba(0,0,0,0.1)] border border-border text-foreground hover:bg-panel-strong transition-transform hover:scale-105">
+                  <span className="sr-only">Upload Photo</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                  <input type="file" className="hidden" accept="image/*" onChange={(event) => setAchieverPhoto(event.target.files?.[0] ?? null)} />
+                </label>
+              </div>
+            </div>
+
+            {/* Right side: Fields */}
+            <div className="flex-1 space-y-5">
+              <FormGrid columns={2}>
+                <Input label="Name" value={achieverForm.name ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, name: event.target.value }))} error={achieverErrors.name} required />
+                <Input label="Goal (Exam)" value={achieverForm.goal ?? ""} onChange={(event) => setAchieverForm((current) => ({ ...current, goal: event.target.value }))} error={achieverErrors.goal} />
+                <Input label="Year" type="number" value={achieverForm.year ?? new Date().getFullYear()} onChange={(event) => setAchieverForm((current) => ({ ...current, year: Number(event.target.value) }))} error={achieverErrors.year} />
+                <Input label="Order" type="number" value={achieverForm.order ?? 0} onChange={(event) => setAchieverForm((current) => ({ ...current, order: Number(event.target.value) }))} error={achieverErrors.order} />
+              </FormGrid>
+              <Textarea 
+                label="Achievement (About)" 
+                value={achieverForm.achievement ?? ""} 
+                onChange={(event) => setAchieverForm((current) => ({ ...current, achievement: event.target.value }))} 
+                error={achieverErrors.achievement} 
+                required 
+                className="min-h-[110px]"
+              />
+            </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end gap-3 pt-4">
+            <Button type="button" variant="secondary" className="px-6 rounded-xl" onClick={() => setAchieverOpen(false)}>Cancel</Button>
+            <Button type="submit" className="px-8 rounded-xl" loading={createAchiever.isPending || updateAchiever.isPending}>{achieverForm.id ? "Save" : "Add"}</Button>
+          </div>
         </FormShell>
       </Modal>
     </>

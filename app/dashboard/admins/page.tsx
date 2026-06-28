@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatabaseBackup, Edit3, Plus, Power, ShieldCheck, Trash2 } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -8,46 +8,27 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/Dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EntityListItem } from "@/components/ui/EntityListItem";
-import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";
 import { MetricTile } from "@/components/ui/MetricTile";
-import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { Select } from "@/components/ui/Select";
 import { EmptyState } from "@/components/ui/StateBlocks";
-import { getErrorMessage, getFieldErrors } from "@/lib/api";
+import { getErrorMessage } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate, formatDateTime, fullName } from "@/lib/format";
 import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import type { ActivityLogItem, AdminUser } from "@/types/api";
-
-type AdminForm = Partial<AdminUser> & { password: string };
-
-const emptyAdmin: AdminForm = {
-  username: "",
-  first_name: "",
-  last_name: "",
-  email: "",
-  mobile: "",
-  role: "admin",
-  is_active: true,
-  permissions: {},
-  password: "",
-};
+import { AdminEditForm } from "@/components/features/admins/AdminEditForm";
 
 export default function AdminsPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const pushToast = useToastStore((state) => state.pushToast);
+  
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<AdminUser | null>(null);
-  const [form, setForm] = useState<AdminForm>(emptyAdmin);
   const [removeTarget, setRemoveTarget] = useState<AdminUser | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const admins = useQuery({ queryKey: ["admins"], queryFn: endpoints.admins });
-  const permissions = useQuery({ queryKey: ["permission-groups"], queryFn: endpoints.permissionGroups });
   const backups = useQuery({ queryKey: ["backups"], queryFn: endpoints.backups });
   const health = useQuery({ queryKey: ["system-health"], queryFn: endpoints.systemHealth });
   const activity = useQuery({ queryKey: ["super-activity-log"], queryFn: endpoints.superActivityLog });
@@ -58,21 +39,6 @@ export default function AdminsPage() {
     queryClient.invalidateQueries({ queryKey: ["super-activity-log"] });
     queryClient.invalidateQueries({ queryKey: ["system-health"] });
   };
-
-  const save = useMutation({
-    mutationFn: () => selected ? endpoints.updateAdmin(selected.id, form) : endpoints.addAdmin(form),
-    onSuccess: () => {
-      invalidate();
-      setForm(emptyAdmin);
-      setSelected(null);
-      setOpen(false);
-      pushToast({ kind: "success", title: "Admin saved" });
-    },
-    onError: (error) => {
-      setFieldErrors(getFieldErrors(error));
-      pushToast({ kind: "error", title: "Save failed", message: getErrorMessage(error) });
-    },
-  });
 
   const remove = useMutation({
     mutationFn: (id: number) => endpoints.removeAdmin(id),
@@ -93,15 +59,6 @@ export default function AdminsPage() {
     onError: (error) => pushToast({ kind: "error", title: "Deactivate failed", message: getErrorMessage(error) }),
   });
 
-  const assignPermissions = useMutation({
-    mutationFn: ({ id, key }: { id: number; key: string }) => endpoints.assignPermissions(id, { [key]: true }),
-    onSuccess: () => {
-      invalidate();
-      pushToast({ kind: "success", title: "Permissions assigned" });
-    },
-    onError: (error) => pushToast({ kind: "error", title: "Permissions failed", message: getErrorMessage(error) }),
-  });
-
   const createBackup = useMutation({
     mutationFn: endpoints.createBackup,
     onSuccess: () => {
@@ -119,15 +76,7 @@ export default function AdminsPage() {
 
   const openAdmin = (admin?: AdminUser) => {
     setSelected(admin ?? null);
-    setForm(admin ? { ...admin, password: "" } : emptyAdmin);
-    setFieldErrors({});
     setOpen(true);
-  };
-
-  const submit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setFieldErrors({});
-    save.mutate();
   };
 
   const adminColumns: Array<DataTableColumn<AdminUser>> = [
@@ -136,7 +85,7 @@ export default function AdminsPage() {
       header: "Admin",
       cell: (admin) => (
         <>
-          <div className="font-medium">{fullName(admin.first_name, admin.last_name)}</div>
+          <div className="font-medium">{fullName(admin.first_name, admin.last_name, admin.username)}</div>
           <div className="text-xs text-muted">@{admin.username}</div>
         </>
       ),
@@ -197,7 +146,7 @@ export default function AdminsPage() {
         loading={admins.isLoading}
         error={admins.error ? "Unable to load admins." : false}
         emptyTitle="No admins found"
-        rowClassName="table-row-hover"
+        rowClassName="hover:bg-table-row-hover transition-colors"
       />
 
       <section className="grid gap-5 xl:grid-cols-2">
@@ -235,7 +184,14 @@ export default function AdminsPage() {
                 key={backup.id}
                 title={backup.id}
                 meta={formatDateTime(backup.created_at)}
-                actions={<Button size="sm" variant="secondary" loading={restoreBackup.isPending} onClick={() => restoreBackup.mutate(backup.id)}>Restore</Button>}
+                actions={
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="secondary" loading={restoreBackup.isPending && restoreBackup.variables === backup.id} onClick={() => restoreBackup.mutate(backup.id)}>Restore</Button>
+                    <a href={`http://localhost:5247/api/v1/superadmin/backup/${backup.id}/download`} download>
+                      <Button size="sm" variant="outline" className="px-3" icon={<DatabaseBackup className="h-4 w-4" />}>Download</Button>
+                    </a>
+                  </div>
+                }
               />
             ))}
             {(backups.data ?? []).length === 0 ? <EmptyState title="No backups configured" /> : null}
@@ -255,70 +211,7 @@ export default function AdminsPage() {
         />
       </section>
 
-      <Modal open={open} title={selected ? "Edit Admin" : "Add Admin"} onClose={() => setOpen(false)}>
-        <FormShell onSubmit={submit}>
-          <FormGrid columns={2}>
-            <Input label="Username" value={form.username ?? ""} onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} error={fieldErrors.username} required />
-            <Input label="Mobile" value={form.mobile ?? ""} onChange={(event) => setForm((current) => ({ ...current, mobile: event.target.value }))} error={fieldErrors.mobile} required />
-            <Input label="First Name" value={form.first_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} error={fieldErrors.first_name} />
-            <Input label="Last Name" value={form.last_name ?? ""} onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} error={fieldErrors.last_name} />
-            <Input label="Email" type="email" value={form.email ?? ""} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} error={fieldErrors.email} />
-            <Input label={selected ? "New Password" : "Password"} type="password" value={form.password} onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} error={fieldErrors.password} required={!selected} />
-            <Select
-              label="Role"
-              value={form.role ?? "admin"}
-              onChange={(v) => setForm((current) => ({ ...current, role: v as AdminUser["role"] }))}
-              disabled={selected?.role === "super_admin"}
-              options={[
-                { value: "admin", label: "Admin" },
-                ...(selected?.role === "super_admin" ? [{ value: "super_admin", label: "Super Admin" }] : []),
-              ]}
-            />
-            <Select
-              label="Status"
-              value={form.is_active ? "active" : "inactive"}
-              onChange={(v) => setForm((current) => ({ ...current, is_active: v === "active" }))}
-              options={[
-                { value: "active", label: "Active" },
-                { value: "inactive", label: "Inactive" },
-              ]}
-            />
-          </FormGrid>
-
-          <div className="mt-6 border-t border-border pt-4">
-            <h3 className="mb-3 font-semibold text-sm">Assign Permissions</h3>
-            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-              {(permissions.data ?? []).map((perm) => (
-                <label key={perm.key} className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(form.permissions?.[perm.key])}
-                    disabled={form.role === "super_admin"}
-                    onChange={(e) =>
-                      setForm((current) => {
-                        const newPerms = { ...(current.permissions || {}) };
-                        if (e.target.checked) {
-                          newPerms[perm.key] = true;
-                        } else {
-                          delete newPerms[perm.key];
-                        }
-                        return { ...current, permissions: newPerms };
-                      })
-                    }
-                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary bg-panel"
-                  />
-                  <span className="text-sm select-none">{perm.label}</span>
-                </label>
-              ))}
-              {(permissions.data ?? []).length === 0 ? <span className="text-sm text-muted">No permissions available.</span> : null}
-            </div>
-          </div>
-
-          <FormActions className="mt-6">
-            <Button type="submit" loading={save.isPending} icon={<Plus className="h-4 w-4" />}>Save Admin</Button>
-          </FormActions>
-        </FormShell>
-      </Modal>
+      <AdminEditForm open={open} admin={selected} onClose={() => setOpen(false)} />
 
       <ConfirmDialog
         open={Boolean(removeTarget)}
