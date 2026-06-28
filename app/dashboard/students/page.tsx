@@ -244,7 +244,6 @@ export default function StudentsPage() {
       <PageHeader
         title="Students"
         eyebrow="Profiles"
-        description="Manage all student profiles, memberships and status"
         actions={
           <div className="flex items-center gap-3">
             <Button

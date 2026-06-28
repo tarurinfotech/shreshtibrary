@@ -357,7 +357,7 @@ export default function LibraryPage() {
         </FormShell>
       </Modal>
 
-      <Modal open={achieverOpen} title={achieverForm.id ? "Edit Achiever" : "Add Achiever"} onClose={() => setAchieverOpen(false)} maxWidth="2xl">
+      <Modal open={achieverOpen} title={achieverForm.id ? "Edit Achiever" : "Add Achiever"} onClose={() => setAchieverOpen(false)} className="max-w-2xl">
         <FormShell onSubmit={(event) => { event.preventDefault(); setAchieverErrors({}); achieverForm.id ? updateAchiever.mutate() : createAchiever.mutate(); }}>
           <div className="flex flex-col gap-8 sm:flex-row">
             {/* Left side: Avatar */}

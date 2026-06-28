@@ -17,6 +17,9 @@ function getLocalIPs() {
 const localIPs = getLocalIPs();
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {

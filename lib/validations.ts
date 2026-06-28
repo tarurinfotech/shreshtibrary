@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const studentPayloadSchema = z.object({
   first_name: z
-    .string({ required_error: "First name is required" })
+    .string()
     .min(1, "First name is required")
     .max(50, "First name cannot exceed 50 characters"),
   middle_name: z.string().max(50, "Middle name cannot exceed 50 characters").optional().or(z.literal("")).nullable(),
@@ -38,9 +38,9 @@ export const studentPayloadSchema = z.object({
 });
 
 export const seatCreateSchema = z.object({
-  floor: z.string({ required_error: "Floor is required." }).min(1, "Floor is required."),
-  row: z.string({ required_error: "Row is required." }).min(1, "Row is required."),
-  seat_number: z.string({ required_error: "Seat number is required." }).min(1, "Seat number is required."),
+  floor: z.string().min(1, "Floor is required."),
+  row: z.string().min(1, "Row is required."),
+  seat_number: z.string().min(1, "Seat number is required."),
   status: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
   is_reserved_for_girls: z.boolean().optional().nullable(),
@@ -48,7 +48,7 @@ export const seatCreateSchema = z.object({
 });
 
 export const planCreateSchema = z.object({
-  name: z.string({ required_error: "Name is required." }).min(1, "Name is required.").max(100, "Name cannot exceed 100 characters."),
+  name: z.string().min(1, "Name is required.").max(100, "Name cannot exceed 100 characters."),
   duration_months: z.number().min(0, "Duration in months must be between 0 and 120.").max(120, "Duration in months must be between 0 and 120."),
   duration_days: z.number().min(0, "Duration in days must be between 0 and 3650.").max(3650, "Duration in days must be between 0 and 3650.").optional().nullable(),
   price: z.number().min(0, "Price must be between 0 and 1000000.").max(1000000, "Price must be between 0 and 1000000."),
@@ -62,8 +62,8 @@ export const planCreateSchema = z.object({
 export function getZodFieldErrors(error: z.ZodError): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
   for (const [key, value] of Object.entries(error.flatten().fieldErrors)) {
-    if (value && value.length > 0) {
-      fieldErrors[key] = value[0];
+    if (Array.isArray(value) && value.length > 0) {
+      fieldErrors[key] = String(value[0]);
     }
   }
   return fieldErrors;

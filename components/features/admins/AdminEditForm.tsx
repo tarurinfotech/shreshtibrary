@@ -51,7 +51,7 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
   }, [admin, open]);
 
   const save = useMutation({
-    mutationFn: () => admin ? endpoints.updateAdmin(admin.id, form) : endpoints.addAdmin(form),
+    mutationFn: () => admin ? endpoints.updateAdmin(admin.id, form) : endpoints.addAdmin({ ...form, password: form.password || "" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admins"] });
       queryClient.invalidateQueries({ queryKey: ["super-activity-log"] });

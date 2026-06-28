@@ -533,7 +533,7 @@ export default function NotificationsPage() {
                       </div>
                       <div className="p-3 border-t border-border/80 bg-panel text-sm font-semibold flex justify-between items-center">
                         <span className="text-muted-foreground ml-2">Selected Students</span>
-                        <Badge variant="primary" className="rounded-full px-3 py-1 font-bold">{selectedStudentIds.length}</Badge>
+                        <Badge variant="info" className="rounded-full px-3 py-1 font-bold">{selectedStudentIds.length}</Badge>
                       </div>
                     </div>
                   )}
@@ -615,7 +615,7 @@ export default function NotificationsPage() {
                     <Button 
                       type="submit" 
                       variant="primary" 
-                      size="lg"
+                      size="md"
                       className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-2xl px-8 h-12 text-[15px] font-bold"
                       loading={schedule.isPending} 
                       icon={<CalendarPlus className="h-5 w-5" />} 
@@ -627,7 +627,7 @@ export default function NotificationsPage() {
                     <Button 
                       type="submit" 
                       variant="primary" 
-                      size="lg"
+                      size="md"
                       className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-2xl px-8 h-12 text-[15px] font-bold"
                       loading={send.isPending} 
                       icon={<Send className="h-5 w-5" />} 
@@ -644,7 +644,7 @@ export default function NotificationsPage() {
             <section className="sticky top-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="font-bold text-xl text-foreground">Live Preview</h2>
-                <Badge variant="outline" className="text-xs font-bold rounded-full px-3 py-1 bg-background/50 border-border/80">Mobile View</Badge>
+                <Badge variant="neutral" className="text-xs font-bold rounded-full px-3 py-1 bg-background/50 border-border/80">Mobile View</Badge>
               </div>
               <MobilePreview />
             </section>

@@ -44,7 +44,7 @@ export function ConfirmDialog({
           <img src="/trash-illustration.svg" alt="Warning" className="h-28 w-28 drop-shadow-md" />
         ) : (
           <div className={clsx("flex h-16 w-16 items-center justify-center rounded-full bg-background border shadow-sm", iconColor)}>
-            <Icon className="h-8 w-8" />
+            {Icon && <Icon className="h-8 w-8" />}
           </div>
         )
       }

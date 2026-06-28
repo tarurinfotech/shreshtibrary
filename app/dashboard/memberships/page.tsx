@@ -26,7 +26,7 @@ const emptyPlan: PlanUpdatePayload = {
   name: "",
   duration_months: 1,
   duration_days: 30,
-  price: 0,
+  price: "0",
   benefits: [],
   description: "",
   is_active: true,
@@ -118,7 +118,7 @@ export default function MembershipsPage() {
       name: plan.name,
       duration_months: plan.duration_months,
       duration_days: plan.duration_days,
-      price: plan.price,
+      price: String(plan.price),
       benefits: Array.isArray(plan.benefits) ? plan.benefits : (typeof plan.benefits === 'string' && plan.benefits ? (plan.benefits as string).split(',').map(s => s.trim()).filter(Boolean) : []),
       description: plan.description,
       is_active: plan.is_active,
@@ -249,7 +249,7 @@ export default function MembershipsPage() {
           <FormGrid columns={2}>
             <Input label="Duration Months" type="number" min={1} value={planForm.duration_months ?? 1} onChange={(event) => setPlanForm((current) => ({ ...current, duration_months: Number(event.target.value), duration_days: Number(event.target.value) * 30 }))} required />
             <Input label="Duration Days" type="number" min={1} value={planForm.duration_days ?? 30} onChange={(event) => setPlanForm((current) => ({ ...current, duration_days: Number(event.target.value) }))} required />
-            <Input label="Price" type="number" min={0} step="0.01" value={planForm.price ?? ""} onChange={(event) => setPlanForm((current) => ({ ...current, price: event.target.value ? Number(event.target.value) : 0 }))} required />
+            <Input label="Price" type="number" min={0} step="0.01" value={planForm.price ?? ""} onChange={(event) => setPlanForm((current) => ({ ...current, price: event.target.value ? String(event.target.value) : "0" }))} required />
             <Input label="Sort Order" type="number" value={planForm.sort_order ?? 0} onChange={(event) => setPlanForm((current) => ({ ...current, sort_order: Number(event.target.value) }))} />
           </FormGrid>
           <Textarea label="Description" value={planForm.description ?? ""} onChange={(event) => setPlanForm((current) => ({ ...current, description: event.target.value }))} />

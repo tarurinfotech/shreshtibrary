@@ -12,6 +12,7 @@ import { MetricTile } from "@/components/ui/MetricTile";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/StateBlocks";
 import { getErrorMessage } from "@/lib/api";
+import { API_BASE_URL } from "@/lib/baseApi";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate, formatDateTime, fullName } from "@/lib/format";
 import { useAuthStore } from "@/store/authStore";
@@ -187,8 +188,8 @@ export default function AdminsPage() {
                 actions={
                   <div className="flex gap-2">
                     <Button size="sm" variant="secondary" loading={restoreBackup.isPending && restoreBackup.variables === backup.id} onClick={() => restoreBackup.mutate(backup.id)}>Restore</Button>
-                    <a href={`http://localhost:5247/api/v1/superadmin/backup/${backup.id}/download`} download>
-                      <Button size="sm" variant="outline" className="px-3" icon={<DatabaseBackup className="h-4 w-4" />}>Download</Button>
+                    <a href={`${API_BASE_URL}/superadmin/backup/${backup.id}/download`} download>
+                      <Button size="sm" variant="secondary" className="px-3" icon={<DatabaseBackup className="h-4 w-4" />}>Download</Button>
                     </a>
                   </div>
                 }
