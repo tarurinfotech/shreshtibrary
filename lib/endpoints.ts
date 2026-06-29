@@ -428,9 +428,9 @@ export const endpoints = {
   refundPayment: (id: number, payload: { refund_amount?: string | number; refund_reason?: string }) =>
     postData<PaymentRecord>(`/admin/payments/${id}/refund/`, payload),
 
-  downloadReceipt: (id: number) => downloadFile(`/admin/payments/${id}/receipt/`, `receipt-${id}.pdf`),
+  downloadReceipt: (id: number) => downloadFile(`/admin/payments/${id}/receipt`, `receipt-${id}.pdf`),
 
-  sendReceipt: (id: number) => postData<{ message: string }>(`/admin/payments/${id}/send-receipt/`),
+  sendReceipt: (id: number) => postData<{ message: string }>(`/admin/payments/${id}/send-receipt`),
 
   paymentSummary: () =>
     getData<{
