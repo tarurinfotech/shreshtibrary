@@ -187,7 +187,15 @@ export default function PaymentsPage() {
       cell: (payment) => (
         <>
           <div>{payment.plan_name ?? "—"}</div>
-          <div className="text-xs text-muted">{payment.method ?? payment.payment_mode}</div>
+          <div className="text-xs text-muted">
+            {payment.method ?? payment.payment_mode}
+            {payment.plan_start && payment.plan_end && (
+              <>
+                {" • "}
+                {formatDate(payment.plan_start)} - {formatDate(payment.plan_end)}
+              </>
+            )}
+          </div>
         </>
       ),
     },

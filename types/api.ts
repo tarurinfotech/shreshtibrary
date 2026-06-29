@@ -175,6 +175,8 @@ export type PaymentRecord = {
   student_name: string;
   membership?: number | null;
   plan_name?: string | null;
+  plan_start?: string | null;
+  plan_end?: string | null;
   amount: string;
   status: PaymentStatus;
   method?: string | null;
