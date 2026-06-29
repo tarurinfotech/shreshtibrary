@@ -202,13 +202,23 @@ export default function PaymentsPage() {
           <div className="text-xs text-muted">
             {payment.method ?? payment.payment_mode}
           </div>
-          {payment.plan_start && payment.plan_end && (
-            <div className="flex flex-col mt-0.5 text-xs text-muted">
-              <span><span className="font-medium text-foreground/80">Start:</span> {formatDate(payment.plan_start)}</span>
-              <span><span className="font-medium text-foreground/80">End:</span> {formatDate(payment.plan_end)}</span>
-            </div>
-          )}
         </>
+      ),
+    },
+    {
+      id: "plan_dates",
+      header: "Plan Dates",
+      cell: (payment) => (
+        <div className="flex flex-col gap-0.5 text-xs text-muted min-w-[130px]">
+          {payment.plan_start && payment.plan_end ? (
+            <>
+              <div><span className="font-medium text-foreground/80">Start:</span> {formatDate(payment.plan_start)}</div>
+              <div><span className="font-medium text-foreground/80">End:</span> {formatDate(payment.plan_end)}</div>
+            </>
+          ) : (
+            <span className="italic">No active plan</span>
+          )}
+        </div>
       ),
     },
     { id: "amount", header: "Amount", cell: (payment) => formatMoney(payment.amount) },
