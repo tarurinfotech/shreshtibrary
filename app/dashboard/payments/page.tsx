@@ -226,8 +226,6 @@ export default function PaymentsPage() {
       id: "status",
       header: "Status",
       cell: (payment) => <Badge variant={statusVariant(payment.status)}>{payment.status}</Badge>,
-    },
-    { id: "date", header: "Date", cell: (payment) => formatDate(payment.payment_date) },
     {
       id: "actions",
       header: "Actions",
