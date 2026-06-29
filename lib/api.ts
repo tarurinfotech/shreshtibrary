@@ -153,7 +153,13 @@ export async function downloadFile(url: string, filename: string, params?: Recor
     anchor.click();
     window.URL.revokeObjectURL(blobUrl);
   } catch (error) {
-    // Failed to download file
+    console.error("Download failed:", error);
+    const { useToastStore } = await import("@/store/toastStore");
+    useToastStore.getState().pushToast({ 
+      kind: "error", 
+      title: "Download Failed", 
+      message: getErrorMessage(error) 
+    });
   }
 }
 
