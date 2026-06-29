@@ -189,13 +189,13 @@ export default function PaymentsPage() {
           <div>{payment.plan_name ?? "—"}</div>
           <div className="text-xs text-muted">
             {payment.method ?? payment.payment_mode}
-            {payment.plan_start && payment.plan_end && (
-              <>
-                {" • "}
-                {formatDate(payment.plan_start)} - {formatDate(payment.plan_end)}
-              </>
-            )}
           </div>
+          {payment.plan_start && payment.plan_end && (
+            <div className="flex flex-col mt-0.5 text-xs text-muted">
+              <span><span className="font-medium text-foreground/80">Start:</span> {formatDate(payment.plan_start)}</span>
+              <span><span className="font-medium text-foreground/80">End:</span> {formatDate(payment.plan_end)}</span>
+            </div>
+          )}
         </>
       ),
     },
