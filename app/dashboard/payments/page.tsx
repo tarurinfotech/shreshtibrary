@@ -250,15 +250,7 @@ export default function PaymentsPage() {
           >
             Receipt
           </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            loading={sendReceipt.isPending}
-            icon={<Mail className="h-4 w-4" />}
-            onClick={() => sendReceipt.mutate(payment.id)}
-          >
-            Email Receipt
-          </Button>
+
           <Button
             variant="danger"
             size="sm"
