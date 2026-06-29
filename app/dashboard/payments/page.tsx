@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { Select } from "@/components/ui/Select";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints, type PaymentPayload } from "@/lib/endpoints";
@@ -175,10 +176,21 @@ export default function PaymentsPage() {
       id: "student",
       header: "Student",
       cell: (payment) => (
-        <>
-          <div className="font-medium">{payment.student_name}</div>
-          <div className="text-xs text-muted">{payment.payment_id ?? payment.transaction_ref ?? "No reference"}</div>
-        </>
+        <div className="flex items-center gap-3">
+          <ProfileAvatar
+            src={payment.student_profile_photo}
+            name={payment.student_name}
+            size="sm"
+          />
+          <div className="min-w-0">
+            <div className="truncate font-medium text-foreground">
+              {payment.student_name}
+            </div>
+            <div className="mt-0.5 truncate text-[11px] text-muted">
+              {payment.payment_id ?? payment.transaction_ref ?? "No reference"}
+            </div>
+          </div>
+        </div>
       ),
     },
     {

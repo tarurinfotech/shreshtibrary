@@ -173,6 +173,7 @@ export type PaymentRecord = {
   payment_id?: string | null;
   student: number;
   student_name: string;
+  student_profile_photo?: string | null;
   membership?: number | null;
   plan_name?: string | null;
   plan_start?: string | null;
