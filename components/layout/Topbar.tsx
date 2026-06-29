@@ -24,23 +24,20 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
   const alertCount = useMemo(
     () => {
       try {
-        return (alerts.data ?? []).reduce((sum, item) => sum + item.count, 0);
+        return (alerts.data ?? []).reduce((sum: any, item: any) => sum + item.count, 0);
       } catch (e) {
-        console.error("DEBUG: Reduce failed on alerts.data:", alerts.data);
         return 0;
       }
     },
     [alerts.data],
   );
   
-  console.log("DEBUG: inbox.data is", inbox.data, "typeof:", typeof inbox.data, "isArray:", Array.isArray(inbox.data));
   
   const unreadInboxCount = useMemo(
     () => {
       try {
-        return (inbox.data ?? []).filter(n => !n.is_read).length;
+        return (inbox.data ?? []).filter((n: any) => !n.is_read).length;
       } catch (e) {
-        console.error("DEBUG: Filter failed on inbox.data:", inbox.data);
         return 0;
       }
     },
