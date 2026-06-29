@@ -299,7 +299,7 @@ export const endpoints = {
       "/admin/students/counts/",
     ),
 
-  exportStudents: (format = "xlsx") =>
+  exportStudents: (format = "csv") =>
     downloadFile("/admin/students/export/", `students.${format}`, { format }),
 
   // Plans and Memberships
@@ -429,6 +429,8 @@ export const endpoints = {
     postData<PaymentRecord>(`/admin/payments/${id}/refund/`, payload),
 
   downloadReceipt: (id: number) => downloadFile(`/admin/payments/${id}/receipt/`, `receipt-${id}.pdf`),
+
+  sendReceipt: (id: number) => postData<{ message: string }>(`/admin/payments/${id}/send-receipt/`),
 
   paymentSummary: () =>
     getData<{

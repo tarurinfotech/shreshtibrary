@@ -139,6 +139,8 @@ export type StudentProfile = {
   created_at?: string | null;
   updated_at?: string | null;
   joining_date?: string | null;
+  membership_start_date?: string | null;
+  membership_end_date?: string | null;
   attendance_status?: string;
 };
 

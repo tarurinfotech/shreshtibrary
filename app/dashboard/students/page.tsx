@@ -167,6 +167,22 @@ export default function StudentsPage() {
       ),
     },
     {
+      id: "plan_dates",
+      header: "Plan Dates",
+      cell: (student) => (
+        <div className="flex flex-col gap-0.5 text-xs text-muted min-w-[130px]">
+          {student.membership_start_date && student.membership_end_date ? (
+            <>
+              <div><span className="font-medium text-foreground/80">Start:</span> {student.membership_start_date}</div>
+              <div><span className="font-medium text-foreground/80">End:</span> {student.membership_end_date}</div>
+            </>
+          ) : (
+            <span className="italic">No active plan</span>
+          )}
+        </div>
+      ),
+    },
+    {
       id: "status",
       header: "Status",
       cell: (student) => (

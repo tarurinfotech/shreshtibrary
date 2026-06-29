@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, Download, Plus, RotateCcw, AlertTriangle } from "lucide-react";
+import { CheckCircle2, Download, Plus, RotateCcw, AlertTriangle, Mail } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { PromptDialog } from "@/components/ui/Dialog";
@@ -121,6 +121,14 @@ export default function PaymentsPage() {
     onError: (error) => pushToast({ kind: "error", title: "Refund failed", message: getErrorMessage(error) }),
   });
 
+  const sendReceipt = useMutation({
+    mutationFn: (id: number) => endpoints.sendReceipt(id),
+    onSuccess: () => {
+      pushToast({ kind: "success", title: "Receipt Sent", message: "Receipt has been emailed successfully." });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Send failed", message: getErrorMessage(error) }),
+  });
+
   // ── Helpers ───────────────────────────────────────────────────────────────
   const filtered = payments.data?.data ?? [];
 
@@ -212,6 +220,15 @@ export default function PaymentsPage() {
             onClick={() => endpoints.downloadReceipt(payment.id)}
           >
             Receipt
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={sendReceipt.isPending}
+            icon={<Mail className="h-4 w-4" />}
+            onClick={() => sendReceipt.mutate(payment.id)}
+          >
+            Email Receipt
           </Button>
           <Button
             variant="danger"
