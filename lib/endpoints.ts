@@ -596,8 +596,8 @@ export const endpoints = {
 
   seatReport: () => getData<SeatReport>("/reports/seats/"),
 
-  exportReport: (kind: string, format = "xlsx") =>
-    downloadFile(`/reports/${kind}/export/`, `${kind}.${format}`, { format }),
+  exportReport: (kind: string, format = "csv") =>
+    downloadFile(`/reports/export/${kind}/`, `${kind}.${format}`, { format }),
 
   // Super Admin
   admins: () => getData<AdminUser[]>("/superadmin/admins"),

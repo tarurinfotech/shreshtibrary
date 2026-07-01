@@ -41,7 +41,7 @@ export function MetricCard({
   value: string;
   helper: string;
   tone: string;
-  ring: number;
+  ring?: number;
   delay: number;
 }) {
   return (
@@ -52,7 +52,7 @@ export function MetricCard({
           <p className="text-xl font-semibold">{value}</p>
           <p className="mt-1 text-xs text-muted">{helper}</p>
         </div>
-        <ProgressRing value={ring} />
+        {ring !== undefined && <ProgressRing value={ring} />}
       </div>
     </ReportCard>
   );

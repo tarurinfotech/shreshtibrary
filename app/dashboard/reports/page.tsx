@@ -110,8 +110,9 @@ export default function ReportsPage() {
   const totalRevenue = Number(dashboardStats?.payments?.month_amount || 0);
   const verifiedRevenue = totalRevenue; // month_amount is already verified revenue in backend
 
-  const attendanceRate = dashboardStats?.attendance?.today_total 
-    ? Math.round((dashboardStats.attendance.today_present / dashboardStats.attendance.today_total) * 100) 
+  const todayAttendanceTotal = (dashboardStats?.attendance?.today_present || 0) + (dashboardStats?.attendance?.today_absent || 0);
+  const attendanceRate = todayAttendanceTotal > 0
+    ? Math.round(((dashboardStats?.attendance?.today_present || 0) / todayAttendanceTotal) * 100)
     : 0;
 
   const occupiedSeatRate = dashboardStats?.seats?.total 
@@ -135,7 +136,7 @@ export default function ReportsPage() {
               ...(canPlans ? ["memberships"] : [])
             ].map((kind) => (
               <Button key={kind} variant="secondary" icon={<Download className="h-4 w-4" />} onClick={() => endpoints.exportReport(kind)}>
-                {kind}
+                {kind.charAt(0).toUpperCase() + kind.slice(1)}
               </Button>
             ))}
           </div>
@@ -181,7 +182,6 @@ export default function ReportsPage() {
           value={formatMoney(totalRevenue)}
           helper={`${dashboardStats?.payments?.month_count || 0} successful payments`}
           tone="text-emerald-600 bg-emerald-500/15"
-          ring={100}
         />}
         {canSeats && <MetricCard
           delay={2}
