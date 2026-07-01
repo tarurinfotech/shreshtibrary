@@ -528,21 +528,15 @@ export const endpoints = {
   libraryInfo: () => getData<LibraryInfo>("/admin/library/info/"),
 
   updateLibraryInfo: (payload: Partial<LibraryInfo>, featureImage?: File | null) =>
-    featureImage
-      ? postMultipart<LibraryInfo>("/admin/library/info/", toFormData(payload, { feature_image: featureImage }))
-      : postData<LibraryInfo>("/admin/library/info/", payload),
+    postMultipart<LibraryInfo>("/admin/library/info/", toFormData(payload, { feature_image: featureImage })),
 
   facilities: () => getData<Facility[]>("/admin/library/facilities/"),
 
   createFacility: (payload: Partial<Facility>, image?: File | null) =>
-    image
-      ? postMultipart<Facility>("/admin/library/facilities/", toFormData(payload, { image }))
-      : postData<Facility>("/admin/library/facilities/", payload),
+    postMultipart<Facility>("/admin/library/facilities/", toFormData(payload, { image })),
 
   updateFacility: (id: number, payload: Partial<Facility>, image?: File | null) =>
-    image
-      ? putMultipart<Facility>(`/admin/library/facilities/${id}/`, toFormData(payload, { image }))
-      : putData<Facility>(`/admin/library/facilities/${id}/`, payload),
+    putMultipart<Facility>(`/admin/library/facilities/${id}/`, toFormData(payload, { image })),
 
   deleteFacility: (id: number) => deleteData<unknown>(`/admin/library/facilities/${id}/`),
 
@@ -557,14 +551,10 @@ export const endpoints = {
   publicAchievers: () => getData<Achiever[]>("/library/achievers/"),
 
   createAchiever: (payload: Partial<Achiever>, photo?: File | null) =>
-    photo
-      ? postMultipart<Achiever>("/admin/library/achievers/", toFormData(payload, { photo }))
-      : postData<Achiever>("/admin/library/achievers/", payload),
+    postMultipart<Achiever>("/admin/library/achievers/", toFormData(payload, { photo })),
 
   updateAchiever: (id: number, payload: Partial<Achiever>, photo?: File | null) =>
-    photo
-      ? putMultipart<Achiever>(`/admin/library/achievers/${id}/`, toFormData(payload, { photo }))
-      : putData<Achiever>(`/admin/library/achievers/${id}/`, payload),
+    putMultipart<Achiever>(`/admin/library/achievers/${id}/`, toFormData(payload, { photo })),
 
   deleteAchiever: (id: number) => deleteData<unknown>(`/admin/library/achievers/${id}/`),
 
