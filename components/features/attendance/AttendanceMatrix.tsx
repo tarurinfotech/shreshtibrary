@@ -123,24 +123,36 @@ export function AttendanceMatrix({
         {actions}
       </div>
 
-      {holidayList.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 border-b border-border bg-[color:var(--field)] px-4 py-2 sm:px-6">
-          <span className="text-xs font-medium text-muted">Holidays this period:</span>
-          {holidayList.map((holiday) => (
-            <Button
-              key={holiday.id}
-              size="sm"
-              variant="secondary"
-              className="group h-6 rounded-full px-2.5 pl-3 pr-2 text-[10px] flex items-center gap-1.5 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20"
-              tooltip="Click to delete holiday"
-              onClick={() => onDeleteHoliday(holiday.id)}
-            >
-              <span>{holiday.date.slice(-2)} {holiday.title}</span>
-              <X className="h-3 w-3 opacity-50 group-hover:opacity-100" />
-            </Button>
-          ))}
-        </div>
-      ) : null}
+      {(() => {
+        const now = new Date();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        const todayStr = `${now.getFullYear()}-${m}-${d}`;
+        const upcomingHolidays = holidayList.filter((h) => h.date >= todayStr);
+        if (upcomingHolidays.length === 0) return null;
+        return (
+          <div className="flex flex-wrap items-center gap-2 border-b border-border bg-[color:var(--field)] px-4 py-2 sm:px-6">
+            <span className="text-xs font-medium text-muted">Upcoming holidays:</span>
+            {upcomingHolidays.map((holiday) => {
+              const isPast = holiday.date < todayStr;
+              return (
+                <Button
+                  key={holiday.id}
+                  size="sm"
+                  variant="secondary"
+                  className={`group h-6 rounded-full px-2.5 ${isPast ? "pl-3 pr-3" : "pl-3 pr-2"} text-[10px] flex items-center gap-1.5 ${!isPast ? "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20" : ""}`}
+                  tooltip={isPast ? "Past holiday (read-only)" : "Click to delete holiday"}
+                  onClick={() => { if (!isPast) onDeleteHoliday(holiday.id); }}
+                  disabled={isPast}
+                >
+                  <span>{holiday.date.slice(-2)} {holiday.title}</span>
+                  {!isPast && <X className="h-3 w-3 opacity-50 group-hover:opacity-100" />}
+                </Button>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       <div className="relative flex-1 overflow-auto bg-panel custom-scrollbar min-w-0">
         <table className="w-full border-collapse text-sm">

@@ -503,7 +503,7 @@ export const endpoints = {
   notifications: (params?: ListParams) => getPage<NotificationRecord>("/admin/notifications/", params),
 
   sendNotification: (payload: FormData) =>
-    postData<NotificationRecord>("/admin/notifications/send/", payload),
+    postMultipart<NotificationRecord>("/admin/notifications/send/", payload),
 
   notification: (id: number) => getData<NotificationRecord>(`/admin/notifications/${id}/`),
 
@@ -511,7 +511,7 @@ export const endpoints = {
     getData<NotificationRecipient[]>(`/admin/notifications/${id}/recipients/`),
 
   scheduleNotification: (payload: FormData) =>
-    postData<NotificationRecord>("/admin/notifications/schedule/", payload),
+    postMultipart<NotificationRecord>("/admin/notifications/schedule/", payload),
 
   scheduledNotifications: () =>
     getData<NotificationRecord[]>("/admin/notifications/scheduled/"),

@@ -3,7 +3,7 @@
 import { FormEvent, useMemo, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarPlus, CheckSquare, Eye, Plus, QrCode, RefreshCcw, TimerOff, Trash2 } from "lucide-react";
+import { Calendar, CalendarPlus, CheckSquare, Clock, Eye, Plus, QrCode, RefreshCcw, TimerOff, Trash2 } from "lucide-react";
 import { AttendanceMatrix, MatrixOptionSelect } from "@/components/features/attendance/AttendanceMatrix";
 import { QRCodeDisplay } from "@/components/features/QRCodeDisplay";
 import { Badge } from "@/components/ui/Badge";
@@ -159,7 +159,12 @@ export default function AttendancePage() {
   const settings = useQuery({
     queryKey: ["settings"],
     queryFn: endpoints.settings,
-    enabled: mounted && tab === "logs",
+    enabled: mounted && (tab === "logs" || tab === "qr"),
+  });
+  const allHolidays = useQuery({
+    queryKey: ["all-holidays"],
+    queryFn: () => endpoints.holidays({ is_active: true }),
+    enabled: mounted && tab === "summary",
   });
   const manualHoliday = useQuery({
     queryKey: ["manual-holiday", manualDate],
@@ -245,6 +250,21 @@ export default function AttendancePage() {
     await queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
   };
 
+  // Pre-populate overrides from existing DB records when manual records load
+  useEffect(() => {
+    if (!manualRecords.data || manualRecords.data.length === 0) return;
+    // Only set initial values — don't overwrite user's manual changes
+    setManualOverrides((current) => {
+      const updated = { ...current };
+      for (const record of manualRecords.data!) {
+        if (!(record.student in updated)) {
+          updated[record.student] = record.is_present;
+        }
+      }
+      return updated;
+    });
+  }, [manualRecords.data]);
+
   const getManualPresence = (studentUserId: number) =>
     manualOverrides[studentUserId] ?? manualRecordsByStudent.get(studentUserId)?.is_present ?? false;
 
@@ -302,10 +322,20 @@ export default function AttendancePage() {
 
   const deleteQrAction = useMutation({
     mutationFn: (id: number) => endpoints.deleteQr(id),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["qr-history"] });
+    onMutate: async (deletedId) => {
+      await queryClient.cancelQueries({ queryKey: ["qr-history"] });
+      const prev = queryClient.getQueryData<{ data: QRCodeRecord[] }>(["qr-history"]);
+      queryClient.setQueryData(["qr-history"], (old: any) => {
+        if (!old?.data) return old;
+        return { ...old, data: old.data.filter((qr: QRCodeRecord) => qr.id !== deletedId) };
+      });
+      return { prev };
     },
-    onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
+    onError: (error, _id, context) => {
+      if (context?.prev) queryClient.setQueryData(["qr-history"], context.prev);
+      pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) });
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["qr-history"] }),
   });
 
   const saveHoliday = useMutation({
@@ -436,6 +466,32 @@ export default function AttendancePage() {
                 </Button>
               </div>
             </div>
+
+            {/* Attendance Window Status */}
+            {(() => {
+              const openTimeStr = settings.data?.library_open_time;
+              const paddingStr = settings.data?.attendance_padding_time || "60";
+              if (!openTimeStr) return null;
+              const [oh, om] = openTimeStr.split(":").map(Number);
+              const now = new Date();
+              const openDate = new Date(); openDate.setHours(oh, om, 0, 0);
+              const cutoffDate = new Date(openDate.getTime() + parseInt(paddingStr, 10) * 60000);
+              const isBeforeOpen = now < openDate;
+              const isAfterCutoff = now > cutoffDate;
+              const isOpen = !isBeforeOpen && !isAfterCutoff;
+              return (
+                <div className={`mb-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${
+                  isOpen ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                  : isBeforeOpen ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                  : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                }`}>
+                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                  {isOpen ? `Attendance window open (until ${cutoffDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })})` 
+                  : isBeforeOpen ? `QR scanning starts at ${openDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}` 
+                  : `Attendance window closed (cutoff was ${cutoffDate.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })})`}
+                </div>
+              );
+            })()}
 
             {/* Expiry Duration Selector */}
             <div className="mb-4 flex items-center gap-2">
@@ -628,6 +684,34 @@ export default function AttendancePage() {
               )}
             </section>
           </div>
+          {/* All Holidays Section */}
+          <section className="surface rounded-lg p-5">
+            <h2 className="mb-4 font-semibold flex items-center gap-2"><Calendar className="h-4 w-4" /> All Holidays</h2>
+            {allHolidays.isLoading ? <LoadingBlock label="Loading holidays" /> : (
+              <div className="grid gap-2">
+                {(() => {
+                  const sorted = [...(allHolidays.data ?? [])].sort((a, b) => a.date.localeCompare(b.date));
+                  if (sorted.length === 0) return <EmptyState title="No holidays declared" />;
+                  return sorted.map((holiday) => {
+                    const isPast = holiday.date < getTodayDate();
+                    const isToday = holiday.date === getTodayDate();
+                    return (
+                      <EntityListItem
+                        key={holiday.id}
+                        title={holiday.title}
+                        meta={formatDate(holiday.date)}
+                        trailing={
+                          <Badge variant={isPast ? "neutral" : isToday ? "warning" : "success"}>
+                            {isPast ? "Past" : isToday ? "Today" : "Upcoming"}
+                          </Badge>
+                        }
+                      />
+                    );
+                  });
+                })()}
+              </div>
+            )}
+          </section>
         </div>
       ) : null}
 
@@ -820,6 +904,7 @@ export default function AttendancePage() {
             label="Holiday Date"
             value={holidayForm.date}
             onChange={(event) => setHolidayForm((current) => ({ ...current, date: event.target.value }))}
+            min={getTodayDate()}
             error={holidayErrors.date}
             required
           />
