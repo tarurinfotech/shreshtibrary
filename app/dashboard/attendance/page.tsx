@@ -633,6 +633,21 @@ export default function AttendancePage() {
                 setManualDate(event.target.value);
                 setManualOverrides({});
               }}
+              min={(() => {
+                const d = new Date();
+                d.setDate(d.getDate() - 2);
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, "0");
+                const day = String(d.getDate()).padStart(2, "0");
+                return `${y}-${m}-${day}`;
+              })()}
+              max={(() => {
+                const d = new Date();
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, "0");
+                const day = String(d.getDate()).padStart(2, "0");
+                return `${y}-${m}-${day}`;
+              })()}
               required
             />
             <Input
