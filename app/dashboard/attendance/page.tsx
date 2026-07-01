@@ -32,6 +32,14 @@ function getTodayDate() {
   return `${now.getFullYear()}-${month}-${day}`;
 }
 
+function getPastDate(days: number) {
+  const now = new Date();
+  now.setDate(now.getDate() - days);
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 function getMonthKey() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -633,21 +641,8 @@ export default function AttendancePage() {
                 setManualDate(event.target.value);
                 setManualOverrides({});
               }}
-              min={(() => {
-                const d = new Date();
-                d.setDate(d.getDate() - 2);
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, "0");
-                const day = String(d.getDate()).padStart(2, "0");
-                return `${y}-${m}-${day}`;
-              })()}
-              max={(() => {
-                const d = new Date();
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, "0");
-                const day = String(d.getDate()).padStart(2, "0");
-                return `${y}-${m}-${day}`;
-              })()}
+              min={getPastDate(2)}
+              max={getTodayDate()}
               required
             />
             <Input
@@ -657,10 +652,10 @@ export default function AttendancePage() {
               placeholder="Name, ID, mobile, goal, status"
             />
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="secondary" size="sm" onClick={() => setVisiblePresence(true)}>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setVisiblePresence(true)} disabled={!canEditManual || Boolean(selectedManualHoliday)}>
                 Select Visible
               </Button>
-              <Button type="button" variant="secondary" size="sm" onClick={() => setVisiblePresence(false)}>
+              <Button type="button" variant="secondary" size="sm" onClick={() => setVisiblePresence(false)} disabled={!canEditManual || Boolean(selectedManualHoliday)}>
                 Clear Visible
               </Button>
             </div>
