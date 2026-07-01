@@ -20,7 +20,7 @@ import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/StateBlock
 import { Table, TableShell, Td, Th } from "@/components/ui/Table";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
-import { formatDate, formatDateTime, fullName } from "@/lib/format";
+import { formatDate, formatDateTime, fullName, isDateWithinAllowedWindow } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
 import type { AttendanceRecord, QRCodeRecord } from "@/types/api";
 
@@ -296,7 +296,6 @@ export default function AttendancePage() {
     mutationFn: (id: number) => endpoints.deleteQr(id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["qr-history"] });
-      pushToast({ kind: "success", title: "QR deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
   });
@@ -334,6 +333,10 @@ export default function AttendancePage() {
       pushToast({ kind: "error", title: "Holiday selected", message: "Attendance cannot be marked on a holiday." });
       return;
     }
+    if (!isDateWithinAllowedWindow(manualDate)) {
+      pushToast({ kind: "error", title: "Date not allowed", message: "Attendance can only be edited for today and the previous 2 days." });
+      return;
+    }
     manual.mutate();
   };
 
@@ -351,6 +354,7 @@ export default function AttendancePage() {
   const selectedManualCount = (manualStudents.data ?? []).filter((student) => getManualPresence(student.user_id)).length;
   const manualStudentCount = manualStudents.data?.length ?? 0;
   const selectedManualHoliday = (manualHoliday.data ?? [])[0];
+  const canEditManual = isDateWithinAllowedWindow(manualDate);
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -484,7 +488,7 @@ export default function AttendancePage() {
                               View Scans
                             </Button>
                             {!qr.is_active && (
-                              <Button size="sm" variant="danger" aria-label={`Delete QR`} className="h-6 px-2 text-[10px]" icon={<Trash2 className="h-3 w-3" />} onClick={() => { if(confirm("Are you sure you want to delete this QR code?")) deleteQrAction.mutate(qr.id); }}>
+                              <Button size="sm" variant="danger" aria-label={`Delete QR`} className="h-6 px-2 text-[10px]" icon={<Trash2 className="h-3 w-3" />} onClick={() => deleteQrAction.mutate(qr.id)}>
                                 Delete
                               </Button>
                             )}
@@ -659,6 +663,12 @@ export default function AttendancePage() {
             </div>
           ) : null}
 
+          {!canEditManual ? (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-700 dark:text-red-200">
+              Editing attendance is restricted to the current date and the previous 2 days. This date is read-only.
+            </div>
+          ) : null}
+
           {manualStudents.isLoading || manualRecords.isLoading ? <LoadingBlock label="Loading students" /> : null}
           {manualStudents.error || manualRecords.error ? <ErrorState message="Unable to load manual attendance list." /> : null}
 
@@ -668,6 +678,7 @@ export default function AttendancePage() {
             {filteredManualStudents.map((student) => {
               const existing = manualRecordsByStudent.get(student.user_id);
               const checked = getManualPresence(student.user_id);
+              const isBeforeJoin = student.joining_date ? manualDate < student.joining_date.substring(0, 10) : false;
               return (
                 <div key={student.user_id} className="surface flex items-center justify-between p-3 rounded-xl">
                   <div className="flex items-center gap-3">
@@ -675,11 +686,13 @@ export default function AttendancePage() {
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{fullName(student.first_name, student.last_name)}</span>
                       <span className="text-xs text-muted">{student.student_id}</span>
+                      {isBeforeJoin && <span className="text-xs text-muted italic">Not Joined</span>}
                     </div>
                   </div>
                   <input
                     checked={checked}
-                    className="h-5 w-5 rounded border-border accent-[var(--primary)]"
+                    disabled={!canEditManual || Boolean(selectedManualHoliday) || isBeforeJoin}
+                    className="h-5 w-5 rounded border-border accent-[var(--primary)] disabled:opacity-50"
                     type="checkbox"
                     aria-label={`Mark ${student.first_name} present`}
                     onChange={(event) => setManualPresence(student.user_id, event.target.checked)}
@@ -706,13 +719,15 @@ export default function AttendancePage() {
                   {filteredManualStudents.map((student) => {
                     const existing = manualRecordsByStudent.get(student.user_id);
                     const checked = getManualPresence(student.user_id);
+                    const isBeforeJoin = student.joining_date ? manualDate < student.joining_date.substring(0, 10) : false;
                     return (
                       <tr key={student.user_id} className="hover:bg-[var(--hover)] transition-colors">
                         <Td>
                           <label className="inline-flex items-center gap-2 cursor-pointer focus-ring">
                             <input
                               checked={checked}
-                              className="h-4 w-4 rounded border-border accent-[var(--primary)] focus:ring-primary"
+                              disabled={!canEditManual || Boolean(selectedManualHoliday) || isBeforeJoin}
+                              className="h-4 w-4 rounded border-border accent-[var(--primary)] focus:ring-primary disabled:opacity-50"
                               type="checkbox"
                               onChange={(event) => setManualPresence(student.user_id, event.target.checked)}
                             />
@@ -744,6 +759,8 @@ export default function AttendancePage() {
                             <Badge variant={existing.is_present ? "success" : "danger"}>
                               {existing.is_present ? "Present" : "Absent"}
                             </Badge>
+                          ) : isBeforeJoin ? (
+                            <span className="text-xs text-muted">Not Joined</span>
                           ) : (
                             <Badge variant="neutral">New</Badge>
                           )}
@@ -762,7 +779,7 @@ export default function AttendancePage() {
             <p className="text-xs text-muted">
               Saving will add new rows or update existing attendance for {manualDate || "selected date"}.
             </p>
-            <Button type="submit" loading={manual.isPending} icon={<CheckSquare className="h-4 w-4" />} disabled={!manualStudentCount || Boolean(selectedManualHoliday)}>
+            <Button type="submit" loading={manual.isPending} icon={<CheckSquare className="h-4 w-4" />} disabled={!manualStudentCount || Boolean(selectedManualHoliday) || !canEditManual}>
               Save Attendance
             </Button>
           </div>
