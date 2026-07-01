@@ -246,6 +246,9 @@ export const endpoints = {
   dashboardChart: (domain: string, chart = "overview") =>
     getData<DashboardChart>(`/dashboard/charts/${domain}/${chart}/`),
 
+  dashboardCharts: (range = "month") =>
+    getData<any>(`/dashboard/charts/`, { range }),
+
   dashboardActivityRecent: () =>
     getData<ActivityLogItem[]>("/dashboard/activity/recent/"),
 
