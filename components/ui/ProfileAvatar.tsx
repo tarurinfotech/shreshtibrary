@@ -20,6 +20,7 @@
  * wrapper so it is never clipped. A `relative` outer shell wraps both.
  */
 
+import { useState, useEffect } from "react";
 import clsx from "clsx";
 import { UserRound } from "lucide-react";
 import { mediaUrl } from "@/lib/media";
@@ -148,7 +149,13 @@ export function ProfileAvatar({
   alt,
   ring = false,
 }: ProfileAvatarProps) {
+  const [imgError, setImgError] = useState(false);
   const imageUrl  = mediaUrl(src);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [imageUrl]);
+
   const initials  = getInitials(name);
   const px        = sizePx[size];
 
@@ -194,6 +201,7 @@ export function ProfileAvatar({
 
   // ── background-image mode (hero / large sidebars) ─────────────────────────
   if (asBackground) {
+    const showImgBg = imageUrl && !imgError;
     return (
       <span className={outerClass}>
         <span
@@ -201,11 +209,20 @@ export function ProfileAvatar({
             innerClass,
             "bg-cover bg-center",
           )}
-          style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
+          style={showImgBg ? { backgroundImage: `url(${imageUrl})` } : undefined}
           aria-label={alt ?? name ?? "Profile"}
           role="img"
         >
-          {!imageUrl && (
+          {showImgBg && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              className="hidden" // Just to catch the onError event for backgrounds
+              onError={() => setImgError(true)}
+              alt=""
+            />
+          )}
+          {!showImgBg && (
             initials
               ? <span className="pointer-events-none text-foreground/80 font-bold">{initials}</span>
               : <UserRound className="h-1/2 w-1/2 text-foreground/40" />
@@ -217,10 +234,11 @@ export function ProfileAvatar({
   }
 
   // ── normal img mode ───────────────────────────────────────────────────────
+  const showImg = imageUrl && !imgError;
   return (
     <span className={outerClass}>
       <span className={innerClass}>
-        {imageUrl ? (
+        {showImg ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
@@ -228,10 +246,7 @@ export function ProfileAvatar({
             width={px}
             height={px}
             className="absolute inset-0 h-full w-full object-cover"
-            onError={(e) => {
-              // If image fails to load, hide the img so initials show through
-              (e.target as HTMLImageElement).style.display = "none";
-            }}
+            onError={() => setImgError(true)}
           />
         ) : initials ? (
           <span className="pointer-events-none text-foreground/80 font-bold leading-none">
