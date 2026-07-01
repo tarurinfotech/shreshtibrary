@@ -22,7 +22,7 @@ export const studentPayloadSchema = z.object({
   is_active: z.boolean().optional().nullable(),
   goal: z.string().optional().nullable(),
   dob: z.string().optional().nullable(),
-  gender: z.enum(["Male", "Female", "Other"]).optional().nullable(),
+  gender: z.enum(["Male", "Female"]).optional().nullable(),
   caste: z.string().optional().nullable(),
   address: z.string().optional().nullable(),
   parent_mobile: z

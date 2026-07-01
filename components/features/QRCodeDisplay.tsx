@@ -23,7 +23,7 @@ export function QRCodeDisplay({ qr }: { qr: QRCodeRecord }) {
   return (
     <div className="grid gap-4 sm:grid-cols-[180px_1fr] sm:items-center">
       <div className="rounded-lg bg-white p-4 shadow-sm border border-border">
-        <QRCodeSVG value={qr.code} size={148} />
+        <QRCodeSVG value={qr.qr_hash ?? qr.code} size={148} />
       </div>
       <div>
         <p className="break-all font-mono text-sm text-foreground">{qr.code}</p>

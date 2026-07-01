@@ -20,7 +20,7 @@ const emptyStudent: StudentCreatePayload = {
   email: "",
   mobile: "",
   goal: "Other",
-  gender: "Other",
+  gender: "Male",
   parent_mobile: "",
   address: "",
 };
@@ -116,12 +116,11 @@ export function StudentCreateForm({ open, onClose }: StudentCreateFormProps) {
           />
           <Select
             label="Gender"
-            value={form.gender ?? "Other"}
+            value={form.gender ?? "Male"}
             onChange={(v) => setForm((c) => ({ ...c, gender: v }))}
             options={[
               { value: "Male", label: "Male" },
               { value: "Female", label: "Female" },
-              { value: "Other", label: "Other" },
             ]}
           />
           <Input

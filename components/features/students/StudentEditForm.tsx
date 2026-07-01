@@ -66,12 +66,11 @@ export function StudentEditForm({
         <DateInput label="Date of Birth" value={form.dob ?? ""} onChange={(event) => setForm((current) => ({ ...current, dob: event.target.value }))} error={formErrors.dob} />
         <Select
           label="Gender"
-          value={form.gender ?? "Other"}
+          value={form.gender ?? "Male"}
           onChange={(v) => setForm((current) => ({ ...current, gender: v }))}
           options={[
             { value: "Male", label: "Male" },
             { value: "Female", label: "Female" },
-            { value: "Other", label: "Other" },
           ]}
         />
         <Select

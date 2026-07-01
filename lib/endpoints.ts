@@ -529,8 +529,8 @@ export const endpoints = {
 
   updateLibraryInfo: (payload: Partial<LibraryInfo>, featureImage?: File | null) =>
     featureImage
-      ? putMultipart<LibraryInfo>("/admin/library/info/", toFormData(payload, { feature_image: featureImage }))
-      : putData<LibraryInfo>("/admin/library/info/", payload),
+      ? postMultipart<LibraryInfo>("/admin/library/info/", toFormData(payload, { feature_image: featureImage }))
+      : postData<LibraryInfo>("/admin/library/info/", payload),
 
   facilities: () => getData<Facility[]>("/admin/library/facilities/"),
 

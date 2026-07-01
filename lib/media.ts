@@ -8,6 +8,12 @@ export function mediaUrl(value?: string | null) {
     return value;
   }
 
-  const backendBase = API_BASE_URL.replace(/\/api\/v\d+\/?$/i, "");
+  let backendBase = API_BASE_URL.replace(/\/api\/v\d+\/?$/i, "");
+  
+  // Force HTTPS in production to prevent mixed content warnings
+  if (backendBase.includes("onrender.com") && backendBase.startsWith("http://")) {
+    backendBase = backendBase.replace("http://", "https://");
+  }
+  
   return `${backendBase}${value.startsWith("/") ? value : `/${value}`}`;
 }

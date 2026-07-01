@@ -117,9 +117,8 @@ export default function DashboardPage() {
     () => [
       { name: "Girls", value: stats.data?.students?.girls ?? 0, color: "#f472b6" },
       { name: "Boys", value: stats.data?.students?.boys ?? 0, color: "#38bdf8" },
-      { name: "Other", value: stats.data?.students?.other ?? 0, color: "#a78bfa" },
     ].filter((item) => item.value > 0),
-    [stats.data?.students?.boys, stats.data?.students?.girls, stats.data?.students?.other],
+    [stats.data?.students?.boys, stats.data?.students?.girls],
   );
   const genderTotal = genderData.reduce((sum, item) => sum + item.value, 0);
 

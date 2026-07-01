@@ -114,7 +114,6 @@ export default function StudentsPage() {
   const genderRows = [
     { label: "Girls", value: counts.data?.girls ?? 0, color: "#f472b6", emoji: "👩" },
     { label: "Boys", value: counts.data?.boys ?? 0, color: "#38bdf8", emoji: "👦" },
-    { label: "Other", value: counts.data?.other ?? 0, color: "#a78bfa", emoji: "🌈" },
   ].filter((item) => item.value > 0);
   const genderTotal = genderRows.reduce((sum, item) => sum + item.value, 0);
   const isSuperAdmin = currentUser?.role === "super_admin";
