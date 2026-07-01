@@ -678,7 +678,16 @@ export default function AttendancePage() {
             {filteredManualStudents.map((student) => {
               const existing = manualRecordsByStudent.get(student.user_id);
               const checked = getManualPresence(student.user_id);
-              const isBeforeJoin = student.joining_date ? manualDate < student.joining_date.substring(0, 10) : false;
+              let isBeforeJoin = false;
+              if (student.joining_date) {
+                const joinDateUTC = student.joining_date + (student.joining_date.endsWith('Z') ? '' : 'Z');
+                const joinDateObj = new Date(joinDateUTC);
+                const y = joinDateObj.getFullYear();
+                const m = String(joinDateObj.getMonth() + 1).padStart(2, "0");
+                const d = String(joinDateObj.getDate()).padStart(2, "0");
+                const localJoinDateStr = `${y}-${m}-${d}`;
+                isBeforeJoin = manualDate < localJoinDateStr;
+              }
               return (
                 <div key={student.user_id} className="surface flex items-center justify-between p-3 rounded-xl">
                   <div className="flex items-center gap-3">
@@ -719,7 +728,16 @@ export default function AttendancePage() {
                   {filteredManualStudents.map((student) => {
                     const existing = manualRecordsByStudent.get(student.user_id);
                     const checked = getManualPresence(student.user_id);
-                    const isBeforeJoin = student.joining_date ? manualDate < student.joining_date.substring(0, 10) : false;
+                    let isBeforeJoin = false;
+                    if (student.joining_date) {
+                      const joinDateUTC = student.joining_date + (student.joining_date.endsWith('Z') ? '' : 'Z');
+                      const joinDateObj = new Date(joinDateUTC);
+                      const y = joinDateObj.getFullYear();
+                      const m = String(joinDateObj.getMonth() + 1).padStart(2, "0");
+                      const d = String(joinDateObj.getDate()).padStart(2, "0");
+                      const localJoinDateStr = `${y}-${m}-${d}`;
+                      isBeforeJoin = manualDate < localJoinDateStr;
+                    }
                     return (
                       <tr key={student.user_id} className="hover:bg-[var(--hover)] transition-colors">
                         <Td>

@@ -179,7 +179,16 @@ export function AttendanceMatrix({
                 (acc, day) => {
                   const holiday = holidays.get(day);
                   const isFuture = new Date(`${day}T00:00:00`) > new Date();
-                  const isBeforeJoin = student.joining_date ? day < student.joining_date.substring(0, 10) : false;
+                  let isBeforeJoin = false;
+                  if (student.joining_date) {
+                    const joinDateUTC = student.joining_date + (student.joining_date.endsWith('Z') ? '' : 'Z');
+                    const joinDateObj = new Date(joinDateUTC);
+                    const y = joinDateObj.getFullYear();
+                    const m = String(joinDateObj.getMonth() + 1).padStart(2, "0");
+                    const d = String(joinDateObj.getDate()).padStart(2, "0");
+                    const localJoinDateStr = `${y}-${m}-${d}`;
+                    isBeforeJoin = day < localJoinDateStr;
+                  }
                   
                   if (holiday || isFuture || isBeforeJoin) return acc;
                   const record = studentRecords?.get(day);
@@ -234,7 +243,16 @@ export function AttendanceMatrix({
                     const isHoliday = Boolean(holiday);
                     const isPresent = Boolean(record?.is_present);
 
-                    const isBeforeJoin = student.joining_date ? day < student.joining_date.substring(0, 10) : false;
+                    let isBeforeJoin = false;
+                    if (student.joining_date) {
+                      const joinDateUTC = student.joining_date + (student.joining_date.endsWith('Z') ? '' : 'Z');
+                      const joinDateObj = new Date(joinDateUTC);
+                      const y = joinDateObj.getFullYear();
+                      const m = String(joinDateObj.getMonth() + 1).padStart(2, "0");
+                      const d = String(joinDateObj.getDate()).padStart(2, "0");
+                      const localJoinDateStr = `${y}-${m}-${d}`;
+                      isBeforeJoin = day < localJoinDateStr;
+                    }
 
                     let isPending = false;
                     const now = new Date();
