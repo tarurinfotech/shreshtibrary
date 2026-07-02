@@ -116,7 +116,7 @@ export interface SharedAreaChartProps {
 export function SharedAreaChart({ data, xKey, yKeys, height = 300 }: SharedAreaChartProps) {
   return (
     <div style={{ height }}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
         <AreaChart data={data} margin={{ left: -20, right: 10 }}>
           <defs>
             {yKeys.map((y, idx) => (

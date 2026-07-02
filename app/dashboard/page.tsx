@@ -204,7 +204,7 @@ export default function DashboardPage() {
           {chart.error ? <ErrorState message="Unable to load chart." /> : null}
           {chartRows.length > 0 ? (
             <div className="h-[340px] w-full min-w-0">
-              <ResponsiveContainer width="100%" height={340}>
+              <ResponsiveContainer width="100%" height={340} minWidth={1} minHeight={1}>
                 <AreaChart data={chartRows} margin={{ left: 4, right: 16, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="reportLine" x1="0" x2="1" y1="0" y2="0">
@@ -253,7 +253,7 @@ export default function DashboardPage() {
           <ChartCard title="Analytics" className="lg:col-span-1">
             <div className="grid place-items-center">
               <div className="relative h-[220px] w-full max-w-[280px] min-w-[220px]">
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={220} minWidth={1} minHeight={1}>
                   <PieChart>
                     <Pie
                       data={donutData}
@@ -358,7 +358,7 @@ export default function DashboardPage() {
           {attendanceSummary.data && (
             <div className="grid place-items-center py-4">
               <div className="relative h-[220px] w-full max-w-[280px] min-w-[220px]">
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={220} minWidth={1} minHeight={1}>
                   <PieChart>
                     <Pie
                       data={[

@@ -208,7 +208,7 @@ export default function ReportsPage() {
         {canAttendance && <ReportCard delay={4} title="Attendance Trends" eyebrow="Present vs Absent over time">
           <div className="h-[240px] 2xl:h-[260px]">
             {attendanceByDate.length ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <ComposedChart data={attendanceByDate} margin={{ left: -24, right: 12, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="reportsPresentFill" x1="0" x2="0" y1="0" y2="1">
@@ -234,7 +234,7 @@ export default function ReportsPage() {
         {canPayments && <ReportCard delay={5} title="Revenue Flow" eyebrow="Monthly Collections">
           <div className="h-[240px] 2xl:h-[260px]">
             {revenueByMonth.length ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <AreaChart data={revenueByMonth} margin={{ left: -24, right: 12, top: 8, bottom: 0 }}>
                   <defs>
                     <linearGradient id="revenueFill" x1="0" x2="0" y1="0" y2="1">
@@ -268,7 +268,7 @@ export default function ReportsPage() {
         {canPayments && <ReportCard delay={7} title="Payments by Status" eyebrow="Breakdown">
           <div className="h-36">
             {paymentByStatus.length ? (
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={paymentByStatus} margin={{ left: -24, right: 8, top: 8, bottom: -10 }}>
                   <CartesianGrid stroke="var(--border)" strokeDasharray="4 6" vertical={false} />
                   <XAxis dataKey="label" tick={{ fill: "var(--muted)", fontSize: 11 }} tickLine={false} axisLine={false} />
