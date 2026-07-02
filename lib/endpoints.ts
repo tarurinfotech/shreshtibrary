@@ -528,60 +528,60 @@ export const endpoints = {
   deleteAdminInbox: (id: number) => deleteData<unknown>(`/admin/inbox/${id}/`),
 
   // Library Content
-  libraryInfo: () => getData<LibraryInfo>("/admin/library/info/"),
+  libraryInfo: () => getData<LibraryInfo>("/admin/library/info"),
 
   updateLibraryInfo: (payload: Partial<LibraryInfo>, logo?: File | null, bannerImage?: File | null) =>
-    postMultipart<LibraryInfo>("/admin/library/info/", toFormData(payload, { logo, banner_image: bannerImage })),
+    postMultipart<LibraryInfo>("/admin/library/info", toFormData(payload, { logo, banner_image: bannerImage })),
 
-  facilities: () => getData<Facility[]>("/admin/library/facilities/"),
+  facilities: () => getData<Facility[]>("/admin/library/facilities"),
 
   createFacility: (payload: Partial<Facility>, image?: File | null) =>
-    postMultipart<Facility>("/admin/library/facilities/", toFormData(payload, { image })),
+    postMultipart<Facility>("/admin/library/facilities", toFormData(payload, { image })),
 
   updateFacility: (id: number, payload: Partial<Facility>, image?: File | null) =>
-    putMultipart<Facility>(`/admin/library/facilities/${id}/`, toFormData(payload, { image })),
+    putMultipart<Facility>(`/admin/library/facilities/${id}`, toFormData(payload, { image })),
 
-  deleteFacility: (id: number) => deleteData<unknown>(`/admin/library/facilities/${id}/`),
+  deleteFacility: (id: number) => deleteData<unknown>(`/admin/library/facilities/${id}`),
 
   toggleFacility: (id: number, is_active?: boolean) =>
-    patchData<Facility>(`/admin/library/facilities/${id}/toggle/`, { is_active }),
+    postData<Facility>(`/admin/library/facilities/${id}/toggle`, { is_active }),
 
   reorderFacilities: (items: Array<{ id: number; order: number }>) =>
-    patchData<unknown>("/admin/library/facilities/reorder/", { items }),
+    patchData<unknown>("/admin/library/facilities/reorder", { items }),
 
-  achievers: () => getData<Achiever[]>("/admin/library/achievers/"),
+  achievers: () => getData<Achiever[]>("/admin/library/achievers"),
 
-  publicAchievers: () => getData<Achiever[]>("/library/achievers/"),
+  publicAchievers: () => getData<Achiever[]>("/library/achievers"),
 
   createAchiever: (payload: Partial<Achiever>, photo?: File | null) =>
-    postMultipart<Achiever>("/admin/library/achievers/", toFormData(payload, { photo })),
+    postMultipart<Achiever>("/admin/library/achievers", toFormData(payload, { photo })),
 
   updateAchiever: (id: number, payload: Partial<Achiever>, photo?: File | null) =>
-    putMultipart<Achiever>(`/admin/library/achievers/${id}/`, toFormData(payload, { photo })),
+    putMultipart<Achiever>(`/admin/library/achievers/${id}`, toFormData(payload, { photo })),
 
-  deleteAchiever: (id: number) => deleteData<unknown>(`/admin/library/achievers/${id}/`),
+  deleteAchiever: (id: number) => deleteData<unknown>(`/admin/library/achievers/${id}`),
 
   toggleAchiever: (id: number, is_active?: boolean) =>
-    patchData<Achiever>(`/admin/library/achievers/${id}/toggle/`, { is_active }),
+    postData<Achiever>(`/admin/library/achievers/${id}/toggle`, { is_active }),
 
   reorderAchievers: (items: Array<{ id: number; order: number }>) =>
-    patchData<unknown>("/admin/library/achievers/reorder/", { items }),
+    patchData<unknown>("/admin/library/achievers/reorder", { items }),
 
-  publicReviews: () => getData<Review[]>("/admin/library/reviews/"),
+  publicReviews: () => getData<Review[]>("/admin/library/reviews"),
 
   reviewSummary: () =>
     getData<{ average_rating: number; count: number; breakdown: Record<number, number> }>(
-      "/admin/library/reviews/summary/",
+      "/admin/library/reviews/summary",
     ),
 
-  reviews: () => getData<Review[]>("/admin/reviews/"),
+  reviews: () => getData<Review[]>("/admin/reviews"),
 
-  pendingReviews: () => getData<Review[]>("/admin/reviews/pending/"),
+  pendingReviews: () => getData<Review[]>("/admin/reviews/pending"),
 
-  approveReview: (id: number) => postData<Review>(`/admin/reviews/${id}/approve/`),
+  approveReview: (id: number) => postData<Review>(`/admin/reviews/${id}/approve`),
 
   rejectReview: (id: number, reason: string) =>
-    postData<Review>(`/admin/reviews/${id}/reject/`, { reason }),
+    postData<Review>(`/admin/reviews/${id}/reject`, { reason }),
 
   deleteReview: (id: number) => deleteData<unknown>(`/admin/reviews/${id}/delete/`),
 
