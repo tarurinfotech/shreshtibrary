@@ -177,28 +177,32 @@ export default function LibraryPage() {
       <div className="space-y-6">
 
       <FormShell surface onSubmit={submitInfo}>
-        <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-          <div
-            className="grid min-h-44 place-items-center rounded-lg border border-border bg-panel-strong bg-cover bg-center text-muted"
-            style={libraryFeatureImage ? { backgroundImage: `url(${libraryFeatureImage})` } : undefined}
-          >
-            {libraryFeatureImage ? (
-              <span className="sr-only">Library feature image</span>
-            ) : (
-              <div className="grid justify-items-center gap-2 text-sm">
-                <ImagePlus className="h-8 w-8" aria-hidden="true" />
-                <span>No feature image</span>
-              </div>
-            )}
+        <div className="space-y-3">
+          <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Feature Image</label>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <div
+              className="grid h-48 w-full sm:w-[400px] shrink-0 place-items-center rounded-lg border border-border bg-panel-strong bg-cover bg-center text-muted"
+              style={(featureImage || libraryFeatureImage) ? { backgroundImage: `url(${featureImage ? URL.createObjectURL(featureImage) : libraryFeatureImage})` } : undefined}
+            >
+              {(featureImage || libraryFeatureImage) ? (
+                <span className="sr-only">Library feature image</span>
+              ) : (
+                <div className="grid justify-items-center gap-2 text-sm">
+                  <ImagePlus className="h-8 w-8" aria-hidden="true" />
+                  <span>No feature image</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 w-full flex flex-col justify-end">
+              <FileInput
+                accept="image/*"
+                label=""
+                fileName={featureImage ? `${featureImage.name} selected` : null}
+                helper="High quality compressed image will be stored after saving."
+                onChange={(event) => setFeatureImage(event.target.files?.[0] ?? null)}
+              />
+            </div>
           </div>
-          <FileInput
-            accept="image/*"
-            className="content-start"
-            label="Feature Image"
-            fileName={featureImage ? `${featureImage.name} selected` : null}
-            helper="High quality compressed image will be stored after saving."
-            onChange={(event) => setFeatureImage(event.target.files?.[0] ?? null)}
-          />
         </div>
         <FormGrid columns={2}>
           <Input label="Name" value={infoForm.name ?? info.data?.name ?? ""} onChange={(event) => setInfoForm((current) => ({ ...current, name: event.target.value }))} error={infoErrors.name} />
