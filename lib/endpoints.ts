@@ -530,8 +530,8 @@ export const endpoints = {
   // Library Content
   libraryInfo: () => getData<LibraryInfo>("/admin/library/info/"),
 
-  updateLibraryInfo: (payload: Partial<LibraryInfo>, featureImage?: File | null) =>
-    postMultipart<LibraryInfo>("/admin/library/info/", toFormData(payload, { feature_image: featureImage })),
+  updateLibraryInfo: (payload: Partial<LibraryInfo>, logo?: File | null, bannerImage?: File | null) =>
+    postMultipart<LibraryInfo>("/admin/library/info/", toFormData(payload, { logo, banner_image: bannerImage })),
 
   facilities: () => getData<Facility[]>("/admin/library/facilities/"),
 

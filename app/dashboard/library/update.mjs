@@ -1,4 +1,6 @@
-"use client";
+import fs from "fs";
+
+const content = `"use client";
 
 import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -221,14 +223,14 @@ export default function LibraryPage() {
                   <span className="text-xs font-semibold uppercase tracking-normal text-muted">Logo</span>
                   <div
                     className="grid h-32 w-32 shrink-0 place-items-center rounded-lg border border-border bg-panel-strong bg-contain bg-no-repeat bg-center text-muted"
-                    style={(logoFile || currentLogo) ? { backgroundImage: `url(${logoFile ? URL.createObjectURL(logoFile) : currentLogo})` } : undefined}
+                    style={(logoFile || currentLogo) ? { backgroundImage: \`url(\${logoFile ? URL.createObjectURL(logoFile) : currentLogo})\` } : undefined}
                   >
                     {!(logoFile || currentLogo) && <ImagePlus className="h-8 w-8" aria-hidden="true" />}
                   </div>
                   <FileInput
                     accept="image/*"
                     label=""
-                    fileName={logoFile ? `${logoFile.name} selected` : null}
+                    fileName={logoFile ? \`\${logoFile.name} selected\` : null}
                     onChange={(event) => setLogoFile(event.target.files?.[0] ?? null)}
                   />
                 </div>
@@ -236,14 +238,14 @@ export default function LibraryPage() {
                   <span className="text-xs font-semibold uppercase tracking-normal text-muted">Banner Image</span>
                   <div
                     className="grid h-32 w-full shrink-0 place-items-center rounded-lg border border-border bg-panel-strong bg-cover bg-center text-muted"
-                    style={(bannerImageFile || currentBanner) ? { backgroundImage: `url(${bannerImageFile ? URL.createObjectURL(bannerImageFile) : currentBanner})` } : undefined}
+                    style={(bannerImageFile || currentBanner) ? { backgroundImage: \`url(\${bannerImageFile ? URL.createObjectURL(bannerImageFile) : currentBanner})\` } : undefined}
                   >
                     {!(bannerImageFile || currentBanner) && <ImagePlus className="h-8 w-8" aria-hidden="true" />}
                   </div>
                   <FileInput
                     accept="image/*"
                     label=""
-                    fileName={bannerImageFile ? `${bannerImageFile.name} selected` : null}
+                    fileName={bannerImageFile ? \`\${bannerImageFile.name} selected\` : null}
                     onChange={(event) => setBannerImageFile(event.target.files?.[0] ?? null)}
                   />
                 </div>
@@ -332,9 +334,9 @@ export default function LibraryPage() {
                 avatar={
                   <div
                     className="grid h-12 w-12 shrink-0 place-items-center rounded-lg bg-primary/10 bg-cover bg-center text-primary"
-                    style={facility.image ? { backgroundImage: `url(${mediaUrl(facility.image)})` } : undefined}
+                    style={facility.image ? { backgroundImage: \`url(\${mediaUrl(facility.image)})\` } : undefined}
                     role="img"
-                    aria-label={`${facility.name} icon`}
+                    aria-label={\`\${facility.name} icon\`}
                   >
                     {!facility.image && facility.icon_key ? <span className="text-xl font-bold" aria-hidden="true">{facility.icon_key[0]}</span> : null}
                   </div>
@@ -375,9 +377,9 @@ export default function LibraryPage() {
                   avatar={
                     <div
                       className="grid h-14 w-14 shrink-0 place-items-center rounded-lg bg-amber-500/15 bg-cover bg-center text-amber-300"
-                      style={achieverImage ? { backgroundImage: `url(${achieverImage})` } : undefined}
+                      style={achieverImage ? { backgroundImage: \`url(\${achieverImage})\` } : undefined}
                       role="img"
-                      aria-label={`${achiever.name} photo`}
+                      aria-label={\`\${achiever.name} photo\`}
                     >
                       {achieverImage ? <span className="sr-only">{achiever.name}</span> : <Trophy className="h-5 w-5" aria-hidden="true" />}
                     </div>
@@ -385,7 +387,7 @@ export default function LibraryPage() {
                   title={achiever.name}
                   subtitle={achiever.achievement}
                   metadata={
-                    <span className="text-xs text-amber-300">{achiever.year} {achiever.goal ? `/ ${achiever.goal}` : ""}</span>
+                    <span className="text-xs text-amber-300">{achiever.year} {achiever.goal ? \`/ \${achiever.goal}\` : ""}</span>
                   }
                   actions={
                     <>
@@ -419,7 +421,7 @@ export default function LibraryPage() {
                     <h3 className="font-medium">{review.student_name}</h3>
                     <p className="mt-1 text-xs text-muted">{formatDate(review.created_at)}</p>
                   </div>
-                  <div className="flex gap-1 text-amber-300" role="img" aria-label={`Rating: ${review.rating} out of 5 stars`}>
+                  <div className="flex gap-1 text-amber-300" role="img" aria-label={\`Rating: \${review.rating} out of 5 stars\`}>
                     {Array.from({ length: 5 }).map((_, index) => (
                       <Star key={index} className={index < review.rating ? "h-4 w-4 fill-current" : "h-4 w-4 text-muted"} aria-hidden="true" />
                     ))}
@@ -442,14 +444,14 @@ export default function LibraryPage() {
             {(facilityImage || facilityForm.image) && (
               <div 
                 className="h-16 w-16 shrink-0 rounded-lg bg-panel-strong bg-cover bg-center border border-border"
-                style={{ backgroundImage: `url(${facilityImage ? URL.createObjectURL(facilityImage) : mediaUrl(facilityForm.image)})` }}
+                style={{ backgroundImage: \`url(\${facilityImage ? URL.createObjectURL(facilityImage) : mediaUrl(facilityForm.image)})\` }}
               />
             )}
             <div className="flex-1">
               <FileInput 
                 label="Facility Image" 
                 accept="image/*" 
-                fileName={facilityImage ? `${facilityImage.name} selected` : null}
+                fileName={facilityImage ? \`\${facilityImage.name} selected\` : null}
                 onChange={(event) => setFacilityImage(event.target.files?.[0] ?? null)} 
               />
             </div>
@@ -466,7 +468,7 @@ export default function LibraryPage() {
               <div className="relative">
                 <div 
                   className="flex h-40 w-40 sm:h-52 sm:w-52 items-center justify-center overflow-hidden rounded-[24px] bg-panel-strong bg-cover bg-center text-muted shadow-inner border border-border/50"
-                  style={{ backgroundImage: (achieverPhoto || achieverForm.photo) ? `url(${achieverPhoto ? URL.createObjectURL(achieverPhoto) : mediaUrl(achieverForm.photo)})` : undefined }}
+                  style={{ backgroundImage: (achieverPhoto || achieverForm.photo) ? \`url(\${achieverPhoto ? URL.createObjectURL(achieverPhoto) : mediaUrl(achieverForm.photo)})\` : undefined }}
                 >
                   {!(achieverPhoto || achieverForm.photo) && <ImagePlus className="h-10 w-10 opacity-40" />}
                 </div>
@@ -505,3 +507,7 @@ export default function LibraryPage() {
     </>
   );
 }
+`;
+
+fs.writeFileSync("d:/EndUser/hitesh/shreshtproject/shreshtibrary/app/dashboard/library/page.tsx", content);
+console.log("Updated page.tsx!");
