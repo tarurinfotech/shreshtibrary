@@ -406,8 +406,33 @@ export type LibraryInfo = {
   whatsapp_number?: string | null;
   telegram_url?: string | null;
   youtube_url?: string | null;
+  tagline?: string | null;
+  mission?: string | null;
+  vision?: string | null;
+  history?: string | null;
+  welcome_message?: string | null;
+  services?: string | null;
+  courses_supported?: string | null;
+  statistics_description?: string | null;
+  faq?: string | null;
+  testimonials?: string | null;
+  emergency_contact?: string | null;
+  footer_text?: string | null;
+  membership_details?: string | null;
+  registration_process?: string | null;
+  required_documents?: string | null;
+  membership_benefits?: string | null;
+  library_rules?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
+};
+
+export type GalleryImage = {
+  id: number;
+  image_url: string;
+  caption?: string | null;
+  order: number;
+  created_at: string;
 };
 
 export type Facility = {

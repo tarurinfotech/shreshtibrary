@@ -27,7 +27,10 @@ const tabs = [
   { value: "basic", label: "Basic Info" },
   { value: "address", label: "Address & Location" },
   { value: "facilities", label: "Facilities" },
-  { value: "social", label: "Social Media" }
+  { value: "social", label: "Social Media" },
+  { value: "content", label: "About Content" },
+  { value: "membership", label: "Membership Info" },
+  { value: "gallery", label: "Gallery" }
 ] as const;
 
 type Tab = typeof tabs[number]["value"];
@@ -41,6 +44,7 @@ export default function LibraryPage() {
   const achievers = useQuery({ queryKey: ["achievers"], queryFn: endpoints.achievers });
   const reviews = useQuery({ queryKey: ["public-reviews"], queryFn: endpoints.publicReviews });
   const reviewSummary = useQuery({ queryKey: ["review-summary"], queryFn: endpoints.reviewSummary });
+  const gallery = useQuery({ queryKey: ["gallery"], queryFn: endpoints.galleryImages });
   
   const [activeTab, setActiveTab] = useState<Tab>("basic");
   
@@ -55,6 +59,11 @@ export default function LibraryPage() {
   const [achieverOpen, setAchieverOpen] = useState(false);
   const [achieverForm, setAchieverForm] = useState<Partial<Achiever>>(emptyAchiever);
   const [achieverPhoto, setAchieverPhoto] = useState<File | null>(null);
+
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [galleryCaption, setGalleryCaption] = useState("");
+  const [galleryOrder, setGalleryOrder] = useState(0);
+  const [galleryFile, setGalleryFile] = useState<File | null>(null);
   
   const [infoErrors, setInfoErrors] = useState<Record<string, string>>({});
   const [facilityErrors, setFacilityErrors] = useState<Record<string, string>>({});
@@ -173,6 +182,28 @@ export default function LibraryPage() {
     onSuccess: async () => {
       await invalidate();
       pushToast({ kind: "success", title: "Achiever deleted" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
+  });
+
+  const uploadGallery = useMutation({
+    mutationFn: () => endpoints.uploadGalleryImage(galleryCaption, galleryOrder, galleryFile),
+    onSuccess: async () => {
+      await invalidate();
+      setGalleryCaption("");
+      setGalleryOrder(0);
+      setGalleryFile(null);
+      setGalleryOpen(false);
+      pushToast({ kind: "success", title: "Image uploaded" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Upload failed", message: getErrorMessage(error) }),
+  });
+
+  const deleteGalleryImage = useMutation({
+    mutationFn: (id: number) => endpoints.deleteGalleryImage(id),
+    onSuccess: async () => {
+      await invalidate();
+      pushToast({ kind: "success", title: "Image deleted" });
     },
     onError: (error) => pushToast({ kind: "error", title: "Delete failed", message: getErrorMessage(error) }),
   });
@@ -313,7 +344,61 @@ export default function LibraryPage() {
           </div>
         )}
 
-        <FormActions><Button type="submit" loading={saveInfo.isPending} icon={<Save className="h-4 w-4" />}>Save Info</Button></FormActions>
+        {activeTab === "content" && (
+          <div className="space-y-6">
+            <FormGrid columns={2}>
+              <Input label="Tagline" value={getVal("tagline") as string} onChange={(e) => setField("tagline", e.target.value)} error={infoErrors.tagline} />
+              <Input label="Welcome Message" value={getVal("welcome_message") as string} onChange={(e) => setField("welcome_message", e.target.value)} error={infoErrors.welcome_message} />
+              <Input label="Mission" value={getVal("mission") as string} onChange={(e) => setField("mission", e.target.value)} error={infoErrors.mission} />
+              <Input label="Vision" value={getVal("vision") as string} onChange={(e) => setField("vision", e.target.value)} error={infoErrors.vision} />
+              <Input label="Emergency Contact" value={getVal("emergency_contact") as string} onChange={(e) => setField("emergency_contact", e.target.value)} error={infoErrors.emergency_contact} />
+              <Input label="Footer Text" value={getVal("footer_text") as string} onChange={(e) => setField("footer_text", e.target.value)} error={infoErrors.footer_text} />
+            </FormGrid>
+            <Textarea label="Library History" value={getVal("history") as string} onChange={(e) => setField("history", e.target.value)} error={infoErrors.history} />
+            <Textarea label="Services Offered" value={getVal("services") as string} onChange={(e) => setField("services", e.target.value)} error={infoErrors.services} />
+            <Textarea label="Courses Supported" value={getVal("courses_supported") as string} onChange={(e) => setField("courses_supported", e.target.value)} error={infoErrors.courses_supported} />
+            <Textarea label="Statistics Description" value={getVal("statistics_description") as string} onChange={(e) => setField("statistics_description", e.target.value)} error={infoErrors.statistics_description} />
+            <Textarea label="FAQ" value={getVal("faq") as string} onChange={(e) => setField("faq", e.target.value)} error={infoErrors.faq} />
+            <Textarea label="Testimonials (Content)" value={getVal("testimonials") as string} onChange={(e) => setField("testimonials", e.target.value)} error={infoErrors.testimonials} />
+          </div>
+        )}
+
+        {activeTab === "membership" && (
+          <div className="space-y-6">
+            <Textarea label="Membership Details" value={getVal("membership_details") as string} onChange={(e) => setField("membership_details", e.target.value)} error={infoErrors.membership_details} />
+            <Textarea label="Registration Process" value={getVal("registration_process") as string} onChange={(e) => setField("registration_process", e.target.value)} error={infoErrors.registration_process} />
+            <Textarea label="Required Documents" value={getVal("required_documents") as string} onChange={(e) => setField("required_documents", e.target.value)} error={infoErrors.required_documents} />
+            <Textarea label="Membership Benefits" value={getVal("membership_benefits") as string} onChange={(e) => setField("membership_benefits", e.target.value)} error={infoErrors.membership_benefits} />
+            <Textarea label="Library Rules" value={getVal("library_rules") as string} onChange={(e) => setField("library_rules", e.target.value)} error={infoErrors.library_rules} />
+          </div>
+        )}
+
+        {activeTab === "gallery" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-semibold">Gallery Images</h3>
+              <Button type="button" size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setGalleryOpen(true)}>Add Image</Button>
+            </div>
+            {gallery.data?.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No gallery images added yet.</div>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
+                {(gallery.data ?? []).map((img) => (
+                  <div key={img.id} className="relative group rounded-lg border overflow-hidden">
+                    <img src={mediaUrl(img.image_url)} alt="Gallery" className="w-full h-32 object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button type="button" size="sm" variant="destructive" icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteGalleryImage.mutate(img.id)}>Delete</Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab !== "gallery" && (
+          <FormActions><Button type="submit" loading={saveInfo.isPending} icon={<Save className="h-4 w-4" />}>Save Info</Button></FormActions>
+        )}
       </FormShell>
 
       <section className="surface rounded-lg p-5">
@@ -500,6 +585,30 @@ export default function LibraryPage() {
             <Button type="button" variant="secondary" className="px-6 rounded-xl" onClick={() => setAchieverOpen(false)}>Cancel</Button>
             <Button type="submit" className="px-8 rounded-xl" loading={createAchiever.isPending || updateAchiever.isPending}>{achieverForm.id ? "Save" : "Add"}</Button>
           </div>
+        </FormShell>
+      </Modal>
+
+      <Modal open={galleryOpen} title="Upload Gallery Image" onClose={() => setGalleryOpen(false)}>
+        <FormShell onSubmit={(event) => { event.preventDefault(); uploadGallery.mutate(); }}>
+          <Input label="Caption (Optional)" value={galleryCaption} onChange={(e) => setGalleryCaption(e.target.value)} />
+          <Input label="Order" type="number" value={galleryOrder} onChange={(e) => setGalleryOrder(Number(e.target.value))} />
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium">Image File</span>
+            {galleryFile && (
+              <div 
+                className="h-32 w-full shrink-0 rounded-lg bg-panel-strong bg-cover bg-center border border-border"
+                style={{ backgroundImage: `url(${URL.createObjectURL(galleryFile)})` }}
+              />
+            )}
+            <FileInput 
+              label="Select Image" 
+              accept="image/*" 
+              fileName={galleryFile ? `${galleryFile.name} selected` : null}
+              onChange={(event) => setGalleryFile(event.target.files?.[0] ?? null)} 
+              required
+            />
+          </div>
+          <FormActions><Button type="submit" loading={uploadGallery.isPending} icon={<Save className="h-4 w-4" />}>Upload</Button></FormActions>
         </FormShell>
       </Modal>
     </>

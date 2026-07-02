@@ -35,6 +35,7 @@ import type {
   StudentAnalytics,
   StudentTimelineItem,
   HomeSlider,
+  GalleryImage,
 } from "@/types/api";
 
 type Query = Record<string, string | number | boolean | undefined>;
@@ -583,7 +584,15 @@ export const endpoints = {
   rejectReview: (id: number, reason: string) =>
     postData<Review>(`/admin/reviews/${id}/reject`, { reason }),
 
-  deleteReview: (id: number) => deleteData<unknown>(`/admin/reviews/${id}/delete/`),
+  deleteReview: (id: number) => deleteData<unknown>(`/admin/reviews/${id}/delete`),
+
+  // Gallery Endpoints
+  galleryImages: () => getData<GalleryImage[]>("/admin/library/gallery"),
+
+  uploadGalleryImage: (caption?: string, order?: number, image?: File | null) =>
+    postMultipart<GalleryImage>("/admin/library/gallery", toFormData({ caption, order }, { image })),
+
+  deleteGalleryImage: (id: number) => deleteData<unknown>(`/admin/library/gallery/${id}`),
 
   // Reports
   report: (kind: "attendance" | "payments" | "students" | "memberships", params?: ListParams) =>
