@@ -207,18 +207,25 @@ export function AttendanceMatrix({
                   if (record?.is_present) {
                     acc.present += 1;
                   } else {
-                    const now = new Date();
-                    const m = String(now.getMonth() + 1).padStart(2, "0");
-                    const d = String(now.getDate()).padStart(2, "0");
-                    const todayStr = `${now.getFullYear()}-${m}-${d}`;
-                    if (day === todayStr && settings?.library_open_time) {
-                      const [openHour, openMin] = settings.library_open_time.split(":").map(Number);
-                      const openDate = new Date();
-                      openDate.setHours(openHour, openMin, 0, 0);
-                      const paddingMs = parseInt(settings.attendance_padding_time || "60", 10) * 60000;
-                      if (now.getTime() <= openDate.getTime() + paddingMs) return acc;
+                    let isPending = false;
+                    if (record) {
+                      isPending = record.method === "PENDING";
+                    } else {
+                      const now = new Date();
+                      const m = String(now.getMonth() + 1).padStart(2, "0");
+                      const d = String(now.getDate()).padStart(2, "0");
+                      const todayStr = `${now.getFullYear()}-${m}-${d}`;
+                      if (day === todayStr && settings?.library_open_time) {
+                        const [openHour, openMin] = settings.library_open_time.split(":").map(Number);
+                        const openDate = new Date();
+                        openDate.setHours(openHour, openMin, 0, 0);
+                        const paddingMs = parseInt(settings.attendance_padding_time || "60", 10) * 60000;
+                        if (now.getTime() <= openDate.getTime() + paddingMs) {
+                          isPending = true;
+                        }
+                      }
                     }
-                    acc.absent += 1;
+                    if (!isPending) acc.absent += 1;
                   }
                   return acc;
                 },
@@ -267,18 +274,22 @@ export function AttendanceMatrix({
                     }
 
                     let isPending = false;
-                    const now = new Date();
-                    const m = String(now.getMonth() + 1).padStart(2, "0");
-                    const d = String(now.getDate()).padStart(2, "0");
-                    const todayStr = `${now.getFullYear()}-${m}-${d}`;
+                    if (record) {
+                      isPending = record.method === "PENDING";
+                    } else {
+                      const now = new Date();
+                      const m = String(now.getMonth() + 1).padStart(2, "0");
+                      const d = String(now.getDate()).padStart(2, "0");
+                      const todayStr = `${now.getFullYear()}-${m}-${d}`;
 
-                    if (!isHoliday && !isFuture && !isPresent && !isBeforeJoin && day === todayStr && settings?.library_open_time) {
-                      const [openHour, openMin] = settings.library_open_time.split(":").map(Number);
-                      const openDate = new Date();
-                      openDate.setHours(openHour, openMin, 0, 0);
-                      const paddingMs = parseInt(settings.attendance_padding_time || "60", 10) * 60000;
-                      if (now.getTime() <= openDate.getTime() + paddingMs) {
-                        isPending = true;
+                      if (!isHoliday && !isFuture && !isPresent && !isBeforeJoin && day === todayStr && settings?.library_open_time) {
+                        const [openHour, openMin] = settings.library_open_time.split(":").map(Number);
+                        const openDate = new Date();
+                        openDate.setHours(openHour, openMin, 0, 0);
+                        const paddingMs = parseInt(settings.attendance_padding_time || "60", 10) * 60000;
+                        if (now.getTime() <= openDate.getTime() + paddingMs) {
+                          isPending = true;
+                        }
                       }
                     }
 
