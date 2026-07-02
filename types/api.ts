@@ -371,6 +371,8 @@ export type LibraryInfo = {
   tagline?: string | null;
   description?: string | null;
   feature_image?: string | null;
+  logo_square?: string | null;
+  logo_rectangle?: string | null;
   rules: string;
   facilities: string;
   about: string;
