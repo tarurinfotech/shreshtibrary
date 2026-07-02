@@ -385,9 +385,9 @@ export default function LibraryPage() {
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
                 {(gallery.data ?? []).map((img) => (
                   <div key={img.id} className="relative group rounded-lg border overflow-hidden">
-                    <img src={mediaUrl(img.image_url)} alt="Gallery" className="w-full h-32 object-cover" />
+                    <img src={mediaUrl(img.image_url ?? undefined) ?? undefined} alt="Gallery" className="w-full h-32 object-cover" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button type="button" size="sm" variant="destructive" icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteGalleryImage.mutate(img.id)}>Delete</Button>
+                      <Button type="button" size="sm" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteGalleryImage.mutate(img.id)}>Delete</Button>
                     </div>
                   </div>
                 ))}
