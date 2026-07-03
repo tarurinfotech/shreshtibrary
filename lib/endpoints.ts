@@ -79,13 +79,17 @@ function toFormData(payload: Record<string, unknown> = {}, files: Record<string,
 
 async function postMultipart<T>(url: string, formData: FormData) {
   return unwrap<T>(
-    await api.post<ApiResponse<T>>(url, formData),
+    await api.post<ApiResponse<T>>(url, formData, {
+      headers: { "Content-Type": undefined },
+    }),
   );
 }
 
 async function putMultipart<T>(url: string, formData: FormData) {
   return unwrap<T>(
-    await api.put<ApiResponse<T>>(url, formData),
+    await api.put<ApiResponse<T>>(url, formData, {
+      headers: { "Content-Type": undefined },
+    }),
   );
 }
 
