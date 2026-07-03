@@ -420,11 +420,7 @@ export type LibraryInfo = {
   testimonials?: string | null;
   emergency_contact?: string | null;
   footer_text?: string | null;
-  membership_details?: string | null;
-  registration_process?: string | null;
-  required_documents?: string | null;
-  membership_benefits?: string | null;
-  library_rules?: string | null;
+
   created_at?: string | null;
   updated_at?: string | null;
 };
