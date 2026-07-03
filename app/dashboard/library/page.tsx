@@ -27,7 +27,6 @@ const emptyAchiever: Partial<Achiever> = { name: "", goal: "", achievement: "", 
 const tabs = [
   { value: "basic", label: "Basic Info" },
   { value: "address", label: "Address & Location" },
-  { value: "facilities", label: "Facilities" },
   { value: "social", label: "Social Media" },
   { value: "content", label: "About Content" },
   { value: "gallery", label: "Gallery" }
@@ -348,21 +347,6 @@ export default function LibraryPage() {
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {activeTab === "facilities" && (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            <Switch label="Wi-Fi" checked={getBool("wifi")} onChange={(e) => setField("wifi", e.target.checked)} />
-            <Switch label="Air Conditioning (AC)" checked={getBool("ac")} onChange={(e) => setField("ac", e.target.checked)} />
-            <Switch label="CCTV Security" checked={getBool("cctv")} onChange={(e) => setField("cctv", e.target.checked)} />
-            <Switch label="Drinking Water" checked={getBool("drinking_water")} onChange={(e) => setField("drinking_water", e.target.checked)} />
-            <Switch label="Personal Lockers" checked={getBool("lockers")} onChange={(e) => setField("lockers", e.target.checked)} />
-            <Switch label="Charging Points" checked={getBool("charging_points")} onChange={(e) => setField("charging_points", e.target.checked)} />
-            <Switch label="Parking" checked={getBool("parking")} onChange={(e) => setField("parking", e.target.checked)} />
-            <Switch label="Reading Area" checked={getBool("reading_area")} onChange={(e) => setField("reading_area", e.target.checked)} />
-            <Switch label="Computer Access" checked={getBool("computer_access")} onChange={(e) => setField("computer_access", e.target.checked)} />
-            <Switch label="Printing Facility" checked={getBool("printing")} onChange={(e) => setField("printing", e.target.checked)} />
           </div>
         )}
 
