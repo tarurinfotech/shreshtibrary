@@ -645,15 +645,9 @@ export const endpoints = {
 
   sliders: () => getData<HomeSlider[]>("/admin/sliders"),
 
-  createSlider: async (form: FormData) =>
-    unwrap<HomeSlider>(
-      await api.post<ApiResponse<HomeSlider>>("/admin/sliders", form)
-    ),
+  createSlider: (form: FormData) => postMultipart<HomeSlider>("/admin/sliders", form),
 
-  updateSlider: async (id: number, form: FormData) =>
-    unwrap<HomeSlider>(
-      await api.put<ApiResponse<HomeSlider>>(`/admin/sliders/${id}`, form)
-    ),
+  updateSlider: (id: number, form: FormData) => putMultipart<HomeSlider>(`/admin/sliders/${id}`, form),
 
   deleteSlider: async (id: number) => {
     await api.delete(`/admin/sliders/${id}`);
