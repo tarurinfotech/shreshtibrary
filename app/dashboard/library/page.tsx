@@ -82,6 +82,7 @@ export default function LibraryPage() {
       await invalidate();
       setLogoFile(null);
       setBannerImageFile(null);
+      setInfoForm({}); // Reset form to use newly fetched data
       pushToast({ kind: "success", title: "Library info saved" });
     },
     onError: (error) => {
