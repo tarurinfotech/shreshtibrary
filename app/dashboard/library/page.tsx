@@ -396,12 +396,12 @@ export default function LibraryPage() {
               {((getVal("faq") as any[]) || []).map((faq, i) => (
                 <div key={i} className="flex gap-2 items-start border p-3 rounded bg-panel">
                   <div className="flex-1 space-y-2">
-                    <Input placeholder="Question" value={faq.question} onChange={(e) => {
+                    <Input label="Question" placeholder="Enter question..." value={faq.question} onChange={(e) => {
                       const faqs = [...((getVal("faq") as any[]) || [])];
                       faqs[i] = { ...faqs[i], question: e.target.value };
                       setField("faq", faqs);
                     }} />
-                    <Textarea placeholder="Answer" value={faq.answer} onChange={(e) => {
+                    <Textarea label="Answer" placeholder="Enter answer..." value={faq.answer} onChange={(e) => {
                       const faqs = [...((getVal("faq") as any[]) || [])];
                       faqs[i] = { ...faqs[i], answer: e.target.value };
                       setField("faq", faqs);
