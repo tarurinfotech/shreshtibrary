@@ -221,27 +221,26 @@ export default function LibraryPage() {
   const getVal = (key: keyof LibraryInfo) => infoForm[key] ?? info.data?.[key] ?? (typeof infoForm[key] === "boolean" ? false : "");
   const getBool = (key: keyof LibraryInfo) => Boolean(infoForm[key] ?? info.data?.[key] ?? false);
 
-  const loading = info.isLoading || facilities.isLoading || achievers.isLoading || reviews.isLoading;
-  const hasError = info.error || facilities.error || achievers.error || reviews.error;
-  
   const currentLogo = mediaUrl(info.data?.logo);
   const currentBanner = mediaUrl(info.data?.banner_image);
 
   return (
     <>
       <PageHeader title="Library" eyebrow="Public Content" />
-      {loading ? <LoadingBlock label="Loading library content" /> : null}
-      {hasError ? <ErrorState message="Unable to load library content." /> : null}
-      {!loading && !hasError && (
-      <div className="space-y-6">
-
-      <FormShell surface onSubmit={submitInfo}>
-        <SegmentedControl
-          value={activeTab}
-          options={tabs as any}
-          onChange={(val) => setActiveTab(val as Tab)}
-          className="mb-4"
-        />
+      
+      {info.isLoading ? (
+        <LoadingBlock label="Loading library info" />
+      ) : info.error ? (
+        <ErrorState message="Unable to load library information." />
+      ) : (
+        <div className="space-y-6">
+          <FormShell surface onSubmit={submitInfo}>
+            <SegmentedControl
+              value={activeTab}
+              options={tabs as any}
+              onChange={(val) => setActiveTab(val as Tab)}
+              className="mb-4"
+            />
 
         {activeTab === "basic" && (
           <div className="space-y-6">
@@ -435,7 +434,11 @@ export default function LibraryPage() {
               <h3 className="text-sm font-semibold">Gallery Images</h3>
               <Button type="button" size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setGalleryOpen(true)}>Add Image</Button>
             </div>
-            {gallery.data?.length === 0 ? (
+            {gallery.isLoading ? (
+              <div className="py-8 text-center text-sm text-muted">Loading gallery...</div>
+            ) : gallery.error ? (
+              <div className="py-8 text-center text-sm text-red-500">Failed to load gallery</div>
+            ) : gallery.data?.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No gallery images added yet.</div>
             ) : (
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
@@ -467,7 +470,11 @@ export default function LibraryPage() {
           <h2 className="font-semibold">Facilities</h2>
           <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setFacilityForm(emptyFacility); setFacilityImage(null); setFacilityOpen(true); }}>Add</Button>
         </div>
-        {facilities.data?.length === 0 ? (
+        {facilities.isLoading ? (
+          <div className="py-8 text-center text-sm text-muted">Loading facilities...</div>
+        ) : facilities.error ? (
+          <div className="py-8 text-center text-sm text-red-500">Failed to load facilities</div>
+        ) : facilities.data?.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No facilities added yet.</div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -508,7 +515,11 @@ export default function LibraryPage() {
           <h2 className="font-semibold">Achievers</h2>
           <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setAchieverForm(emptyAchiever); setAchieverPhoto(null); setAchieverOpen(true); }}>Add</Button>
         </div>
-        {achievers.data?.length === 0 ? (
+        {achievers.isLoading ? (
+          <div className="py-8 text-center text-sm text-muted">Loading achievers...</div>
+        ) : achievers.error ? (
+          <div className="py-8 text-center text-sm text-red-500">Failed to load achievers</div>
+        ) : achievers.data?.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No achievers added yet.</div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -554,7 +565,11 @@ export default function LibraryPage() {
           <h2 className="font-semibold">Public Reviews</h2>
           <Badge variant="success">{reviewSummary.data?.count ?? reviews.data?.length ?? 0}</Badge>
         </div>
-        {reviews.data?.length === 0 ? (
+        {reviews.isLoading ? (
+          <div className="py-8 text-center text-sm text-muted">Loading reviews...</div>
+        ) : reviews.error ? (
+          <div className="py-8 text-center text-sm text-red-500">Failed to load reviews</div>
+        ) : reviews.data?.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No public reviews available.</div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
