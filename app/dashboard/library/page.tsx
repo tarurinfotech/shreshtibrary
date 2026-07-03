@@ -385,7 +385,36 @@ export default function LibraryPage() {
             <Textarea label="Services Offered" value={getVal("services") as string} onChange={(e) => setField("services", e.target.value)} error={infoErrors.services} />
             <Textarea label="Courses Supported" value={getVal("courses_supported") as string} onChange={(e) => setField("courses_supported", e.target.value)} error={infoErrors.courses_supported} />
             <Textarea label="Statistics Description" value={getVal("statistics_description") as string} onChange={(e) => setField("statistics_description", e.target.value)} error={infoErrors.statistics_description} />
-            <Textarea label="FAQ" value={getVal("faq") as string} onChange={(e) => setField("faq", e.target.value)} error={infoErrors.faq} />
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium">FAQ</label>
+                <Button type="button" size="sm" onClick={() => {
+                  const faqs = (getVal("faq") as any[]) || [];
+                  setField("faq", [...faqs, { question: "", answer: "" }]);
+                }}>Add FAQ</Button>
+              </div>
+              {((getVal("faq") as any[]) || []).map((faq, i) => (
+                <div key={i} className="flex gap-2 items-start border p-3 rounded bg-panel">
+                  <div className="flex-1 space-y-2">
+                    <Input placeholder="Question" value={faq.question} onChange={(e) => {
+                      const faqs = [...((getVal("faq") as any[]) || [])];
+                      faqs[i] = { ...faqs[i], question: e.target.value };
+                      setField("faq", faqs);
+                    }} />
+                    <Textarea placeholder="Answer" value={faq.answer} onChange={(e) => {
+                      const faqs = [...((getVal("faq") as any[]) || [])];
+                      faqs[i] = { ...faqs[i], answer: e.target.value };
+                      setField("faq", faqs);
+                    }} />
+                  </div>
+                  <Button type="button" variant="danger" onClick={() => {
+                    const faqs = [...((getVal("faq") as any[]) || [])];
+                    faqs.splice(i, 1);
+                    setField("faq", faqs);
+                  }}>Remove</Button>
+                </div>
+              ))}
+            </div>
             <Textarea label="Testimonials (Content)" value={getVal("testimonials") as string} onChange={(e) => setField("testimonials", e.target.value)} error={infoErrors.testimonials} />
           </div>
         )}

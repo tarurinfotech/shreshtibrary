@@ -416,7 +416,7 @@ export type LibraryInfo = {
   services?: string | null;
   courses_supported?: string | null;
   statistics_description?: string | null;
-  faq?: string | null;
+  faq?: { question: string; answer: string }[] | null;
   testimonials?: string | null;
   emergency_contact?: string | null;
   footer_text?: string | null;
