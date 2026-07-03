@@ -213,162 +213,162 @@ export const endpoints = {
     return res.data.data;
   },
 
-  me: () => getData<AdminUser>("/auth/me/"),
+  me: () => getData<AdminUser>("/auth/me"),
 
-  adminProfile: () => getData<AdminProfile>("/admin/profile/"),
+  adminProfile: () => getData<AdminProfile>("/admin/profile"),
 
   updateAdminProfile: (payload: Partial<AdminProfile>, image?: File | null) =>
-    putMultipart<AdminProfile>("/admin/profile/", toFormData(payload, { profile_image: image })),
+    putMultipart<AdminProfile>("/admin/profile", toFormData(payload, { profile_image: image })),
 
   changePassword: (payload: {
     old_password: string;
     new_password: string;
     confirm_password: string;
-  }) => postData<unknown>("/auth/change-password/", payload),
+  }) => postData<unknown>("/auth/change-password", payload),
 
   updateFcmToken: (payload: { token: string }) =>
-    postData<unknown>("/auth/fcm-token/update/", payload),
+    postData<unknown>("/auth/fcm-token/update", payload),
 
-  settings: () => getData<any>("/admin/settings/"),
+  settings: () => getData<any>("/admin/settings"),
 
   updateSettings: (payload: Record<string, unknown>) =>
-    putData<Record<string, unknown>>("/admin/settings/", payload),
+    putData<Record<string, unknown>>("/admin/settings", payload),
 
   // Dashboard
-  dashboardStats: () => getData<DashboardStats>("/dashboard/stats/"),
+  dashboardStats: () => getData<DashboardStats>("/dashboard/stats"),
 
   dashboardStatsSection: (section: string) =>
-    getData<Record<string, unknown>>(`/dashboard/stats/${section}/`),
+    getData<Record<string, unknown>>(`/dashboard/stats/${section}`),
 
   dashboardChart: (domain: string, chart = "overview") =>
-    getData<DashboardChart>(`/dashboard/charts/${domain}/${chart}/`),
+    getData<DashboardChart>(`/dashboard/charts/${domain}/${chart}`),
 
   dashboardCharts: (range = "month") =>
-    getData<any>(`/dashboard/charts/`, { range }),
+    getData<any>(`/dashboard/charts`, { range }),
 
   dashboardActivityRecent: () =>
-    getData<ActivityLogItem[]>("/dashboard/activity/recent/"),
+    getData<ActivityLogItem[]>("/dashboard/activity/recent"),
 
-  dashboardActivityLog: () => getData<ActivityLogItem[]>("/dashboard/activity/log/"),
+  dashboardActivityLog: () => getData<ActivityLogItem[]>("/dashboard/activity/log"),
 
-  exportActivityLog: () => downloadFile("/dashboard/activity/export/", "activity-log.xlsx"),
+  exportActivityLog: () => downloadFile("/dashboard/activity/export", "activity-log.xlsx"),
 
-  dashboardAlerts: () => getData<AlertItem[]>("/dashboard/alerts/"),
+  dashboardAlerts: () => getData<AlertItem[]>("/dashboard/alerts"),
   
-  globalSearch: (query: string) => getData<{ students: StudentProfile[]; seats: Seat[]; payments: PaymentRecord[] }>("/admin/search/", { q: query }),
+  globalSearch: (query: string) => getData<{ students: StudentProfile[]; seats: Seat[]; payments: PaymentRecord[] }>("/admin/search", { q: query }),
 
   // Students
-  students: (params?: ListParams) => getPage<StudentProfile>("/admin/students/", params),
+  students: (params?: ListParams) => getPage<StudentProfile>("/admin/students", params),
 
   allStudents: (params?: ListParams) =>
-    getAllPages<StudentProfile>("/admin/students/", { page_size: 100, ...params }),
+    getAllPages<StudentProfile>("/admin/students", { page_size: 100, ...params }),
 
-  student: (id: string | number) => getData<StudentProfile>(`/admin/students/${id}/`),
+  student: (id: string | number) => getData<StudentProfile>(`/admin/students/${id}`),
 
   createStudent: (payload: StudentCreatePayload) =>
-    postData<StudentProfile>("/admin/students/", payload),
+    postData<StudentProfile>("/admin/students", payload),
 
   updateStudent: (id: string | number, payload: StudentUpdatePayload) =>
-    putData<StudentProfile>(`/admin/students/${id}/`, payload),
+    putData<StudentProfile>(`/admin/students/${id}`, payload),
 
   uploadStudentPhoto: (id: string | number, image: File) =>
-    postMultipart<StudentProfile>(`/admin/students/${id}/photo/`, toFormData({}, { profile_photo: image })),
+    postMultipart<StudentProfile>(`/admin/students/${id}/photo`, toFormData({}, { profile_photo: image })),
 
-  deleteStudent: (id: string | number) => deleteData<unknown>(`/admin/students/${id}/`),
+  deleteStudent: (id: string | number) => deleteData<unknown>(`/admin/students/${id}`),
 
   suspendStudent: (id: string | number, reason: string) =>
-    postData<StudentProfile>(`/admin/students/${id}/suspend/`, { reason }),
+    postData<StudentProfile>(`/admin/students/${id}/suspend`, { reason }),
 
   activateStudent: (id: string | number) =>
-    postData<StudentProfile>(`/admin/students/${id}/activate/`),
+    postData<StudentProfile>(`/admin/students/${id}/activate`),
 
   studentTimeline: (id: string | number) =>
-    getData<StudentTimelineItem[]>(`/admin/students/${id}/timeline/`),
+    getData<StudentTimelineItem[]>(`/admin/students/${id}/timeline`),
 
   studentPayments: (id: string | number) =>
-    getData<PaymentRecord[]>(`/admin/students/${id}/payments/`),
+    getData<PaymentRecord[]>(`/admin/students/${id}/payments`),
 
   studentAttendance: (id: string | number) =>
-    getData<AttendanceRecord[]>(`/admin/students/${id}/attendance/`),
+    getData<AttendanceRecord[]>(`/admin/students/${id}/attendance`),
 
   studentAnalytics: (id: string | number, period: StudentAnalytics["period"]) =>
-    getData<StudentAnalytics>(`/admin/students/${id}/analytics/`, { period }),
+    getData<StudentAnalytics>(`/admin/students/${id}/analytics`, { period }),
 
   studentCounts: () =>
     getData<{ total: number; live: number; expired: number; suspended: number; pending: number; girls?: number; boys?: number; other?: number }>(
-      "/admin/students/counts/",
+      "/admin/students/counts",
     ),
 
   exportStudents: (format = "csv") =>
-    downloadFile("/admin/students/export/", `students.${format}`, { format }),
+    downloadFile("/admin/students/export", `students.${format}`, { format }),
 
   // Plans and Memberships
-  publicPlans: () => getData<MembershipPlan[]>("/plans/"),
+  publicPlans: () => getData<MembershipPlan[]>("/plans"),
 
-  plans: () => getData<MembershipPlan[]>("/admin/plans/"),
+  plans: () => getData<MembershipPlan[]>("/admin/plans"),
 
   createPlan: (payload: PlanUpdatePayload) =>
-    postData<MembershipPlan>("/admin/plans/create/", payload),
+    postData<MembershipPlan>("/admin/plans/create", payload),
 
   updatePlan: (id: number, payload: PlanUpdatePayload) =>
-    putData<MembershipPlan>(`/admin/plans/${id}/`, payload),
+    putData<MembershipPlan>(`/admin/plans/${id}`, payload),
 
-  deletePlan: (id: number) => deleteData<unknown>(`/admin/plans/${id}/`),
+  deletePlan: (id: number) => deleteData<unknown>(`/admin/plans/${id}`),
 
   togglePlan: (id: number, is_active?: boolean) =>
-    patchData<MembershipPlan>(`/admin/plans/${id}/toggle/`, { is_active }),
+    patchData<MembershipPlan>(`/admin/plans/${id}/toggle`, { is_active }),
 
   planStats: () =>
     getData<Array<MembershipPlan & { active_students: number; all_time_students: number }>>(
-      "/admin/plans/stats/",
+      "/admin/plans/stats",
     ),
 
-  planStudents: (id: number) => getData<StudentProfile[]>(`/admin/plans/${id}/students/`),
+  planStudents: (id: number) => getData<StudentProfile[]>(`/admin/plans/${id}/students`),
 
-  memberships: (params?: ListParams) => getPage<MembershipRecord>("/admin/memberships/", params),
+  memberships: (params?: ListParams) => getPage<MembershipRecord>("/admin/memberships", params),
 
   studentMemberships: (studentId: number) =>
-    getPage<MembershipRecord>("/admin/memberships/", { student_id: studentId, page_size: 20 }),
+    getPage<MembershipRecord>("/admin/memberships", { student_id: studentId, page_size: 20 }),
 
-  membership: (id: number) => getData<MembershipRecord>(`/admin/memberships/${id}/`),
+  membership: (id: number) => getData<MembershipRecord>(`/admin/memberships/${id}`),
 
   assignMembership: (payload: MembershipPayload) =>
-    postData<MembershipRecord>("/admin/memberships/assign/", payload),
+    postData<MembershipRecord>("/admin/memberships/assign", payload),
 
   renewMembership: (payload: MembershipPayload) =>
-    postData<MembershipRecord>("/admin/memberships/renew/", payload),
+    postData<MembershipRecord>("/admin/memberships/renew", payload),
 
   upgradeMembership: (payload: MembershipPayload) =>
-    postData<MembershipRecord>("/admin/memberships/upgrade/", payload),
+    postData<MembershipRecord>("/admin/memberships/upgrade", payload),
 
   updateMembership: (id: number, payload: Partial<MembershipRecord>) =>
-    putData<MembershipRecord>(`/admin/memberships/${id}/`, payload),
+    putData<MembershipRecord>(`/admin/memberships/${id}`, payload),
 
   expiringMemberships: (days = 7) =>
-    getData<MembershipRecord[]>("/admin/memberships/expiring/", { days }),
+    getData<MembershipRecord[]>("/admin/memberships/expiring", { days }),
 
   expiredTodayMemberships: () =>
-    getData<MembershipRecord[]>("/admin/memberships/expired-today/"),
+    getData<MembershipRecord[]>("/admin/memberships/expired-today"),
 
   // QR and Attendance
-  currentQr: () => getData<QRCodeRecord | null>("/admin/qr/current/"),
+  currentQr: () => getData<QRCodeRecord | null>("/admin/qr/current"),
 
-  qrHistory: (params?: ListParams) => getPage<QRCodeRecord>("/admin/qr/history/", params),
+  qrHistory: (params?: ListParams) => getPage<QRCodeRecord>("/admin/qr/history", params),
 
-  generateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/generate/", payload ?? {}),
+  generateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/generate", payload ?? {}),
 
-  regenerateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/regenerate/", payload ?? {}),
+  regenerateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/regenerate", payload ?? {}),
 
-  expireQr: () => postData<unknown>("/admin/qr/expire/"),
+  expireQr: () => postData<unknown>("/admin/qr/expire"),
   
-  deleteQr: (id: number) => deleteData<unknown>(`/admin/qr/${id}/`),
+  deleteQr: (id: number) => deleteData<unknown>(`/admin/qr/${id}`),
 
-  qrScans: (id: number) => getData<AttendanceRecord[]>(`/admin/qr/${id}/scans/`),
+  qrScans: (id: number) => getData<AttendanceRecord[]>(`/admin/qr/${id}/scans`),
 
-  attendance: (params?: Query) => getPage<AttendanceRecord>("/admin/attendance/", params),
+  attendance: (params?: Query) => getPage<AttendanceRecord>("/admin/attendance", params),
 
   allAttendance: (params?: Query) =>
-    getAllPages<AttendanceRecord>("/admin/attendance/", { page_size: 100, ...params }),
+    getAllPages<AttendanceRecord>("/admin/attendance", { page_size: 100, ...params }),
 
   manualAttendance: (payload: {
     student_id?: number;
@@ -376,7 +376,7 @@ export const endpoints = {
     date?: string;
     is_present?: boolean;
     note?: string;
-  }) => postData<AttendanceRecord>("/admin/attendance/manual/", payload),
+  }) => postData<AttendanceRecord>("/admin/attendance/manual", payload),
 
   manualAttendanceBulk: (payload: Array<{
     student_id?: number;
@@ -384,49 +384,49 @@ export const endpoints = {
     date?: string;
     is_present?: boolean;
     note?: string;
-  }>) => postData<{ success: boolean; message: string }>("/admin/attendance/manual/bulk/", payload),
+  }>) => postData<{ success: boolean; message: string }>("/admin/attendance/manual/bulk", payload),
 
   updateAttendance: (id: number, payload: Partial<AttendanceRecord>) =>
-    putData<AttendanceRecord>(`/admin/attendance/${id}/`, payload),
+    putData<AttendanceRecord>(`/admin/attendance/${id}`, payload),
 
-  deleteAttendance: (id: number) => deleteData<unknown>(`/admin/attendance/${id}/`),
+  deleteAttendance: (id: number) => deleteData<unknown>(`/admin/attendance/${id}`),
 
   attendanceDailySummary: (date?: string) =>
     getData<{ date: string; present: number; absent: number; pending: number; total: number }>(
-      "/admin/attendance/daily-summary/",
+      "/admin/attendance/daily-summary",
       { date },
     ),
 
   attendanceAbsentees: (date?: string) =>
-    getData<StudentProfile[]>("/admin/attendance/absentees/", { date }),
+    getData<StudentProfile[]>("/admin/attendance/absentees", { date }),
 
   attendanceStreak: () =>
-    getData<Array<{ student: StudentProfile; streak: number }>>("/admin/attendance/streak/"),
+    getData<Array<{ student: StudentProfile; streak: number }>>("/admin/attendance/streak"),
 
-  holidays: (params?: Query) => getData<HolidayRecord[]>("/holidays/", params),
+  holidays: (params?: Query) => getData<HolidayRecord[]>("/holidays", params),
 
   createHoliday: (payload: Partial<HolidayRecord>) =>
-    postData<HolidayRecord>("/admin/holidays/", payload),
+    postData<HolidayRecord>("/admin/holidays", payload),
 
   updateHoliday: (id: number, payload: Partial<HolidayRecord>) =>
-    putData<HolidayRecord>(`/admin/holidays/${id}/`, payload),
+    putData<HolidayRecord>(`/admin/holidays/${id}`, payload),
 
-  deleteHoliday: (id: number) => deleteData<unknown>(`/admin/holidays/${id}/`),
+  deleteHoliday: (id: number) => deleteData<unknown>(`/admin/holidays/${id}`),
 
   // Payments
-  payments: (params?: ListParams) => getPage<PaymentRecord>("/admin/payments/", params),
+  payments: (params?: ListParams) => getPage<PaymentRecord>("/admin/payments", params),
 
-  createPayment: (payload: PaymentPayload) => postData<PaymentRecord>("/admin/payments/", payload),
+  createPayment: (payload: PaymentPayload) => postData<PaymentRecord>("/admin/payments", payload),
 
-  payment: (id: number) => getData<PaymentRecord>(`/admin/payments/${id}/`),
+  payment: (id: number) => getData<PaymentRecord>(`/admin/payments/${id}`),
 
   updatePayment: (id: number, payload: Partial<PaymentRecord>) =>
-    putData<PaymentRecord>(`/admin/payments/${id}/`, payload),
+    putData<PaymentRecord>(`/admin/payments/${id}`, payload),
 
-  verifyPayment: (id: number) => postData<PaymentRecord>(`/admin/payments/${id}/verify/`),
+  verifyPayment: (id: number) => postData<PaymentRecord>(`/admin/payments/${id}/verify`),
 
   refundPayment: (id: number, payload: { refund_amount?: string | number; refund_reason?: string }) =>
-    postData<PaymentRecord>(`/admin/payments/${id}/refund/`, payload),
+    postData<PaymentRecord>(`/admin/payments/${id}/refund`, payload),
 
   downloadReceipt: (id: number) => downloadFile(`/admin/payments/${id}/receipt`, `receipt-${id}.pdf`),
 
@@ -440,89 +440,89 @@ export const endpoints = {
       year_amount: string;
       all_time_amount: string;
       pending_count: number;
-    }>("/admin/payments/summary/"),
+    }>("/admin/payments/summary"),
 
-  pendingPayments: () => getData<PaymentRecord[]>("/admin/payments/pending/"),
+  pendingPayments: () => getData<PaymentRecord[]>("/admin/payments/pending"),
 
-  overduePayments: () => getData<PaymentRecord[]>("/admin/payments/overdue/"),
+  overduePayments: () => getData<PaymentRecord[]>("/admin/payments/overdue"),
 
   // Seats
-  seatLayout: () => getData<Floor[]>("/admin/seats/layout/"),
+  seatLayout: () => getData<Floor[]>("/admin/seats/layout"),
 
-  seats: (params?: ListParams) => getPage<Seat>("/admin/seats/", params),
+  seats: (params?: ListParams) => getPage<Seat>("/admin/seats", params),
 
-  flatSeats: async () => (await getPage<Seat>("/admin/seats/", { page_size: 200 })).data ?? [],
+  flatSeats: async () => (await getPage<Seat>("/admin/seats", { page_size: 200 })).data ?? [],
 
-  addSeat: (payload: Partial<Seat>) => postData<Seat>("/admin/seats/", payload),
+  addSeat: (payload: Partial<Seat>) => postData<Seat>("/admin/seats", payload),
 
   updateSeat: (id: number, payload: Partial<Seat>) =>
-    putData<Seat>(`/admin/seats/${id}/`, payload),
+    putData<Seat>(`/admin/seats/${id}`, payload),
 
   updateSeatStatus: (id: number, payload: { status: string; reason?: string }) =>
-    patchData<Seat>(`/admin/seats/${id}/status/`, payload),
+    patchData<Seat>(`/admin/seats/${id}/status`, payload),
 
   assignSeat: (id: number, student_id: number | string) =>
-    postData<Seat>(`/admin/seats/${id}/assign/`, { student_id }),
+    postData<Seat>(`/admin/seats/${id}/assign`, { student_id }),
 
   unassignSeat: (id: number, reason?: string) =>
-    postData<Seat>(`/admin/seats/${id}/unassign/`, { reason }),
+    postData<Seat>(`/admin/seats/${id}/unassign`, { reason }),
 
-  availableSeats: () => getData<Seat[]>("/admin/seats/available/"),
+  availableSeats: () => getData<Seat[]>("/admin/seats/available"),
 
-  seatHistory: (id: number) => getData<SeatHistoryItem[]>(`/admin/seats/${id}/history/`),
+  seatHistory: (id: number) => getData<SeatHistoryItem[]>(`/admin/seats/${id}/history`),
 
-  seatStats: () => getData<SeatReport>("/admin/seats/stats/"),
+  seatStats: () => getData<SeatReport>("/admin/seats/stats"),
   
-  releaseAllSeats: () => postData<unknown>("/admin/seats/release-all/"),
+  releaseAllSeats: () => postData<unknown>("/admin/seats/release-all"),
 
   reserveBulkSeats: (payload: { seat_ids: number[]; is_reserved_for_girls: boolean }) =>
-    postData<unknown>("/admin/seats/reserve-bulk/", payload),
+    postData<unknown>("/admin/seats/reserve-bulk", payload),
 
-  deleteSeat: (id: number) => deleteData<unknown>(`/admin/seats/${id}/`),
+  deleteSeat: (id: number) => deleteData<unknown>(`/admin/seats/${id}`),
 
   createFloor: (payload: { name: string; description?: string; order?: number }) =>
-    postData<Floor>("/admin/floors/", payload),
+    postData<Floor>("/admin/floors", payload),
 
   updateFloor: (id: number, payload: Partial<Floor>) =>
-    putData<Floor>(`/admin/floors/${id}/`, payload),
+    putData<Floor>(`/admin/floors/${id}`, payload),
 
-  deleteFloor: (id: number) => deleteData<unknown>(`/admin/floors/${id}/`),
+  deleteFloor: (id: number) => deleteData<unknown>(`/admin/floors/${id}`),
 
   createRow: (payload: { floor_id: number; label: string; order?: number }) =>
-    postData<SeatRow>("/admin/rows/", payload),
+    postData<SeatRow>("/admin/rows", payload),
 
   updateRow: (id: number, payload: { label?: string; order?: number }) =>
-    putData<SeatRow>(`/admin/rows/${id}/`, payload),
+    putData<SeatRow>(`/admin/rows/${id}`, payload),
 
-  deleteRow: (id: number) => deleteData<unknown>(`/admin/rows/${id}/`),
+  deleteRow: (id: number) => deleteData<unknown>(`/admin/rows/${id}`),
 
   // Notifications
-  notifications: (params?: ListParams) => getPage<NotificationRecord>("/admin/notifications/", params),
+  notifications: (params?: ListParams) => getPage<NotificationRecord>("/admin/notifications", params),
 
   sendNotification: (payload: FormData) =>
-    postMultipart<NotificationRecord>("/admin/notifications/send/", payload),
+    postMultipart<NotificationRecord>("/admin/notifications/send", payload),
 
-  notification: (id: number) => getData<NotificationRecord>(`/admin/notifications/${id}/`),
+  notification: (id: number) => getData<NotificationRecord>(`/admin/notifications/${id}`),
 
   notificationRecipients: (id: number) =>
-    getData<NotificationRecipient[]>(`/admin/notifications/${id}/recipients/`),
+    getData<NotificationRecipient[]>(`/admin/notifications/${id}/recipients`),
 
   scheduleNotification: (payload: FormData) =>
-    postMultipart<NotificationRecord>("/admin/notifications/schedule/", payload),
+    postMultipart<NotificationRecord>("/admin/notifications/schedule", payload),
 
   scheduledNotifications: () =>
-    getData<NotificationRecord[]>("/admin/notifications/scheduled/"),
+    getData<NotificationRecord[]>("/admin/notifications/scheduled"),
 
   cancelScheduledNotification: (id: number) =>
-    deleteData<unknown>(`/admin/notifications/scheduled/${id}/cancel/`),
+    deleteData<unknown>(`/admin/notifications/scheduled/${id}/cancel`),
 
   notificationTemplates: () =>
-    getData<Array<{ id: string; title: string; body: string }>>("/admin/notifications/templates/"),
+    getData<Array<{ id: string; title: string; body: string }>>("/admin/notifications/templates"),
 
   // Admin Inbox
-  adminInbox: () => getData<AdminInboxNotificationRecord[]>("/admin/inbox/"),
-  adminInboxAction: (id: number, action: "read" | "unread") => postData<unknown>(`/admin/inbox/${id}/${action}/`),
-  deleteAdminInbox: (id: number) => deleteData<unknown>(`/admin/inbox/${id}/`),
+  adminInbox: () => getData<AdminInboxNotificationRecord[]>("/admin/inbox"),
+  adminInboxAction: (id: number, action: "read" | "unread") => postData<unknown>(`/admin/inbox/${id}/${action}`),
+  deleteAdminInbox: (id: number) => deleteData<unknown>(`/admin/inbox/${id}`),
 
   // Library Content
   libraryInfo: () => getData<LibraryInfo>("/admin/library/info"),
@@ -593,16 +593,16 @@ export const endpoints = {
   // Reports
   report: (kind: "attendance" | "payments" | "students" | "memberships", params?: ListParams) =>
     getPage<AttendanceRecord | PaymentRecord | StudentProfile | MembershipRecord>(
-      `/reports/${kind}/`,
+      `/reports/${kind}`,
       params,
     ),
 
-  dailySummaryReport: () => getData<Record<string, unknown>>("/reports/daily-summary/"),
+  dailySummaryReport: () => getData<Record<string, unknown>>("/reports/daily-summary"),
 
-  seatReport: () => getData<SeatReport>("/reports/seats/"),
+  seatReport: () => getData<SeatReport>("/reports/seats"),
 
   exportReport: (kind: string, format = "csv") =>
-    downloadFile(`/reports/export/${kind}/`, `${kind}.${format}`, { format }),
+    downloadFile(`/reports/export/${kind}`, `${kind}.${format}`, { format }),
 
   // Super Admin
   admins: () => getData<AdminUser[]>("/superadmin/admins"),
@@ -625,35 +625,35 @@ export const endpoints = {
     postData<AdminUser>("/superadmin/permissions/assign", { admin_id, permissions }),
 
   createBackup: () =>
-    postData<{ id: string; status: string }>("/superadmin/backup/create/"),
+    postData<{ id: string; status: string }>("/superadmin/backup/create"),
 
   backups: () =>
-    getData<Array<{ id: string; created_at: string; status: string }>>("/superadmin/backup/list/"),
+    getData<Array<{ id: string; created_at: string; status: string }>>("/superadmin/backup/list"),
 
-  restoreBackup: (id: string) => postData<unknown>("/superadmin/backup/restore/", { id }),
+  restoreBackup: (id: string) => postData<unknown>("/superadmin/backup/restore", { id }),
 
-  superActivityLog: () => getData<ActivityLogItem[]>("/superadmin/activity-log/"),
+  superActivityLog: () => getData<ActivityLogItem[]>("/superadmin/activity-log"),
 
   systemHealth: () =>
-    getData<Record<string, unknown>>("/superadmin/health/"),
+    getData<Record<string, unknown>>("/superadmin/health"),
 
   // ─── Sliders ─────────────────────────────────────────────────────────────────
 
-  sliders: () => getData<HomeSlider[]>("/admin/sliders/"),
+  sliders: () => getData<HomeSlider[]>("/admin/sliders"),
 
   createSlider: async (form: FormData) =>
     unwrap<HomeSlider>(
-      await api.post<ApiResponse<HomeSlider>>("/admin/sliders/", form)
+      await api.post<ApiResponse<HomeSlider>>("/admin/sliders", form)
     ),
 
   updateSlider: async (id: number, form: FormData) =>
     unwrap<HomeSlider>(
-      await api.put<ApiResponse<HomeSlider>>(`/admin/sliders/${id}/`, form)
+      await api.put<ApiResponse<HomeSlider>>(`/admin/sliders/${id}`, form)
     ),
 
   deleteSlider: async (id: number) => {
-    await api.delete(`/admin/sliders/${id}/`);
+    await api.delete(`/admin/sliders/${id}`);
   },
   
-  studyLeaderboard: (duration?: string, start_date?: string, end_date?: string) => getData<Array<{ rank: number; student: StudentProfile; total_minutes: number; hours_formatted: string; level_info?: {level: number; title: string; badge_color: string}; is_current_user?: boolean }>>("/study/leaderboard/", { duration, start_date, end_date }),
+  studyLeaderboard: (duration?: string, start_date?: string, end_date?: string) => getData<Array<{ rank: number; student: StudentProfile; total_minutes: number; hours_formatted: string; level_info?: {level: number; title: string; badge_color: string}; is_current_user?: boolean }>>("/study/leaderboard", { duration, start_date, end_date }),
 };
