@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ImagePlus, Plus, Save, Star, Trash2, Trophy } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -29,13 +30,15 @@ const tabs = [
   { value: "facilities", label: "Facilities" },
   { value: "social", label: "Social Media" },
   { value: "content", label: "About Content" },
-  { value: "membership", label: "Membership Info" },
   { value: "gallery", label: "Gallery" }
 ] as const;
 
 type Tab = typeof tabs[number]["value"];
 
 export default function LibraryPage() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
   
@@ -46,7 +49,13 @@ export default function LibraryPage() {
   const reviewSummary = useQuery({ queryKey: ["review-summary"], queryFn: endpoints.reviewSummary });
   const gallery = useQuery({ queryKey: ["gallery"], queryFn: endpoints.galleryImages });
   
-  const [activeTab, setActiveTab] = useState<Tab>("basic");
+  const activeTab = (searchParams.get("tab") as Tab) || "basic";
+  
+  const setActiveTab = (tab: Tab) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", tab);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
   
   const [infoForm, setInfoForm] = useState<Partial<LibraryInfo>>({});
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -416,16 +425,6 @@ export default function LibraryPage() {
               ))}
             </div>
             <Textarea label="Testimonials (Content)" value={getVal("testimonials") as string} onChange={(e) => setField("testimonials", e.target.value)} error={infoErrors.testimonials} />
-          </div>
-        )}
-
-        {activeTab === "membership" && (
-          <div className="space-y-6">
-            <Textarea label="Membership Details" value={getVal("membership_details") as string} onChange={(e) => setField("membership_details", e.target.value)} error={infoErrors.membership_details} />
-            <Textarea label="Registration Process" value={getVal("registration_process") as string} onChange={(e) => setField("registration_process", e.target.value)} error={infoErrors.registration_process} />
-            <Textarea label="Required Documents" value={getVal("required_documents") as string} onChange={(e) => setField("required_documents", e.target.value)} error={infoErrors.required_documents} />
-            <Textarea label="Membership Benefits" value={getVal("membership_benefits") as string} onChange={(e) => setField("membership_benefits", e.target.value)} error={infoErrors.membership_benefits} />
-            <Textarea label="Library Rules" value={getVal("library_rules") as string} onChange={(e) => setField("library_rules", e.target.value)} error={infoErrors.library_rules} />
           </div>
         )}
 
