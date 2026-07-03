@@ -54,7 +54,7 @@ async function putData<T>(url: string, payload?: unknown) {
 
 function toFormData(payload: Record<string, unknown> = {}, files: Record<string, File | null | undefined> = {}) {
   const formData = new FormData();
-  const skipKeys = new Set(["id", "created_at", "updated_at", "profile_photo", "profile_image", "photo", "feature_image"]);
+  const skipKeys = new Set(["id", "created_at", "updated_at", "profile_photo", "profile_image", "photo", "feature_image", "logo", "banner_image", "image"]);
 
   Object.entries(payload).forEach(([key, value]) => {
     if (skipKeys.has(key) || value === undefined || value === null) {
@@ -79,17 +79,13 @@ function toFormData(payload: Record<string, unknown> = {}, files: Record<string,
 
 async function postMultipart<T>(url: string, formData: FormData) {
   return unwrap<T>(
-    await api.post<ApiResponse<T>>(url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    await api.post<ApiResponse<T>>(url, formData),
   );
 }
 
 async function putMultipart<T>(url: string, formData: FormData) {
   return unwrap<T>(
-    await api.put<ApiResponse<T>>(url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    await api.put<ApiResponse<T>>(url, formData),
   );
 }
 
@@ -647,16 +643,12 @@ export const endpoints = {
 
   createSlider: async (form: FormData) =>
     unwrap<HomeSlider>(
-      await api.post<ApiResponse<HomeSlider>>("/admin/sliders/", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      await api.post<ApiResponse<HomeSlider>>("/admin/sliders/", form)
     ),
 
   updateSlider: async (id: number, form: FormData) =>
     unwrap<HomeSlider>(
-      await api.put<ApiResponse<HomeSlider>>(`/admin/sliders/${id}/`, form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      await api.put<ApiResponse<HomeSlider>>(`/admin/sliders/${id}/`, form)
     ),
 
   deleteSlider: async (id: number) => {
