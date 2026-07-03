@@ -281,6 +281,7 @@ export type AttendanceRecord = {
   method: string;
   marked_at?: string | null;
   note?: string | null;
+  status?: string;
 };
 
 export type HolidayRecord = {

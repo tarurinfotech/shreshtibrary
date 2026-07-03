@@ -289,7 +289,15 @@ export function StudentDetailClient({ id }: { id: string }) {
                   <Td>{formatDate(record.date)}</Td>
                   <Td>{record.time_in ?? "Not set"}</Td>
                   <Td>{record.method}</Td>
-                  <Td><Badge variant={record.is_present ? "success" : "danger"}>{record.is_present ? "Present" : "Absent"}</Badge></Td>
+                  <Td>
+                    <Badge variant={
+                      record.status === 'Pending' ? 'warning' :
+                      record.status === 'Absent' ? 'danger' :
+                      record.status === 'Present (Arrived Late)' ? 'warning' : 'success'
+                    }>
+                      {record.status ?? (record.is_present ? "Present" : "Absent")}
+                    </Badge>
+                  </Td>
                 </tr>
               ))}
             </tbody>
