@@ -406,6 +406,8 @@ export type LibraryInfo = {
   whatsapp_number?: string | null;
   telegram_url?: string | null;
   youtube_url?: string | null;
+  twitter_url?: string | null;
+  linkedin_url?: string | null;
   tagline?: string | null;
   mission?: string | null;
   vision?: string | null;

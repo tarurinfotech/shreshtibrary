@@ -314,6 +314,31 @@ export default function LibraryPage() {
               <Input label="Longitude" type="number" step="any" value={getVal("longitude") as string} onChange={(e) => setField("longitude", Number(e.target.value))} error={infoErrors.longitude} />
             </FormGrid>
             <Textarea label="Google Map URL" value={getVal("google_map_url") as string} onChange={(e) => setField("google_map_url", e.target.value)} error={infoErrors.google_map_url} />
+            
+            {/* Map Preview */}
+            {(getVal("google_map_url") || (getVal("latitude") && getVal("longitude"))) && (
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-sm font-semibold">Map Preview</h3>
+                  {getVal("google_map_url") && (
+                    <Button type="button" size="sm" variant="secondary" onClick={() => window.open(getVal("google_map_url") as string, '_blank')}>
+                      Get Directions
+                    </Button>
+                  )}
+                </div>
+                <div className="h-64 w-full rounded-lg border border-border overflow-hidden bg-panel-strong relative">
+                  <iframe 
+                    src={getVal("google_map_url") ? (getVal("google_map_url") as string).includes('embed') ? getVal("google_map_url") as string : `https://maps.google.com/maps?q=${getVal("latitude") || 0},${getVal("longitude") || 0}&hl=en&z=14&output=embed` : `https://maps.google.com/maps?q=${getVal("latitude") || 0},${getVal("longitude") || 0}&hl=en&z=14&output=embed`}
+                    width="100%" 
+                    height="100%" 
+                    style={{ border: 0 }} 
+                    allowFullScreen 
+                    loading="lazy" 
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -340,6 +365,8 @@ export default function LibraryPage() {
               <Input label="WhatsApp Number" value={getVal("whatsapp_number") as string} onChange={(e) => setField("whatsapp_number", e.target.value)} error={infoErrors.whatsapp_number} />
               <Input label="Telegram URL" value={getVal("telegram_url") as string} onChange={(e) => setField("telegram_url", e.target.value)} error={infoErrors.telegram_url} />
               <Input label="YouTube URL" value={getVal("youtube_url") as string} onChange={(e) => setField("youtube_url", e.target.value)} error={infoErrors.youtube_url} />
+              <Input label="Twitter/X URL" value={getVal("twitter_url") as string} onChange={(e) => setField("twitter_url", e.target.value)} error={infoErrors.twitter_url} />
+              <Input label="LinkedIn URL" value={getVal("linkedin_url") as string} onChange={(e) => setField("linkedin_url", e.target.value)} error={infoErrors.linkedin_url} />
             </FormGrid>
           </div>
         )}
@@ -385,7 +412,12 @@ export default function LibraryPage() {
               <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
                 {(gallery.data ?? []).map((img) => (
                   <div key={img.id} className="relative group rounded-lg border overflow-hidden">
-                    <img src={mediaUrl(img.image_url ?? undefined) ?? undefined} alt="Gallery" className="w-full h-32 object-cover" />
+                    <img 
+                      src={mediaUrl(img.image_url ?? undefined) ?? undefined} 
+                      alt={img.caption || "Gallery Image"} 
+                      className="w-full h-32 object-cover" 
+                      onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=Image+Not+Found'; }}
+                    />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Button type="button" size="sm" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteGalleryImage.mutate(img.id)}>Delete</Button>
                     </div>
