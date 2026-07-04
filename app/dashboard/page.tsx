@@ -442,8 +442,8 @@ export default function DashboardPage() {
           {activity.isLoading ? <LoadingBlock label="Loading activity" /> : null}
           {activity.error ? <ErrorState message="Unable to load activity." /> : null}
           {activity.data && (
-          <div className="flex flex-col px-2 py-1">
-            {activity.data.slice(0, 6).map((item, index, arr) => (
+          <div className="flex flex-col px-2 py-1 max-h-[380px] overflow-y-auto pr-3">
+            {activity.data.slice(0, 15).map((item, index, arr) => (
               <ActivityRow key={item.id} item={item} isLast={index === arr.length - 1} />
             ))}
             {activity.data.length === 0 && (
