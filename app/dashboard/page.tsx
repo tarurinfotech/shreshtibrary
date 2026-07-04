@@ -38,19 +38,43 @@ import { useAuthStore } from "@/store/authStore";
 const chartDomains = ["attendance", "revenue", "students", "memberships", "seats", "study"];
 const donutColors = ["#22c55e", "#f59e0b", "#dc2626", "#f97316"];
 
-function formatActivityDescription(description?: string, targetModel?: string) {
+function formatActivityDescription(description?: string, targetModel?: string, action?: string) {
   if (!description) return targetModel;
   try {
     const parsed = JSON.parse(description);
     if (parsed.path && parsed.method) {
       return "";
     }
-    return description;
+    
+    if (action === "ATTENDANCE_UPDATE") {
+      const student = parsed.Student || parsed.student_id || "Unknown";
+      const newStatus = parsed.NewStatus || parsed.status || "Unknown";
+      const oldStatus = parsed.PreviousStatus ? ` (was ${parsed.PreviousStatus})` : "";
+      return `Updated attendance for student ${student} to ${newStatus}${oldStatus}`;
+    }
+    
+    if (action === "ATTENDANCE_AUTO_CHECKOUT") {
+      const student = parsed.Student || "Unknown";
+      const time = parsed.CheckoutTime || "Unknown";
+      const duration = parsed.TotalHours || "Unknown";
+      return `Auto-checkout for student ${student} at ${time} (Duration: ${duration})`;
+    }
+    
+    if (action === "STUDY_SESSION_AUTO_CLOSED") {
+      return `Auto-closed study session ${parsed.SessionId} (Duration: ${parsed.Duration})`;
+    }
+    
+    // Generic fallback for other JSON descriptions
+    const parts = [];
+    for (const [key, value] of Object.entries(parsed)) {
+      if (key === "Method" || key === "UpdatedBy") continue; // filter noise
+      parts.push(`${key}: ${value}`);
+    }
+    return parts.join(", ") || targetModel;
   } catch {
     return description;
   }
 }
-
 
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
@@ -334,7 +358,7 @@ export default function DashboardPage() {
                 <div className="flex flex-col pt-0.5">
                   <p className="text-sm font-semibold text-foreground">{item.action}</p>
                   {(() => {
-                    const desc = formatActivityDescription(item.description, item.target_model);
+                    const desc = formatActivityDescription(item.description, item.target_model, item.action);
                     return desc ? <p className="mt-0.5 text-sm text-muted">{desc}</p> : null;
                   })()}
                   <div className="mt-1.5 flex items-center gap-2 text-xs text-muted">
