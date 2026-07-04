@@ -207,7 +207,7 @@ export default function ReportsPage() {
       {/* Trends Row */}
       <section className="mt-3 flex flex-wrap gap-3 [&>*]:flex-1 [&>*]:basis-[400px]">
         {canAttendance && <ReportCard delay={4} title="Attendance Trends" eyebrow="Present vs Absent over time">
-          <div className="h-[240px] 2xl:h-[260px]">
+          <div className="h-[240px] 2xl:h-[260px] w-full min-w-0">
             {attendanceByDate.length ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <ComposedChart data={attendanceByDate} margin={{ left: -24, right: 12, top: 8, bottom: 0 }}>
@@ -233,7 +233,7 @@ export default function ReportsPage() {
         </ReportCard>}
 
         {canPayments && <ReportCard delay={5} title="Revenue Flow" eyebrow="Monthly Collections">
-          <div className="h-[240px] 2xl:h-[260px]">
+          <div className="h-[240px] 2xl:h-[260px] w-full min-w-0">
             {revenueByMonth.length ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <AreaChart data={revenueByMonth} margin={{ left: -24, right: 12, top: 8, bottom: 0 }}>
@@ -258,8 +258,8 @@ export default function ReportsPage() {
       {/* Distribution Row */}
       <section className="mt-3 flex flex-wrap gap-3 [&>*]:flex-1 [&>*]:basis-[300px]">
         {canStudents && <ReportCard delay={6} title="Student Status" eyebrow="Distribution Overview">
-          <div className="grid gap-3 xl:grid-cols-[1fr_120px]">
-            <div className="h-36">
+          <div className="grid gap-3 xl:grid-cols-[1fr_120px] w-full min-w-0">
+            <div className="h-36 w-full min-w-0">
               <DonutChart data={studentStatus} />
             </div>
             <LegendList data={studentStatus} />
@@ -267,7 +267,7 @@ export default function ReportsPage() {
         </ReportCard>}
 
         {canPayments && <ReportCard delay={7} title="Payments by Status" eyebrow="Breakdown">
-          <div className="h-36">
+          <div className="h-36 w-full min-w-0">
             {paymentByStatus.length ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
                 <BarChart data={paymentByStatus} margin={{ left: -24, right: 8, top: 8, bottom: -10 }}>

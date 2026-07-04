@@ -227,7 +227,7 @@ export default function DashboardPage() {
           {chart.isLoading ? <LoadingBlock label="Loading chart" /> : null}
           {chart.error ? <ErrorState message="Unable to load chart." /> : null}
           {chartRows.length > 0 ? (
-            <div className="h-[340px] w-full min-w-0">
+            <div className="h-[340px] w-full min-w-0 flex-1">
               <ResponsiveContainer width="100%" height={340} minWidth={1} minHeight={1}>
                 <AreaChart data={chartRows} margin={{ left: 4, right: 16, top: 8, bottom: 0 }}>
                   <defs>
@@ -276,7 +276,7 @@ export default function DashboardPage() {
         {canStudents && (
           <SectionCard menu padding="lg" title="Analytics" className="lg:col-span-1">
             <div className="grid place-items-center">
-              <div className="relative h-[220px] w-full max-w-[280px] min-w-[220px]">
+              <div className="relative h-[220px] w-full max-w-[280px] min-w-0">
                 <ResponsiveContainer width="100%" height={220} minWidth={1} minHeight={1}>
                   <PieChart>
                     <Pie
@@ -381,7 +381,7 @@ export default function DashboardPage() {
           {attendanceSummary.error ? <ErrorState message="Unable to load summary." /> : null}
           {attendanceSummary.data && (
             <div className="grid place-items-center py-4">
-              <div className="relative h-[220px] w-full max-w-[280px] min-w-[220px]">
+              <div className="relative h-[220px] w-full max-w-[280px] min-w-0">
                 <ResponsiveContainer width="100%" height={220} minWidth={1} minHeight={1}>
                   <PieChart>
                     <Pie

@@ -64,7 +64,8 @@ export function MiniAreaChart({ data, dataKey }: { data: Array<Record<string, st
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+    <div className="w-full h-full min-w-0 min-h-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
       <AreaChart data={data}>
         <defs>
           <linearGradient id="miniAreaFill" x1="0" x2="0" y1="0" y2="1">
@@ -76,6 +77,7 @@ export function MiniAreaChart({ data, dataKey }: { data: Array<Record<string, st
         <Area type="monotone" dataKey={dataKey} stroke="var(--accent-sky)" strokeWidth={2.5} fill="url(#miniAreaFill)" dot={{ r: 3 }} />
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -86,7 +88,8 @@ export function DonutChart({ data }: { data: Array<{ label: string; value: numbe
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
+    <div className="w-full h-full min-w-0 min-h-0">
+      <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
       <PieChart>
         <Tooltip content={<ChartTooltip />} />
         <Pie data={data} dataKey="value" nameKey="label" innerRadius="60%" outerRadius="84%" paddingAngle={5} stroke="var(--panel)" strokeWidth={3}>
@@ -94,6 +97,7 @@ export function DonutChart({ data }: { data: Array<{ label: string; value: numbe
         </Pie>
       </PieChart>
     </ResponsiveContainer>
+    </div>
   );
 }
 
