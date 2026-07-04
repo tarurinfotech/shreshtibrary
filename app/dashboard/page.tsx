@@ -58,86 +58,60 @@ function ActivityRow({ item, isLast }: { item: any; isLast: boolean }) {
 
   let Icon = Activity;
   let colorClass = "bg-primary/10 text-primary border-primary/20";
-  let title = item.action;
+  let title = item.action.replace(/_/g, " ").replace(/\w\S*/g, (t: string) => t.charAt(0).toUpperCase() + t.substr(1).toLowerCase());
   let content: React.ReactNode = null;
 
   if (item.action === "ATTENDANCE_UPDATE" && isJson) {
     Icon = CalendarCheck;
     colorClass = "bg-amber-500/15 text-amber-600 border-amber-500/20";
-    title = `Attendance Updated: ${parsed.NewStatus || parsed.status || "Unknown"}`;
+    title = `Attendance: ${parsed.NewStatus || parsed.status || "Updated"}`;
     
     content = (
-      <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-3 text-sm">
-        <p>Student ID: <span className="font-semibold text-foreground">{parsed.Student || parsed.student_id}</span></p>
-        <p className="text-muted">Date: <span className="text-foreground">{parsed.AttendanceDate}</span> {parsed.PreviousStatus && `(was ${parsed.PreviousStatus})`}</p>
-        <div className="mt-1 flex flex-wrap gap-2">
-          <Badge variant={parsed.NewStatus === "Absent" ? "danger" : parsed.NewStatus === "Pending" ? "warning" : "success"}>
-            {parsed.NewStatus || parsed.status}
-          </Badge>
-          <Badge variant="neutral">Method: {parsed.Method || parsed.UpdatedBy || "System"}</Badge>
-        </div>
+      <div className="mt-1 text-sm text-muted">
+        <p>Student <span className="font-medium text-foreground">#{parsed.Student || parsed.student_id}</span> was marked <span className="font-medium text-foreground">{parsed.NewStatus || parsed.status}</span>.</p>
       </div>
     );
   } else if (item.action === "ATTENDANCE_AUTO_CHECKOUT" && isJson) {
     Icon = Clock8;
     colorClass = "bg-purple-500/15 text-purple-600 border-purple-500/20";
-    title = "Auto Checkout Processed";
+    title = "Automatic Checkout";
     
     content = (
-      <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-3 text-sm">
-        <p>Student ID: <span className="font-semibold text-foreground">{parsed.Student}</span></p>
-        <p className="text-muted">Checked out at <span className="text-foreground">{parsed.CheckoutTime}</span></p>
-        <Badge variant="neutral" className="w-fit mt-1">Duration: {parsed.TotalHours}</Badge>
+      <div className="mt-1 text-sm text-muted">
+        <p>Student <span className="font-medium text-foreground">#{parsed.Student}</span> was automatically checked out after <span className="font-medium text-foreground">{parsed.TotalHours}</span> of study.</p>
       </div>
     );
   } else if (item.action === "STUDY_SESSION_AUTO_CLOSED" && isJson) {
     Icon = Clock;
     colorClass = "bg-indigo-500/15 text-indigo-600 border-indigo-500/20";
-    title = "Study Session Auto-Closed";
+    title = "Session Ended";
     
     content = (
-      <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-3 text-sm">
-        <p>Session ID: <span className="font-semibold text-foreground">{parsed.SessionId}</span></p>
-        <Badge variant="neutral" className="w-fit mt-1">Duration: {parsed.Duration}</Badge>
+      <div className="mt-1 text-sm text-muted">
+        <p>A study session was automatically closed after <span className="font-medium text-foreground">{parsed.Duration}</span>.</p>
       </div>
     );
   } else if (item.action.toLowerCase().includes("login")) {
     Icon = LogIn;
     colorClass = "bg-sky-500/15 text-sky-600 border-sky-500/20";
-    if (!isJson && item.description) {
-      content = <p className="mt-1 text-sm text-muted">{item.description}</p>;
-    }
+    title = "User Logged In";
   } else if (item.action.toLowerCase().includes("payment")) {
     Icon = CreditCard;
     colorClass = "bg-emerald-500/15 text-emerald-600 border-emerald-500/20";
-    if (isJson) {
-      content = <p className="mt-1 text-sm text-muted">Amount: {parsed.amount || parsed.Amount}</p>;
+    title = "Payment Processed";
+    if (isJson && (parsed.amount || parsed.Amount)) {
+      content = <p className="mt-1 text-sm text-muted">A payment of <span className="font-medium text-foreground">₹{parsed.amount || parsed.Amount}</span> was recorded.</p>;
     }
   } else if (item.action.toLowerCase().includes("student")) {
     Icon = User;
     colorClass = "bg-rose-500/15 text-rose-600 border-rose-500/20";
-    if (isJson) {
-      content = <p className="mt-1 text-sm text-muted">Student ID: {parsed.student_id || parsed.id || parsed.Student}</p>;
+    if (isJson && (parsed.student_id || parsed.id || parsed.Student)) {
+      content = <p className="mt-1 text-sm text-muted">Updated details for student <span className="font-medium text-foreground">#{parsed.student_id || parsed.id || parsed.Student}</span>.</p>;
     }
   } else {
     Icon = Settings;
     colorClass = "bg-slate-500/15 text-slate-600 border-slate-500/20";
-    if (isJson) {
-      content = (
-        <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-2 text-xs">
-          {Object.entries(parsed).map(([k, v]) => (
-            k !== "Method" && k !== "UpdatedBy" ? (
-              <div key={k} className="flex justify-between gap-4 border-b border-border/50 pb-1 last:border-0 last:pb-0">
-                <span className="text-muted">{k}</span>
-                <span className="font-medium text-foreground">{String(v)}</span>
-              </div>
-            ) : null
-          ))}
-        </div>
-      );
-    } else if (item.description) {
-      content = <p className="mt-1 text-sm text-muted">{item.description}</p>;
-    }
+    content = <p className="mt-1 text-sm text-muted">System configuration or record was updated.</p>;
   }
 
   return (
@@ -158,17 +132,11 @@ function ActivityRow({ item, isLast }: { item: any; isLast: boolean }) {
         
         {content}
         
-        <div className="mt-2.5 flex items-center gap-1.5 text-xs text-muted">
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-muted">
           <Shield className="h-3 w-3" />
           <span className="font-medium text-foreground">{item.admin_name}</span>
           <span className="text-border">•</span>
           <span>{new Date(item.created_at).toLocaleDateString()}</span>
-          {item.target_model && (
-            <>
-              <span className="text-border">•</span>
-              <span className="truncate">Model: {item.target_model}</span>
-            </>
-          )}
         </div>
       </div>
     </div>
