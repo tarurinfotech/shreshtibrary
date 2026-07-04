@@ -13,12 +13,12 @@ export function ChartPanel({
   children: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-panel-strong p-4">
-      <div className="mb-4 flex items-center gap-2">
+    <div className="rounded-lg border border-border bg-panel-strong p-4 flex flex-col h-full">
+      <div className="mb-4 flex items-center gap-2 shrink-0">
         {icon ? <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/10 text-primary">{icon}</span> : null}
         <h3 className="font-semibold">{title}</h3>
       </div>
-      <div className="h-72">{children}</div>
+      <div className="flex-1 min-h-[280px] w-full min-w-0">{children}</div>
     </div>
   );
 }
@@ -110,12 +110,12 @@ export interface SharedAreaChartProps {
   data: Record<string, unknown>[];
   xKey: string;
   yKeys: Array<{ key: string; name: string; color: string; fillOpacity?: number }>;
-  height?: number;
+  height?: number | string;
 }
 
 export function SharedAreaChart({ data, xKey, yKeys, height = 300 }: SharedAreaChartProps) {
   return (
-    <div style={{ height }}>
+    <div style={{ width: "100%", height, minWidth: 0 }}>
       <ResponsiveContainer width="100%" height="100%" minWidth={1} minHeight={1}>
         <AreaChart data={data} margin={{ left: -20, right: 10 }}>
           <defs>

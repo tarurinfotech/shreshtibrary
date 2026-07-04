@@ -255,7 +255,7 @@ export function StudentDetailClient({ id }: { id: string }) {
             </ChartPanel>
 
             <ChartPanel title="Study Hours" icon={<Clock className="h-4 w-4" />}>
-              <div className="h-[300px]">
+              <div className="h-full w-full min-w-0">
                 <SharedAreaChart
                   data={analytics.data?.study ?? []}
                   xKey="label"
@@ -263,7 +263,7 @@ export function StudentDetailClient({ id }: { id: string }) {
                     { key: "hours", name: "Study hours", color: "var(--primary)" },
                     { key: "target_hours", name: "Target hours", color: "var(--success)", fillOpacity: 0 },
                   ]}
-                  height={300}
+                  height="100%"
                 />
               </div>
             </ChartPanel>
