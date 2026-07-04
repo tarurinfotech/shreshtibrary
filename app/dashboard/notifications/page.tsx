@@ -483,9 +483,11 @@ export default function NotificationsPage() {
                         { value: "all", label: "👥 All Students" },
                         { value: "new", label: "👋 New Students (< 7 days)" },
                         { value: "premium", label: "⭐ Premium Members" },
-                        { value: "non_premium", label: "🆓 Free Users" },
-                        { value: "expired", label: "⚠️ Expired Plans" },
-                        { value: "selected", label: "🎯 Specific Students..." },
+                        { value: "free", label: "🆓 Free Students" },
+                        { value: "pending", label: "⏳ Pending Students" },
+                        { value: "expired", label: "⚠️ Expired Students" },
+                        { value: "suspended", label: "🚫 Suspended Students" },
+                        { value: "selected", label: "🎯 Selected Students..." },
                       ]}
                     />
                     <Select
