@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import axios from "axios";
@@ -228,12 +229,12 @@ export const endpoints = {
     old_password: string;
     new_password: string;
     confirm_password: string;
-  }) => postData<unknown>("/auth/change-password", payload),
+  }) => postData<any>("/auth/change-password", payload),
 
   updateFcmToken: (payload: { token: string }) =>
-    postData<unknown>("/auth/fcm-token/update", payload),
+    postData<any>("/auth/fcm-token/update", payload),
 
-  settings: () => getData<unknown>("/admin/settings"),
+  settings: () => getData<any>("/admin/settings"),
 
   updateSettings: (payload: Record<string, unknown>) =>
     putData<Record<string, unknown>>("/admin/settings", payload),
@@ -248,7 +249,7 @@ export const endpoints = {
     getData<DashboardChart>(`/dashboard/charts/${domain}/${chart}`),
 
   dashboardCharts: (range = "month") =>
-    getData<unknown>(`/dashboard/charts`, { range }),
+    getData<any>(`/dashboard/charts`, { range }),
 
   dashboardActivityRecent: () =>
     getData<ActivityLogItem[]>("/dashboard/activity/recent"),
@@ -278,7 +279,7 @@ export const endpoints = {
   uploadStudentPhoto: (id: string | number, image: File) =>
     postMultipart<StudentProfile>(`/admin/students/${id}/photo`, toFormData({}, { profile_photo: image })),
 
-  deleteStudent: (id: string | number) => deleteData<unknown>(`/admin/students/${id}`),
+  deleteStudent: (id: string | number) => deleteData<any>(`/admin/students/${id}`),
 
   suspendStudent: (id: string | number, reason: string) =>
     postData<StudentProfile>(`/admin/students/${id}/suspend`, { reason }),
@@ -317,7 +318,7 @@ export const endpoints = {
   updatePlan: (id: number, payload: PlanUpdatePayload) =>
     putData<MembershipPlan>(`/admin/plans/${id}`, payload),
 
-  deletePlan: (id: number) => deleteData<unknown>(`/admin/plans/${id}`),
+  deletePlan: (id: number) => deleteData<any>(`/admin/plans/${id}`),
 
   togglePlan: (id: number, is_active?: boolean) =>
     patchData<MembershipPlan>(`/admin/plans/${id}/toggle`, { is_active }),
@@ -363,9 +364,9 @@ export const endpoints = {
 
   regenerateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/regenerate", payload ?? {}),
 
-  expireQr: () => postData<unknown>("/admin/qr/expire"),
+  expireQr: () => postData<any>("/admin/qr/expire"),
   
-  deleteQr: (id: number) => deleteData<unknown>(`/admin/qr/${id}`),
+  deleteQr: (id: number) => deleteData<any>(`/admin/qr/${id}`),
 
   qrScans: (id: number) => getData<AttendanceRecord[]>(`/admin/qr/${id}/scans`),
 
@@ -393,7 +394,7 @@ export const endpoints = {
   updateAttendance: (id: number, payload: Partial<AttendanceRecord>) =>
     putData<AttendanceRecord>(`/admin/attendance/${id}`, payload),
 
-  deleteAttendance: (id: number) => deleteData<unknown>(`/admin/attendance/${id}`),
+  deleteAttendance: (id: number) => deleteData<any>(`/admin/attendance/${id}`),
 
   attendanceDailySummary: (date?: string) =>
     getData<{ date: string; present: number; absent: number; pending: number; total: number }>(
@@ -415,7 +416,7 @@ export const endpoints = {
   updateHoliday: (id: number, payload: Partial<HolidayRecord>) =>
     putData<HolidayRecord>(`/admin/holidays/${id}`, payload),
 
-  deleteHoliday: (id: number) => deleteData<unknown>(`/admin/holidays/${id}`),
+  deleteHoliday: (id: number) => deleteData<any>(`/admin/holidays/${id}`),
 
   // Payments
   payments: (params?: ListParams) => getPage<PaymentRecord>("/admin/payments", params),
@@ -477,12 +478,12 @@ export const endpoints = {
 
   seatStats: () => getData<SeatReport>("/admin/seats/stats"),
   
-  releaseAllSeats: () => postData<unknown>("/admin/seats/release-all"),
+  releaseAllSeats: () => postData<any>("/admin/seats/release-all"),
 
   reserveBulkSeats: (payload: { seat_ids: number[]; is_reserved_for_girls: boolean }) =>
-    postData<unknown>("/admin/seats/reserve-bulk", payload),
+    postData<any>("/admin/seats/reserve-bulk", payload),
 
-  deleteSeat: (id: number) => deleteData<unknown>(`/admin/seats/${id}`),
+  deleteSeat: (id: number) => deleteData<any>(`/admin/seats/${id}`),
 
   createFloor: (payload: { name: string; description?: string; order?: number }) =>
     postData<Floor>("/admin/floors", payload),
@@ -490,7 +491,7 @@ export const endpoints = {
   updateFloor: (id: number, payload: Partial<Floor>) =>
     putData<Floor>(`/admin/floors/${id}`, payload),
 
-  deleteFloor: (id: number) => deleteData<unknown>(`/admin/floors/${id}`),
+  deleteFloor: (id: number) => deleteData<any>(`/admin/floors/${id}`),
 
   createRow: (payload: { floor_id: number; label: string; order?: number }) =>
     postData<SeatRow>("/admin/rows", payload),
@@ -498,7 +499,7 @@ export const endpoints = {
   updateRow: (id: number, payload: { label?: string; order?: number }) =>
     putData<SeatRow>(`/admin/rows/${id}`, payload),
 
-  deleteRow: (id: number) => deleteData<unknown>(`/admin/rows/${id}`),
+  deleteRow: (id: number) => deleteData<any>(`/admin/rows/${id}`),
 
   // Notifications
   notifications: (params?: ListParams) => getPage<NotificationRecord>("/admin/notifications", params),
@@ -518,15 +519,15 @@ export const endpoints = {
     getData<NotificationRecord[]>("/admin/notifications/scheduled"),
 
   cancelScheduledNotification: (id: number) =>
-    deleteData<unknown>(`/admin/notifications/scheduled/${id}/cancel`),
+    deleteData<any>(`/admin/notifications/scheduled/${id}/cancel`),
 
   notificationTemplates: () =>
     getData<Array<{ id: string; title: string; body: string }>>("/admin/notifications/templates"),
 
   // Admin Inbox
   adminInbox: () => getData<AdminInboxNotificationRecord[]>("/admin/inbox"),
-  adminInboxAction: (id: number, action: "read" | "unread") => postData<unknown>(`/admin/inbox/${id}/${action}`),
-  deleteAdminInbox: (id: number) => deleteData<unknown>(`/admin/inbox/${id}`),
+  adminInboxAction: (id: number, action: "read" | "unread") => postData<any>(`/admin/inbox/${id}/${action}`),
+  deleteAdminInbox: (id: number) => deleteData<any>(`/admin/inbox/${id}`),
 
   // Library Content
   libraryInfo: () => getData<LibraryInfo>("/admin/library/info"),
@@ -542,13 +543,13 @@ export const endpoints = {
   updateFacility: (id: number, payload: Partial<Facility>, image?: File | null) =>
     putMultipart<Facility>(`/admin/library/facilities/${id}`, toFormData(payload, { image })),
 
-  deleteFacility: (id: number) => deleteData<unknown>(`/admin/library/facilities/${id}`),
+  deleteFacility: (id: number) => deleteData<any>(`/admin/library/facilities/${id}`),
 
   toggleFacility: (id: number, is_active?: boolean) =>
     postData<Facility>(`/admin/library/facilities/${id}/toggle`, { is_active }),
 
   reorderFacilities: (items: Array<{ id: number; order: number }>) =>
-    patchData<unknown>("/admin/library/facilities/reorder", { items }),
+    patchData<any>("/admin/library/facilities/reorder", { items }),
 
   achievers: () => getData<Achiever[]>("/admin/library/achievers"),
 
@@ -560,13 +561,13 @@ export const endpoints = {
   updateAchiever: (id: number, payload: Partial<Achiever>, photo?: File | null) =>
     putMultipart<Achiever>(`/admin/library/achievers/${id}`, toFormData(payload, { photo })),
 
-  deleteAchiever: (id: number) => deleteData<unknown>(`/admin/library/achievers/${id}`),
+  deleteAchiever: (id: number) => deleteData<any>(`/admin/library/achievers/${id}`),
 
   toggleAchiever: (id: number, is_active?: boolean) =>
     postData<Achiever>(`/admin/library/achievers/${id}/toggle`, { is_active }),
 
   reorderAchievers: (items: Array<{ id: number; order: number }>) =>
-    patchData<unknown>("/admin/library/achievers/reorder", { items }),
+    patchData<any>("/admin/library/achievers/reorder", { items }),
 
   publicReviews: () => getData<Review[]>("/admin/library/reviews"),
 
@@ -584,7 +585,7 @@ export const endpoints = {
   rejectReview: (id: number, reason: string) =>
     postData<Review>(`/admin/reviews/${id}/reject`, { reason }),
 
-  deleteReview: (id: number) => deleteData<unknown>(`/admin/reviews/${id}/delete`),
+  deleteReview: (id: number) => deleteData<any>(`/admin/reviews/${id}/delete`),
 
   // Gallery Endpoints
   galleryImages: () => getData<GalleryImage[]>("/admin/library/gallery"),
@@ -592,7 +593,7 @@ export const endpoints = {
   uploadGalleryImage: (caption?: string, order?: number, image?: File | null) =>
     postMultipart<GalleryImage>("/admin/library/gallery", toFormData({ caption, order }, { image })),
 
-  deleteGalleryImage: (id: number) => deleteData<unknown>(`/admin/library/gallery/${id}`),
+  deleteGalleryImage: (id: number) => deleteData<any>(`/admin/library/gallery/${id}`),
 
   // Reports
   report: (kind: "attendance" | "payments" | "students" | "memberships", params?: ListParams) =>
@@ -617,7 +618,7 @@ export const endpoints = {
   updateAdmin: (id: number, payload: Partial<AdminUser> & { password?: string }) =>
     putData<AdminUser>(`/superadmin/admins/${id}`, payload),
 
-  removeAdmin: (id: number) => deleteData<unknown>(`/superadmin/admins/${id}/remove`),
+  removeAdmin: (id: number) => deleteData<any>(`/superadmin/admins/${id}/remove`),
 
   deactivateAdmin: (id: number) =>
     postData<AdminUser>(`/superadmin/admins/${id}/deactivate`),
@@ -634,7 +635,7 @@ export const endpoints = {
   backups: () =>
     getData<Array<{ id: string; created_at: string; status: string }>>("/superadmin/backup/list"),
 
-  restoreBackup: (id: string) => postData<unknown>("/superadmin/backup/restore", { id }),
+  restoreBackup: (id: string) => postData<any>("/superadmin/backup/restore", { id }),
 
   superActivityLog: () => getData<ActivityLogItem[]>("/superadmin/activity-log"),
 
@@ -655,3 +656,4 @@ export const endpoints = {
   
   studyLeaderboard: (duration?: string, start_date?: string, end_date?: string) => getData<Array<{ rank: number; student: StudentProfile; total_minutes: number; hours_formatted: string; level_info?: {level: number; title: string; badge_color: string}; is_current_user?: boolean }>>("/study/leaderboard", { duration, start_date, end_date }),
 };
+

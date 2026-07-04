@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
@@ -46,7 +47,7 @@ api.interceptors.response.use(
     }
     return response;
   },
-  async (error: AxiosError<ApiResponse<unknown>>) => {
+  async (error: AxiosError<ApiResponse<any>>) => {
     if (axios.isCancel(error)) {
       return Promise.reject(error);
     }
@@ -126,7 +127,7 @@ export function unwrap<T>(response: { data: ApiResponse<T> }, schema?: z.ZodType
   return data;
 }
 
-export function unwrapPage<T>(response: { data: unknown }, itemSchema?: z.ZodType<T>) {
+export function unwrapPage<T>(response: { data: any }, itemSchema?: z.ZodType<T>) {
   const page = (response.data && "success" in response.data && "data" in response.data)
     ? (response.data.data as PaginatedResponse<T>)
     : (response.data as PaginatedResponse<T>);
@@ -167,7 +168,7 @@ export async function downloadFile(url: string, filename: string, params?: Recor
 }
 
 export function getErrorMessage(error: unknown) {
-  if (axios.isAxiosError<ApiResponse<unknown>>(error)) {
+  if (axios.isAxiosError<ApiResponse<any>>(error)) {
     if (error.code === 'ECONNABORTED') return "Request timed out.";
     if (axios.isCancel(error)) return "Request cancelled.";
     
@@ -202,7 +203,7 @@ export function getErrorMessage(error: unknown) {
 
 export function getFieldErrors(error: unknown): Record<string, string> {
   const result: Record<string, string> = {};
-  if (axios.isAxiosError<ApiResponse<unknown>>(error)) {
+  if (axios.isAxiosError<ApiResponse<any>>(error)) {
     const payload = error.response?.data;
     const errors = payload?.errors;
     if (errors && typeof errors === "object" && !Array.isArray(errors)) {
@@ -217,3 +218,4 @@ export function getFieldErrors(error: unknown): Record<string, string> {
   }
   return result;
 }
+
