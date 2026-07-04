@@ -3,7 +3,9 @@
 import { FormEvent, useState } from "react";
 import { Save } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { DateInput, Input, Textarea } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { DateInput } from "@/components/ui/DateInput";;
 import { Select } from "@/components/ui/Select";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
 import type { StudentUpdatePayload } from "@/lib/endpoints";

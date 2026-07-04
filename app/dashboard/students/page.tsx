@@ -24,7 +24,7 @@ import {
   RotateCcw,
   Hourglass,
 } from "lucide-react";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog, PromptDialog } from "@/components/ui/Dialog";
@@ -126,7 +126,7 @@ export default function StudentsPage() {
       header: "Student",
       cell: (student) => (
         <div className="flex items-center gap-3">
-          <ProfileAvatar
+          <Avatar
             src={student.profile_image ?? student.profile_photo}
             name={[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || student.username}
             size="md"

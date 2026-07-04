@@ -9,13 +9,15 @@ import { Button } from "@/components/ui/Button";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { EntityListItem } from "@/components/ui/EntityListItem";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { DateInput, Input, Textarea, TimeInput } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { DateInput, TimeInput } from "@/components/ui/DateInput";;
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Select } from "@/components/ui/Select";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState, LoadingBlock } from "@/components/ui/StateBlocks";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { getErrorMessage } from "@/lib/api";
 import { endpoints, type NotificationPayload } from "@/lib/endpoints";
 import { formatDateTime } from "@/lib/format";
@@ -522,7 +524,7 @@ export default function NotificationsPage() {
                           .map(student => (
                             <div key={student.id} onClick={() => toggleStudent(student.id)} className="flex items-center justify-between p-3 hover:bg-panel rounded-xl cursor-pointer transition-colors mb-1 group">
                               <div className="flex items-center gap-4">
-                                <ProfileAvatar src={student.profile_image} name={`${student.first_name} ${student.last_name}`} size="md" />
+                                <Avatar src={student.profile_image} name={`${student.first_name} ${student.last_name}`} size="md" />
                                 <div>
                                   <div className="text-sm font-bold text-foreground">{student.first_name} {student.last_name}</div>
                                   <div className="text-[11px] font-medium text-muted mt-0.5">ID: {student.id}</div>

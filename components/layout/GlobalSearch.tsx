@@ -7,7 +7,7 @@ import { navItems } from "./nav";
 import { useAuthStore } from "@/store/authStore";
 import { useQuery } from "@tanstack/react-query";
 import { endpoints } from "@/lib/endpoints";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 
 export function GlobalSearch() {
   const [open, setOpen] = useState(false);
@@ -151,7 +151,7 @@ export function GlobalSearch() {
                         className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-[color:var(--hover)] hover:text-primary"
                       >
                         <div className="flex items-center gap-3">
-                          <ProfileAvatar src={student.profile_image} name={student.first_name || student.username} size="sm" shape="circle" />
+                          <Avatar src={student.profile_image} name={student.first_name || student.username} size="sm" shape="circle" />
                           <div className="flex flex-col">
                             <span className="font-medium text-foreground group-hover:text-primary">{student.first_name} {student.last_name}</span>
                             <span className="text-xs text-muted">{student.mobile} • {student.student_id}</span>

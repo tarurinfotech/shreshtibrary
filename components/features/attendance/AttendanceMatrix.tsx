@@ -3,7 +3,7 @@
 import { type ReactNode, useState } from "react";
 import { Check, ChevronDown, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { fullName } from "@/lib/format";
 import type { AttendanceRecord, HolidayRecord, StudentProfile } from "@/types/api";
@@ -237,7 +237,7 @@ export function AttendanceMatrix({
                   {/* ── Sticky name cell ────────────────────────────────────── */}
                   <td className="sticky left-0 z-10 border-r border-border bg-panel px-4 py-2.5 shadow-[1px_0_0_0_var(--border)] group-hover:bg-[color:var(--hover)]">
                     <div className="flex items-center gap-3 min-w-0">
-                      <ProfileAvatar
+                      <Avatar
                         src={student.profile_image ?? student.profile_photo}
                         name={name}
                         size="sm"

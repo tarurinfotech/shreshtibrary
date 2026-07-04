@@ -11,7 +11,7 @@ import { Button, buttonClasses } from "@/components/ui/Button";
 import { ChartPanel, SharedAreaChart } from "@/components/ui/ChartWidgets";
 import { FileInput } from "@/components/ui/FileInput";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Select } from "@/components/ui/Select";
 import { ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { Table, TableShell, Td, Th } from "@/components/ui/Table";
@@ -90,7 +90,7 @@ export function StudentDetailClient({ id }: { id: string }) {
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         <aside className="surface rounded-lg p-5">
           <div className="flex flex-col items-center text-center">
-            <ProfileAvatar
+            <Avatar
               src={student.data.profile_image ?? student.data.profile_photo}
               name={studentName}
               size="2xl"

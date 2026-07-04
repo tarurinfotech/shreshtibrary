@@ -9,11 +9,11 @@ import { Button } from "@/components/ui/Button";
 import { PromptDialog } from "@/components/ui/Dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar, FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";;
 import { Modal } from "@/components/ui/Modal";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Select } from "@/components/ui/Select";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints, type PaymentPayload } from "@/lib/endpoints";
@@ -178,7 +178,7 @@ export default function PaymentsPage() {
       header: "Student",
       cell: (payment) => (
         <div className="flex items-center gap-3">
-          <ProfileAvatar
+          <Avatar
             src={payment.student_profile_photo}
             name={payment.student_name}
             size="sm"

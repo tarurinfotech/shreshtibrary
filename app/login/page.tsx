@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { LockKeyhole, LogIn, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FormShell } from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";;
 import { LoadingBlock } from "@/components/ui/StateBlocks";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";

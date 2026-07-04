@@ -26,9 +26,9 @@ import {
 } from "recharts";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
-import { ChartCard } from "@/components/ui/ChartCard";
+import { SectionCard } from "@/components/ui/SectionCard";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { StatCard } from "@/components/ui/StatCard";
+import { MetricTile } from "@/components/ui/MetricTile";
 import { ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { Table, TableShell, Td, Th } from "@/components/ui/Table";
 import { endpoints } from "@/lib/endpoints";
@@ -148,14 +148,14 @@ export default function DashboardPage() {
         <div className="flex flex-wrap gap-4 [&>*]:flex-1 [&>*]:basis-[240px]">
           {canStudents && (
             <>
-              <StatCard
+              <MetricTile
                 label="Students"
                 value={stats.data.students?.total ?? stats.data.total_registered_students ?? 0}
                 icon={<Users className="h-9 w-9" strokeWidth={1.8} />}
                 tone="violet"
                 helper="Registered profiles"
               />
-              <StatCard
+              <MetricTile
                 label="Live Members"
                 value={stats.data.students?.live ?? stats.data.active_memberships ?? 0}
                 icon={<CalendarCheck className="h-9 w-9" strokeWidth={1.8} />}
@@ -164,25 +164,25 @@ export default function DashboardPage() {
               />
             </>
           )}
-          {canPayments && <StatCard
+          {canPayments && <MetricTile
             label="Revenue"
             value={formatMoney(stats.data.payments?.month_amount ?? 0)}
             icon={<CreditCard className="h-9 w-9" strokeWidth={1.8} />}
             tone="amber"
             helper={`${stats.data.payments?.month_count ?? 0} payments`}
           />}
-          {canSeats && <StatCard
+          {canSeats && <MetricTile
             label="Seats"
             value={stats.data.seats?.available ?? stats.data.available_seats ?? 0}
             icon={<Armchair className="h-9 w-9" strokeWidth={1.8} />}
-            tone="green"
+            tone="emerald"
             helper={`${stats.data.seats?.occupied ?? 0} occupied`}
           />}
         </div>
       ) : null}
 
       <div className="grid gap-7 lg:grid-cols-3">
-        <ChartCard
+        <SectionCard menu padding="lg"
           className="lg:col-span-2"
           title="Reports"
           actions={
@@ -247,10 +247,10 @@ export default function DashboardPage() {
               ))}
             </div>
           )}
-        </ChartCard>
+        </SectionCard>
 
         {canStudents && (
-          <ChartCard title="Analytics" className="lg:col-span-1">
+          <SectionCard menu padding="lg" title="Analytics" className="lg:col-span-1">
             <div className="grid place-items-center">
               <div className="relative h-[220px] w-full max-w-[280px] min-w-[220px]">
                 <ResponsiveContainer width="100%" height={220} minWidth={1} minHeight={1}>
@@ -310,12 +310,12 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
-          </ChartCard>
+          </SectionCard>
         )}
       </div>
 
       <div className="grid gap-7 lg:grid-cols-2">
-        <ChartCard title="Recent Activity">
+        <SectionCard menu padding="lg" title="Recent Activity">
           {activity.isLoading ? <LoadingBlock label="Loading activity" /> : null}
           {activity.error ? <ErrorState message="Unable to load activity." /> : null}
           {activity.data && (
@@ -350,9 +350,9 @@ export default function DashboardPage() {
             )}
           </div>
           )}
-        </ChartCard>
+        </SectionCard>
 
-        <ChartCard title="Today's Attendance">
+        <SectionCard menu padding="lg" title="Today's Attendance">
           {attendanceSummary.isLoading ? <LoadingBlock label="Loading summary" /> : null}
           {attendanceSummary.error ? <ErrorState message="Unable to load summary." /> : null}
           {attendanceSummary.data && (
@@ -400,7 +400,7 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
-        </ChartCard>
+        </SectionCard>
       </div>
     </>
   );

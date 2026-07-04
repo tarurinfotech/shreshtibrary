@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";;
 import { Modal } from "@/components/ui/Modal";
 import { Select } from "@/components/ui/Select";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";

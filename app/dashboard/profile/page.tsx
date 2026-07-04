@@ -8,10 +8,10 @@ import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { FileInput } from "@/components/ui/FileInput";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";;
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
@@ -78,7 +78,7 @@ export default function AdminProfilePage() {
       <div className="grid gap-5 xl:grid-cols-[360px_1fr]">
         <aside className="surface rounded-lg p-5">
           <div className="flex flex-col items-center text-center">
-            <ProfileAvatar
+            <Avatar
               src={profile.data.profile_image}
               name={displayName}
               size="2xl"

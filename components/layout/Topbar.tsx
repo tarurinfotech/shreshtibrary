@@ -6,7 +6,7 @@ import { Bell, LogOut, Menu, Moon, Sun, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { endpoints } from "@/lib/endpoints";
 import { useAuthStore } from "@/store/authStore";
 import { useThemeStore } from "@/store/themeStore";
@@ -83,7 +83,7 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
             href="/dashboard/profile"
             className="focus-ring hidden items-center gap-2.5 rounded-full border border-border/60 bg-panel p-1 pr-4 shadow-sm transition-all duration-200 hover:border-primary/40 hover:bg-panel-strong hover:shadow-md sm:flex"
           >
-            <ProfileAvatar
+            <Avatar
               src={user?.profile_image}
               name={user ? (user.first_name || user.username) : null}
               size="sm"

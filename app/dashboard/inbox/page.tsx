@@ -5,11 +5,11 @@ import { useState, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Inbox, Trash2, MailOpen, Mail, UserPlus, CreditCard, MessageSquare, Clock, AlertTriangle, CheckCircle2, Search, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";;
 import { Select } from "@/components/ui/Select";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
@@ -145,7 +145,7 @@ export default function AdminInboxPage() {
       header: "Student",
       cell: (n) => (
         <div className="flex items-center gap-3 min-w-[150px]">
-          <ProfileAvatar src={n.student_avatar} name={n.student_name || "System"} size="sm" />
+          <Avatar src={n.student_avatar} name={n.student_name || "System"} size="sm" />
           <span className="font-semibold text-sm whitespace-nowrap">{n.student_name || "Automated"}</span>
         </div>
       ),
@@ -284,7 +284,7 @@ export default function AdminInboxPage() {
 
             <div className="flex items-center justify-between pt-4 border-t border-border/50">
               <div className="flex items-center gap-3">
-                <ProfileAvatar src={selectedNotification.student_avatar} name={selectedNotification.student_name || "System"} size="sm" />
+                <Avatar src={selectedNotification.student_avatar} name={selectedNotification.student_name || "System"} size="sm" />
                 <div className="flex flex-col">
                   <span className="text-sm font-bold">{selectedNotification.student_name || "System Automated"}</span>
                   <span className="text-xs text-muted-foreground">Related Entity</span>

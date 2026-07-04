@@ -4,12 +4,12 @@ import { FormEvent, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Armchair, History, Plus, Save, UserMinus, UserPlus, Trash2 } from "lucide-react";
 import { SeatGrid } from "@/components/features/SeatGrid";
-import { SeatStudentAvatar } from "@/components/features/seats/SeatStudentAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";;
 import { MetricTile } from "@/components/ui/MetricTile";
 import { Modal } from "@/components/ui/Modal";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -380,7 +380,7 @@ export default function SeatsPage() {
           <form className="grid gap-4" onSubmit={submitStatus}>
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-panel-strong p-4">
               <div className="flex min-w-0 items-center gap-3">
-                {selected.status.toLowerCase() === "occupied" ? <SeatStudentAvatar seat={selected} /> : null}
+                {selected.status.toLowerCase() === "occupied" ? <Avatar size="lg" src={selected.student_profile_image ?? selected.student_profile_photo} name={selected.student_name} /> : null}
                 <div className="min-w-0">
                   <p className="truncate font-semibold">{selected.floor} / Row {selected.row} / Seat {selected.seat_number}</p>
                   <p className="mt-1 truncate text-sm text-muted">{selected.student_name ?? "Unassigned"}</p>

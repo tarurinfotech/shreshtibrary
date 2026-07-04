@@ -4,7 +4,7 @@ import clsx from "clsx";
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -149,7 +149,7 @@ export function Select({
           {selected ? (
             <>
               {selected.avatarFallback != null && (
-                <ProfileAvatar src={selected.avatarSrc} name={selected.avatarFallback} size="xs" />
+                <Avatar src={selected.avatarSrc} name={selected.avatarFallback} size="xs" />
               )}
               <span className="truncate">{selected.label}</span>
               {selected.badge && (
@@ -245,7 +245,7 @@ export function Select({
                     )}
                   >
                     {opt.avatarFallback != null && (
-                      <ProfileAvatar src={opt.avatarSrc} name={opt.avatarFallback} size="xs" />
+                      <Avatar src={opt.avatarSrc} name={opt.avatarFallback} size="xs" />
                     )}
                     <span className="min-w-0 flex-1 truncate">{opt.label}</span>
                     {opt.badge && (

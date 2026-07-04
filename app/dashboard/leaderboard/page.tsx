@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Medal, Trophy, Clock, Star, Target, Crown } from "lucide-react";
 import { endpoints } from "@/lib/endpoints";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { LoadingBlock, ErrorState } from "@/components/ui/StateBlocks";
 
 export default function LeaderboardPage() {
@@ -90,7 +90,7 @@ export default function LeaderboardPage() {
                   <div className="flex flex-col items-center w-full animate-in slide-in-from-bottom-8 duration-700 fade-in fill-mode-both z-20" style={{ animationDelay: '200ms' }}>
                     <img src="/images/crowns/silver_crown.png" alt="Rank 2" className="w-12 h-12 sm:w-16 sm:h-16 mb-1 sm:mb-2 object-contain mix-blend-screen contrast-125 brightness-110 [mask-image:radial-gradient(circle,white_40%,transparent_70%)]" />
                     <div className="rounded-full bg-emerald-900 p-1 border-2 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] -mt-2">
-                      <ProfileAvatar 
+                      <Avatar 
                         src={top3[0].student.profile_image} 
                         name={top3[0].student.first_name || top3[0].student.username} 
                         size="md" 
@@ -121,7 +121,7 @@ export default function LeaderboardPage() {
                   <div className="flex flex-col items-center w-full animate-in slide-in-from-bottom-12 duration-700 fade-in fill-mode-both z-20">
                     <img src="/images/crowns/gold_crown.png" alt="Rank 1" className="w-16 h-16 sm:w-24 sm:h-24 mb-1 sm:mb-2 object-contain mix-blend-screen contrast-125 brightness-110 [mask-image:radial-gradient(circle,white_50%,transparent_75%)]" />
                     <div className="rounded-full bg-yellow-900 p-1 border-2 border-yellow-400 shadow-[0_0_30px_rgba(234,179,8,0.6)] -mt-4">
-                      <ProfileAvatar 
+                      <Avatar 
                         src={top3[1].student.profile_image} 
                         name={top3[1].student.first_name || top3[1].student.username} 
                         size="lg" 
@@ -152,7 +152,7 @@ export default function LeaderboardPage() {
                   <div className="flex flex-col items-center w-full animate-in slide-in-from-bottom-8 duration-700 fade-in fill-mode-both z-20" style={{ animationDelay: '400ms' }}>
                     <img src="/images/crowns/bronze_crown.png" alt="Rank 3" className="w-12 h-12 sm:w-16 sm:h-16 mb-1 sm:mb-2 object-contain mix-blend-screen contrast-125 brightness-110 [mask-image:radial-gradient(circle,white_40%,transparent_70%)]" />
                     <div className="rounded-full bg-emerald-900 p-1 border-2 border-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.4)] -mt-2">
-                      <ProfileAvatar 
+                      <Avatar 
                         src={top3[2].student.profile_image} 
                         name={top3[2].student.first_name || top3[2].student.username} 
                         size="md" 
@@ -211,7 +211,7 @@ export default function LeaderboardPage() {
                 </div>
                 
                 <div className="flex items-center gap-3 min-w-0">
-                  <ProfileAvatar 
+                  <Avatar 
                     src={item.student.profile_image} 
                     name={item.student.first_name || item.student.username} 
                     size="sm" 

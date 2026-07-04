@@ -2,7 +2,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import type { Seat } from "@/types/api";
 
 const statusClasses: Record<string, string> = {
@@ -14,7 +14,7 @@ const statusClasses: Record<string, string> = {
 
 function SeatOccupant({ seat }: { seat: Seat }) {
   return (
-    <ProfileAvatar
+    <Avatar
       src={seat.student_profile_image ?? seat.student_profile_photo}
       name={seat.student_name}
       size="sm"

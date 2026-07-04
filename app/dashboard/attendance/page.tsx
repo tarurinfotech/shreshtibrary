@@ -11,12 +11,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { EntityListItem } from "@/components/ui/EntityListItem";
 import { FormActions } from "@/components/ui/Form";
-import { DateInput, Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/Input";
+import { DateInput } from "@/components/ui/DateInput";;
 import { MetricTile } from "@/components/ui/MetricTile";
 import { Modal } from "@/components/ui/Modal";
 import { MonthPicker } from "@/components/ui/MonthPicker";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { Table, TableShell, Td, Th } from "@/components/ui/Table";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
@@ -786,7 +787,7 @@ export default function AttendancePage() {
               return (
                 <div key={student.user_id} className="surface flex items-center justify-between p-3 rounded-xl">
                   <div className="flex items-center gap-3">
-                    <ProfileAvatar src={student.profile_image} name={student.first_name} size="sm" />
+                    <Avatar src={student.profile_image} name={student.first_name} size="sm" />
                     <div className="flex flex-col">
                       <span className="text-sm font-medium">{fullName(student.first_name, student.last_name)}</span>
                       <span className="text-xs text-muted">{student.student_id}</span>
@@ -849,7 +850,7 @@ export default function AttendancePage() {
                         </Td>
                         <Td>
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <ProfileAvatar
+                            <Avatar
                               src={student.profile_image ?? student.profile_photo}
                               name={[student.first_name, student.middle_name, student.last_name].filter(Boolean).join(" ") || student.username}
                               size="sm"
