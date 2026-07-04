@@ -11,6 +11,13 @@ import {
   QrCode,
   Send,
   Users,
+  User,
+  LogIn,
+  Settings,
+  Clock,
+  Clock8,
+  Shield,
+  Activity
 } from "lucide-react";
 import {
   Area,
@@ -37,43 +44,135 @@ import { useAuthStore } from "@/store/authStore";
 
 const chartDomains = ["attendance", "revenue", "students", "memberships", "seats", "study"];
 const donutColors = ["#22c55e", "#f59e0b", "#dc2626", "#f97316"];
-
-function formatActivityDescription(description?: string, targetModel?: string, action?: string) {
-  if (!description) return targetModel;
-  try {
-    const parsed = JSON.parse(description);
-    if (parsed.path && parsed.method) {
-      return "";
+function ActivityRow({ item, isLast }: { item: any; isLast: boolean }) {
+  let parsed: any = null;
+  let isJson = false;
+  if (item.description) {
+    try {
+      parsed = JSON.parse(item.description);
+      isJson = true;
+    } catch {
+      parsed = item.description;
     }
-    
-    if (action === "ATTENDANCE_UPDATE") {
-      const student = parsed.Student || parsed.student_id || "Unknown";
-      const newStatus = parsed.NewStatus || parsed.status || "Unknown";
-      const oldStatus = parsed.PreviousStatus ? ` (was ${parsed.PreviousStatus})` : "";
-      return `Updated attendance for student ${student} to ${newStatus}${oldStatus}`;
-    }
-    
-    if (action === "ATTENDANCE_AUTO_CHECKOUT") {
-      const student = parsed.Student || "Unknown";
-      const time = parsed.CheckoutTime || "Unknown";
-      const duration = parsed.TotalHours || "Unknown";
-      return `Auto-checkout for student ${student} at ${time} (Duration: ${duration})`;
-    }
-    
-    if (action === "STUDY_SESSION_AUTO_CLOSED") {
-      return `Auto-closed study session ${parsed.SessionId} (Duration: ${parsed.Duration})`;
-    }
-    
-    // Generic fallback for other JSON descriptions
-    const parts = [];
-    for (const [key, value] of Object.entries(parsed)) {
-      if (key === "Method" || key === "UpdatedBy") continue; // filter noise
-      parts.push(`${key}: ${value}`);
-    }
-    return parts.join(", ") || targetModel;
-  } catch {
-    return description;
   }
+
+  let Icon = Activity;
+  let colorClass = "bg-primary/10 text-primary border-primary/20";
+  let title = item.action;
+  let content: React.ReactNode = null;
+
+  if (item.action === "ATTENDANCE_UPDATE" && isJson) {
+    Icon = CalendarCheck;
+    colorClass = "bg-amber-500/15 text-amber-600 border-amber-500/20";
+    title = `Attendance Updated: ${parsed.NewStatus || parsed.status || "Unknown"}`;
+    
+    content = (
+      <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-3 text-sm">
+        <p>Student ID: <span className="font-semibold text-foreground">{parsed.Student || parsed.student_id}</span></p>
+        <p className="text-muted">Date: <span className="text-foreground">{parsed.AttendanceDate}</span> {parsed.PreviousStatus && `(was ${parsed.PreviousStatus})`}</p>
+        <div className="mt-1 flex flex-wrap gap-2">
+          <Badge variant={parsed.NewStatus === "Absent" ? "danger" : parsed.NewStatus === "Pending" ? "warning" : "success"}>
+            {parsed.NewStatus || parsed.status}
+          </Badge>
+          <Badge variant="neutral">Method: {parsed.Method || parsed.UpdatedBy || "System"}</Badge>
+        </div>
+      </div>
+    );
+  } else if (item.action === "ATTENDANCE_AUTO_CHECKOUT" && isJson) {
+    Icon = Clock8;
+    colorClass = "bg-purple-500/15 text-purple-600 border-purple-500/20";
+    title = "Auto Checkout Processed";
+    
+    content = (
+      <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-3 text-sm">
+        <p>Student ID: <span className="font-semibold text-foreground">{parsed.Student}</span></p>
+        <p className="text-muted">Checked out at <span className="text-foreground">{parsed.CheckoutTime}</span></p>
+        <Badge variant="neutral" className="w-fit mt-1">Duration: {parsed.TotalHours}</Badge>
+      </div>
+    );
+  } else if (item.action === "STUDY_SESSION_AUTO_CLOSED" && isJson) {
+    Icon = Clock;
+    colorClass = "bg-indigo-500/15 text-indigo-600 border-indigo-500/20";
+    title = "Study Session Auto-Closed";
+    
+    content = (
+      <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-3 text-sm">
+        <p>Session ID: <span className="font-semibold text-foreground">{parsed.SessionId}</span></p>
+        <Badge variant="neutral" className="w-fit mt-1">Duration: {parsed.Duration}</Badge>
+      </div>
+    );
+  } else if (item.action.toLowerCase().includes("login")) {
+    Icon = LogIn;
+    colorClass = "bg-sky-500/15 text-sky-600 border-sky-500/20";
+    if (!isJson && item.description) {
+      content = <p className="mt-1 text-sm text-muted">{item.description}</p>;
+    }
+  } else if (item.action.toLowerCase().includes("payment")) {
+    Icon = CreditCard;
+    colorClass = "bg-emerald-500/15 text-emerald-600 border-emerald-500/20";
+    if (isJson) {
+      content = <p className="mt-1 text-sm text-muted">Amount: {parsed.amount || parsed.Amount}</p>;
+    }
+  } else if (item.action.toLowerCase().includes("student")) {
+    Icon = User;
+    colorClass = "bg-rose-500/15 text-rose-600 border-rose-500/20";
+    if (isJson) {
+      content = <p className="mt-1 text-sm text-muted">Student ID: {parsed.student_id || parsed.id || parsed.Student}</p>;
+    }
+  } else {
+    Icon = Settings;
+    colorClass = "bg-slate-500/15 text-slate-600 border-slate-500/20";
+    if (isJson) {
+      content = (
+        <div className="mt-2 grid gap-1.5 rounded-lg border border-border bg-panel-strong p-2 text-xs">
+          {Object.entries(parsed).map(([k, v]) => (
+            k !== "Method" && k !== "UpdatedBy" ? (
+              <div key={k} className="flex justify-between gap-4 border-b border-border/50 pb-1 last:border-0 last:pb-0">
+                <span className="text-muted">{k}</span>
+                <span className="font-medium text-foreground">{String(v)}</span>
+              </div>
+            ) : null
+          ))}
+        </div>
+      );
+    } else if (item.description) {
+      content = <p className="mt-1 text-sm text-muted">{item.description}</p>;
+    }
+  }
+
+  return (
+    <div className="relative flex gap-4 pb-6 last:pb-0">
+      {!isLast && (
+        <div className="absolute bottom-0 left-[15px] top-8 w-[2px] bg-border/40" />
+      )}
+      <div className={`relative z-10 mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${colorClass}`}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col pt-1">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-semibold text-foreground">{title}</p>
+          <span className="shrink-0 rounded-full bg-panel px-2 py-0.5 text-[10px] font-medium text-muted border border-border">
+            {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+        
+        {content}
+        
+        <div className="mt-2.5 flex items-center gap-1.5 text-xs text-muted">
+          <Shield className="h-3 w-3" />
+          <span className="font-medium text-foreground">{item.admin_name}</span>
+          <span className="text-border">•</span>
+          <span>{new Date(item.created_at).toLocaleDateString()}</span>
+          {item.target_model && (
+            <>
+              <span className="text-border">•</span>
+              <span className="truncate">Model: {item.target_model}</span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function DashboardPage() {
@@ -345,29 +444,7 @@ export default function DashboardPage() {
           {activity.data && (
           <div className="flex flex-col px-2 py-1">
             {activity.data.slice(0, 6).map((item, index, arr) => (
-              <div key={item.id} className="relative flex gap-5 pb-6 last:pb-0">
-                {/* Timeline line */}
-                {index !== arr.length - 1 && (
-                  <div className="absolute bottom-0 left-[11px] top-7 w-[2px] bg-border" />
-                )}
-                {/* Timeline dot */}
-                <div className="relative z-10 mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-[3px] border-panel bg-[color:var(--primary-soft)]">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
-                </div>
-                {/* Content */}
-                <div className="flex flex-col pt-0.5">
-                  <p className="text-sm font-semibold text-foreground">{item.action}</p>
-                  {(() => {
-                    const desc = formatActivityDescription(item.description, item.target_model, item.action);
-                    return desc ? <p className="mt-0.5 text-sm text-muted">{desc}</p> : null;
-                  })()}
-                  <div className="mt-1.5 flex items-center gap-2 text-xs text-muted">
-                    <span className="font-medium text-foreground">{item.admin_name}</span>
-                    <span>&bull;</span>
-                    <span>{formatDateTime(item.created_at)}</span>
-                  </div>
-                </div>
-              </div>
+              <ActivityRow key={item.id} item={item} isLast={index === arr.length - 1} />
             ))}
             {activity.data.length === 0 && (
               <div className="py-4 text-sm text-muted">No recent activity found.</div>
