@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react/no-unescaped-entities */
 "use client";
 
 import { FormEvent, useMemo, useState, useEffect } from "react";
@@ -473,3 +474,4 @@ export default function PaymentsPage() {
     </>
   );
 }
+

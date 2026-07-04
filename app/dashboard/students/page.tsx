@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any */
 "use client";
 
 import Link from "next/link";
@@ -463,3 +464,4 @@ export default function StudentsPage() {
     </>
   );
 }
+

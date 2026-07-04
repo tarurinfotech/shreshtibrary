@@ -28,26 +28,35 @@ export function GlobalSearch() {
     enabled: debouncedQuery.length >= 2,
   });
 
+  // Focus input when opened
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 10);
+    }
+  }, [open]);
+
+  // Handle open state changes safely
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setQuery("");
+    }
+  };
+
   // Keyboard shortcut to open (Ctrl+K or Cmd+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        setOpen((prev) => !prev);
+        setOpen((prev) => {
+          if (prev) setQuery("");
+          return !prev;
+        });
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
-
-  // Focus input when opened
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 10);
-    } else {
-      setQuery("");
-    }
-  }, [open]);
 
   // Filter navigation items
   const filteredNav = navItems.filter((item) => {
@@ -60,14 +69,14 @@ export function GlobalSearch() {
 
   const handleSelect = (href: string) => {
     router.push(href);
-    setOpen(false);
+    handleOpenChange(false);
   };
 
   const handleSearchStudents = (e: React.FormEvent) => {
     e.preventDefault();
     if (query) {
       router.push(`/dashboard/students?search=${encodeURIComponent(query)}`);
-      setOpen(false);
+      handleOpenChange(false);
     }
   };
 
@@ -75,7 +84,7 @@ export function GlobalSearch() {
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => handleOpenChange(true)}
         className="focus-within:ring-primary/30 flex h-11 w-full max-w-sm items-center gap-3 rounded-lg border border-border bg-panel px-4 text-sm text-muted shadow-[var(--shadow-soft)] transition hover:ring-4 hover:ring-primary/30"
       >
         <span className="min-w-0 flex-1 text-left">Search anything... (Ctrl+K)</span>
@@ -83,7 +92,7 @@ export function GlobalSearch() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/65 p-4 pt-[10vh] sm:pt-[20vh]" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/65 p-4 pt-[10vh] sm:pt-[20vh]" onClick={() => handleOpenChange(false)}>
           <div
             className="surface w-full max-w-xl overflow-hidden rounded-xl shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -99,7 +108,7 @@ export function GlobalSearch() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
-              <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-1 text-muted hover:bg-muted/20 hover:text-foreground">
+              <button type="button" onClick={() => handleOpenChange(false)} className="rounded-lg p-1 text-muted hover:bg-muted/20 hover:text-foreground">
                 <X className="h-5 w-5" />
               </button>
             </form>
@@ -118,7 +127,7 @@ export function GlobalSearch() {
                 >
                   <span className="flex items-center gap-2">
                     <Search className="h-4 w-4" />
-                    Search students for "{query}"
+                    Search students for &quot;{query}&quot;
                   </span>
                   <ChevronRight className="h-4 w-4 opacity-50" />
                 </button>

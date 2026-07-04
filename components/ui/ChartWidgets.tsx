@@ -107,7 +107,7 @@ export function ProgressBar({
 }
 
 export interface SharedAreaChartProps {
-  data: any[];
+  data: Record<string, unknown>[];
   xKey: string;
   yKeys: Array<{ key: string; name: string; color: string; fillOpacity?: number }>;
   height?: number;

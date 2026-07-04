@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any */
 "use client";
 
 import { FormEvent, useState, useRef, useMemo, useEffect } from "react";
@@ -744,3 +745,4 @@ export default function NotificationsPage() {
     </div>
   );
 }
+

@@ -151,10 +151,12 @@ export function ProfileAvatar({
 }: ProfileAvatarProps) {
   const [imgError, setImgError] = useState(false);
   const imageUrl  = mediaUrl(src);
+  const [prevImageUrl, setPrevImageUrl] = useState(imageUrl);
 
-  useEffect(() => {
+  if (imageUrl !== prevImageUrl) {
+    setPrevImageUrl(imageUrl);
     setImgError(false);
-  }, [imageUrl]);
+  }
 
   const initials  = getInitials(name);
   const px        = sizePx[size];

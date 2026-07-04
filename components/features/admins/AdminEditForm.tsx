@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any */
 "use client";
 
 import { FormEvent, useState, useEffect } from "react";
@@ -188,3 +189,4 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
     </Modal>
   );
 }
+

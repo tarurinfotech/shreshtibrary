@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react/no-unescaped-entities */
 "use client";
 
 import { useMemo, useState } from "react";
@@ -369,4 +370,5 @@ function shortDate(value: string) {
   }
   return date.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 }
+
 

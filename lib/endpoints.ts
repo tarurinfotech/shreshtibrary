@@ -233,7 +233,7 @@ export const endpoints = {
   updateFcmToken: (payload: { token: string }) =>
     postData<unknown>("/auth/fcm-token/update", payload),
 
-  settings: () => getData<any>("/admin/settings"),
+  settings: () => getData<unknown>("/admin/settings"),
 
   updateSettings: (payload: Record<string, unknown>) =>
     putData<Record<string, unknown>>("/admin/settings", payload),
@@ -248,7 +248,7 @@ export const endpoints = {
     getData<DashboardChart>(`/dashboard/charts/${domain}/${chart}`),
 
   dashboardCharts: (range = "month") =>
-    getData<any>(`/dashboard/charts`, { range }),
+    getData<unknown>(`/dashboard/charts`, { range }),
 
   dashboardActivityRecent: () =>
     getData<ActivityLogItem[]>("/dashboard/activity/recent"),

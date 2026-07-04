@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Bell, LogOut, Menu, Moon, Search, Sun, UserRound, RefreshCw } from "lucide-react";
+import { Bell, LogOut, Menu, Moon, Sun, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -18,25 +18,12 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
   const clearSession = useAuthStore((state) => state.clearSession);
   const theme = useThemeStore((state) => state.theme);
   const toggleTheme = useThemeStore((state) => state.toggleTheme);
-  const alerts = useQuery({ queryKey: ["dashboard-alerts-topbar"], queryFn: endpoints.dashboardAlerts, refetchInterval: 60000 });
   const inbox = useQuery({ queryKey: ["admin-inbox-topbar"], queryFn: endpoints.adminInbox, refetchInterval: 30000 });
 
-  const alertCount = useMemo(
-    () => {
-      try {
-        return (alerts.data ?? []).reduce((sum: any, item: any) => sum + item.count, 0);
-      } catch (e) {
-        return 0;
-      }
-    },
-    [alerts.data],
-  );
-  
-  
   const unreadInboxCount = useMemo(
     () => {
       try {
-        return (inbox.data ?? []).filter((n: any) => !n.is_read).length;
+        return (inbox.data ?? []).filter((n: { is_read: boolean }) => !n.is_read).length;
       } catch (e) {
         return 0;
       }

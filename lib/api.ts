@@ -126,7 +126,7 @@ export function unwrap<T>(response: { data: ApiResponse<T> }, schema?: z.ZodType
   return data;
 }
 
-export function unwrapPage<T>(response: { data: any }, itemSchema?: z.ZodType<T>) {
+export function unwrapPage<T>(response: { data: unknown }, itemSchema?: z.ZodType<T>) {
   const page = (response.data && "success" in response.data && "data" in response.data)
     ? (response.data.data as PaginatedResponse<T>)
     : (response.data as PaginatedResponse<T>);
