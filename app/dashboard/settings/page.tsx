@@ -69,6 +69,13 @@ export default function SettingsPage() {
   const [smtpFromName, setSmtpFromName] = useState("");
   const [smtpFromEmail, setSmtpFromEmail] = useState("");
 
+  // WhatsApp Settings
+  const [waBaseUrl, setWaBaseUrl] = useState("");
+  const [waSessionId, setWaSessionId] = useState("");
+  const [waApiKey, setWaApiKey] = useState("");
+  const [waErrors, setWaErrors] = useState<Record<string, string>>({});
+  const [showWaApiKey, setShowWaApiKey] = useState(false);
+
   // Expired Student Permissions (API Paths)
   const [allowProfile, setAllowProfile] = useState(true);
   const [allowPlans, setAllowPlans] = useState(true);
@@ -137,6 +144,24 @@ export default function SettingsPage() {
     },
   });
 
+  const updateWaSettings = useMutation({
+    mutationFn: () => {
+      return endpoints.updateSettings({
+        wa_base_url: waBaseUrl,
+        wa_session_id: waSessionId,
+        wa_api_key: waApiKey || undefined,
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["settings"], data);
+      pushToast({ kind: "success", title: "WhatsApp Settings updated" });
+    },
+    onError: (error) => {
+      setWaErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) });
+    },
+  });
+
   // Effect to load settings
   useEffect(() => {
     if (settings.data) {
@@ -155,6 +180,10 @@ export default function SettingsPage() {
         setSmtpFromName(settings.data.smtp_from_name || "");
         setSmtpFromEmail(settings.data.smtp_from_email || "");
         setSmtpPass(settings.data.smtp_pass || "");
+
+        setWaBaseUrl(settings.data.wa_base_url || "");
+        setWaSessionId(settings.data.wa_session_id || "");
+        setWaApiKey(settings.data.wa_api_key || "");
       }
 
       const paths = settings.data.expired_student_permissions?.allowed_paths ?? [
@@ -189,6 +218,12 @@ export default function SettingsPage() {
     event.preventDefault();
     setSmtpErrors({});
     updateSmtpSettings.mutate();
+  };
+
+  const submitWaSettings = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setWaErrors({});
+    updateWaSettings.mutate();
   };
 
   return (
@@ -313,6 +348,7 @@ export default function SettingsPage() {
         </form>
 
         {user?.role === "super_admin" && (
+          <>
            <form onSubmit={submitSmtpSettings} className="lg:col-span-12">
              <SectionCard 
                title="SMTP Email Settings" 
@@ -355,7 +391,47 @@ export default function SettingsPage() {
                </div>
              </SectionCard>
            </form>
-        )}
+           
+           <form onSubmit={submitWaSettings} className="lg:col-span-12 mt-6">
+             <SectionCard 
+               title="WhatsApp API Settings" 
+               eyebrow="Super Admin Only" 
+               className="border-green-500/30"
+             >
+               <p className="text-sm text-muted mb-5">Configure the WhatsApp API server details used for sending OTPs and notifications.</p>
+               <div className="grid sm:grid-cols-2 gap-6">
+                 <Input label="Base URL" value={waBaseUrl} onChange={(e) => setWaBaseUrl(e.target.value)} placeholder="https://shreshtlibrarywa.onrender.com" error={waErrors.wa_base_url} className="col-span-1 sm:col-span-2" />
+                 <Input label="Session ID" value={waSessionId} onChange={(e) => setWaSessionId(e.target.value)} placeholder="de0f1671-d69b-4e35-ba62-23330e792fcc" error={waErrors.wa_session_id} />
+                 
+                 <div className="relative">
+                   <Input 
+                     label="API Key" 
+                     type={showWaApiKey ? "text" : "password"} 
+                     value={waApiKey} 
+                     onChange={(e) => setWaApiKey(e.target.value)} 
+                     placeholder="API Key" 
+                     error={waErrors.wa_api_key} 
+                   />
+                   <button
+                     type="button"
+                     className="absolute right-3 top-[32px] text-muted hover:text-foreground transition-colors"
+                     onClick={() => setShowWaApiKey(!showWaApiKey)}
+                     aria-label={showWaApiKey ? "Hide API key" : "Show API key"}
+                   >
+                     {showWaApiKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                   </button>
+                 </div>
+               </div>
+               
+               <div className="pt-4 border-t border-border mt-6 flex justify-end">
+                 <Button type="submit" loading={updateWaSettings.isPending} icon={<Save className="h-4 w-4" />}>
+                   Save WhatsApp Settings
+                 </Button>
+               </div>
+             </SectionCard>
+           </form>
+          </>
+         )}
       </div>
     </>
   );
