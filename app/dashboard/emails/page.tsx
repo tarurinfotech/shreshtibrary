@@ -20,8 +20,7 @@ const emailTemplates = [
       subtitle: "We are thrilled to have you join Shresht Library. Your journey to excellence starts here.",
       highlight: "WELCOME",
       stats: [
-        { label: "Access", value: "24/7 Library" },
-        { label: "Wi-Fi", value: "High-Speed" }
+        { label: "Registration Date", value: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
       ],
       actionText: "Explore Your Dashboard",
       footer: "Let's make studying great!",
