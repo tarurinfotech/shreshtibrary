@@ -7,7 +7,25 @@ import { Button } from "@/components/ui/Button";
 import { Send, Eye, Copy } from "lucide-react";
 import { useToastStore } from "@/store/toastStore";
 
-const emailTemplates = [
+type EmailTemplate = {
+  id: string;
+  name: string;
+  description: string;
+  subject: string;
+  color: string;
+  image: string;
+  content: {
+    title: string;
+    subtitle: string;
+    highlight?: string;
+    reward?: string;
+    stats?: { label: string; value: string }[];
+    actionText?: string;
+    footer: string;
+  };
+};
+
+const emailTemplates: EmailTemplate[] = [
   {
     id: "welcome",
     name: "Welcome to Shresht",
@@ -27,74 +45,25 @@ const emailTemplates = [
     }
   },
   {
-    id: "congratulations",
-    name: "Congratulations",
-    description: "Send when a student achieves a milestone or wins a contest.",
-    subject: "Congratulations! You've unlocked a reward 🎉",
+    id: "receipt",
+    name: "Payment Receipt",
+    description: "Sent when a student buys a plan or an admin assigns one.",
+    subject: "Plan Activated & Payment Receipt 🎉",
     color: "from-indigo-500 to-purple-600",
-    image: "/images/emails/congratulations.png",
+    image: "/images/emails/receipt.png",
     content: {
       title: "Congratulations!",
-      subtitle: "Thank you for being with us, you have unlocked:",
-      reward: "25% Off Monthly Membership",
-      actionText: "Redeem Reward",
-      footer: "Thanks for being awesome!",
-    }
-  },
-  {
-    id: "reminder",
-    name: "Reminder",
-    description: "Send a reminder for expiring plans or inactive students.",
-    subject: "We miss you! ⏰",
-    color: "from-blue-500 to-cyan-500",
-    image: "/images/emails/reminder.png",
-    content: {
-      title: "We miss you ...!",
-      subtitle: "It has been 7 days since we last saw you.",
+      subtitle: "Your plan has been activated successfully. Your payment receipt is attached as a PDF.",
       stats: [
-        { label: "Days Active", value: "280" },
-        { label: "Study Hours", value: "1,500" },
-        { label: "Points", value: "86" }
-      ],
-      actionText: "Come Back Now",
-      footer: "We hope to see you soon!",
-    }
-  },
-  {
-    id: "notification",
-    name: "Notification",
-    description: "General alerts and system notifications.",
-    subject: "Here is a quick update 📋",
-    color: "from-purple-500 to-indigo-500",
-    image: "/images/emails/notification.png",
-    content: {
-      title: "Here is a quick update",
-      subtitle: "Check out what's new in your library dashboard.",
-      stats: [
-        { label: "New Books", value: "24" },
-        { label: "Upcoming Events", value: "3" }
+        { label: "Goal", value: "UPSC Civil Services" },
+        { label: "Plan Details", value: "Premium Monthly" },
+        { label: "Starts", value: "24 Oct 2026" },
+        { label: "Expires", value: "24 Nov 2026" },
+        { label: "Amount Paid", value: "₹1,500.00" },
+        { label: "Payment Mode", value: "UPI" }
       ],
       actionText: "View Dashboard",
-      footer: "Stay updated with Shresht Library",
-    }
-  },
-  {
-    id: "plan_details",
-    name: "Plan Details",
-    description: "Send details about their current active plan.",
-    subject: "Your Subscription Details 📚",
-    color: "from-emerald-400 to-teal-500",
-    image: "/images/emails/plan_details.png",
-    content: {
-      title: "Your Premium Plan",
-      subtitle: "Here are the details of your active membership:",
-      stats: [
-        { label: "Plan Type", value: "Standard Monthly" },
-        { label: "Valid Until", value: "24 Oct 2026" },
-        { label: "Seat", value: "A-12" }
-      ],
-      actionText: "Manage Plan",
-      footer: "Enjoy your premium benefits!",
+      footer: "Thank you for choosing Shresht Library!",
     }
   },
   {
@@ -135,28 +104,13 @@ const emailTemplates = [
     image: "/images/emails/suspended.png",
     content: {
       title: "Account Suspended",
-      subtitle: "Your library account has been suspended due to a policy violation or unpaid dues.",
-      actionText: "Contact Support",
-      footer: "Please reach out to resolve this issue.",
-    }
-  },
-  {
-    id: "receipt",
-    name: "Purchase Receipt",
-    description: "Sent when a student buys a plan or admin assigns one.",
-    subject: "Payment Receipt & Plan Activated ✅",
-    color: "from-emerald-500 to-green-600",
-    image: "/images/emails/receipt.png",
-    content: {
-      title: "Plan Activated!",
-      subtitle: "Your payment was successful and your premium plan is now active.",
+      subtitle: "Your library account has been suspended.",
       stats: [
-        { label: "Amount Paid", value: "₹ 1,500" },
-        { label: "Plan Name", value: "Premium Monthly" },
-        { label: "Valid Until", value: "Next Month" }
+        { label: "Reason", value: "Policy violation or unpaid dues" },
+        { label: "Date", value: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) }
       ],
-      actionText: "View Dashboard",
-      footer: "Thank you for choosing Shresht Library!",
+      actionText: "Contact Admin",
+      footer: "Please reach out to resolve this issue.",
     }
   },
   {
@@ -174,7 +128,6 @@ const emailTemplates = [
         { label: "Zone", value: "Quiet Study Area" },
         { label: "Timing", value: "08:00 AM - 08:00 PM" }
       ],
-      actionText: "Check Guidelines",
       footer: "Please ensure you follow the seating rules.",
     }
   },
@@ -192,8 +145,24 @@ const emailTemplates = [
         { label: "Occasion", value: "Independence Day" },
         { label: "Date", value: "15 August 2026" }
       ],
-      actionText: "View Calendar",
       footer: "Plan your study schedule accordingly!",
+    }
+  },
+  {
+    id: "holiday_cancelled",
+    name: "Holiday Cancelled",
+    description: "Sent when a previously announced holiday is cancelled.",
+    subject: "Update: Holiday Cancelled 📅",
+    color: "from-sky-400 to-blue-500",
+    image: "/images/emails/holiday.png",
+    content: {
+      title: "Holiday Cancelled",
+      subtitle: "The previously announced holiday has been cancelled. The library will remain OPEN on this day.",
+      stats: [
+        { label: "Occasion", value: "Independence Day" },
+        { label: "Date", value: "15 August 2026" }
+      ],
+      footer: "We look forward to seeing you at the library!",
     }
   }
 ];
@@ -341,9 +310,11 @@ export default function EmailSystemPage() {
                 )}
 
                 {/* CTA Button */}
-                <button className={`mt-auto w-full py-3 px-6 rounded-xl text-white font-bold text-[13px] shadow-lg shadow-indigo-200 transition-transform hover:-translate-y-0.5 bg-gradient-to-r ${activeTemplate.color}`}>
-                  {activeTemplate.content.actionText}
-                </button>
+                {activeTemplate.content.actionText && (
+                  <button className={`mt-auto w-full py-3 px-6 rounded-xl text-white font-bold text-[13px] shadow-lg shadow-indigo-200 transition-transform hover:-translate-y-0.5 bg-gradient-to-r ${activeTemplate.color}`}>
+                    {activeTemplate.content.actionText}
+                  </button>
+                )}
               </div>
 
               {/* Footer */}
