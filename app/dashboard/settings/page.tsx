@@ -318,11 +318,6 @@ export default function SettingsPage() {
                title="SMTP Email Settings" 
                eyebrow="Super Admin Only" 
                className="border-purple-500/30"
-               actions={
-                 <Button type="submit" loading={updateSmtpSettings.isPending}>
-                   <Save className="mr-2 h-4 w-4" /> Save SMTP
-                 </Button>
-               }
              >
                <p className="text-sm text-muted mb-5">Configure the global mail server used to send Welcome emails, OTPs, and Password Reset links.</p>
                <div className="grid sm:grid-cols-2 gap-6">
@@ -341,7 +336,7 @@ export default function SettingsPage() {
                    />
                    <button
                      type="button"
-                     className="absolute right-3 top-[34px] text-muted hover:text-foreground transition-colors"
+                     className="absolute right-3 top-[32px] text-muted hover:text-foreground transition-colors"
                      onClick={() => setShowSmtpPass(!showSmtpPass)}
                      aria-label={showSmtpPass ? "Hide password" : "Show password"}
                    >
@@ -351,6 +346,12 @@ export default function SettingsPage() {
 
                  <Input label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="Shresht Library" error={smtpErrors.smtp_from_name} />
                  <Input label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} placeholder="no-reply@shreshtlibrary.com" error={smtpErrors.smtp_from_email} />
+               </div>
+               
+               <div className="pt-4 border-t border-border mt-6 flex justify-end">
+                 <Button type="submit" loading={updateSmtpSettings.isPending} icon={<Save className="h-4 w-4" />}>
+                   Save SMTP Settings
+                 </Button>
                </div>
              </SectionCard>
            </form>
