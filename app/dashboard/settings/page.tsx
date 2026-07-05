@@ -154,7 +154,7 @@ export default function SettingsPage() {
         setSmtpUser(settings.data.smtp_user || "");
         setSmtpFromName(settings.data.smtp_from_name || "");
         setSmtpFromEmail(settings.data.smtp_from_email || "");
-        setSmtpPass(settings.data.smtp_pass ? "******" : "");
+        setSmtpPass(settings.data.smtp_pass || "");
       }
 
       const paths = settings.data.expired_student_permissions?.allowed_paths ?? [
