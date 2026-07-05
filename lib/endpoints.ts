@@ -196,6 +196,7 @@ export type NotificationPayload = {
   send_push?: boolean;
   send_email?: boolean;
   send_sms?: boolean;
+  send_whatsapp?: boolean;
   scheduled_at?: string;
   subtitle?: string;
   description?: string;

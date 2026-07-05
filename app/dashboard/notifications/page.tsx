@@ -33,6 +33,7 @@ const emptyNotification: NotificationPayload = {
   send_push: true,
   send_email: false,
   send_sms: false,
+  send_whatsapp: false,
   layout: "text_only",
   audience: "all",
   display_mode: "persistent",
@@ -616,30 +617,41 @@ export default function NotificationsPage() {
                     <p className="text-sm font-bold text-foreground">Ready to go?</p>
                     <p className="text-xs font-medium text-muted mt-0.5">Double check your message preview on the right before sending.</p>
                   </div>
-                  {deliveryMethod === "later" ? (
-                    <Button 
-                      type="submit" 
-                      variant="primary" 
-                      size="md"
-                      className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-2xl px-8 h-12 text-[15px] font-bold"
-                      loading={schedule.isPending} 
-                      icon={<CalendarPlus className="h-5 w-5" />} 
-                      disabled={!form.scheduled_at}
-                    >
-                      Confirm & Schedule
-                    </Button>
-                  ) : (
-                    <Button 
-                      type="submit" 
-                      variant="primary" 
-                      size="md"
-                      className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-2xl px-8 h-12 text-[15px] font-bold"
-                      loading={send.isPending} 
-                      icon={<Send className="h-5 w-5" />} 
-                    >
-                      Send Broadcast Now
-                    </Button>
-                  )}
+                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+                    <label className="flex items-center gap-2 cursor-pointer bg-green-500/10 text-green-600 px-4 py-2 rounded-xl border border-green-500/20 hover:bg-green-500/20 transition-colors">
+                      <input 
+                        type="checkbox" 
+                        checked={form.send_whatsapp || false}
+                        onChange={(e) => setForm(c => ({...c, send_whatsapp: e.target.checked}))}
+                        className="w-4 h-4 rounded border-green-500/30 text-green-600 focus:ring-green-500/50"
+                      />
+                      <span className="font-bold text-sm">Send via WhatsApp</span>
+                    </label>
+                    {deliveryMethod === "later" ? (
+                      <Button 
+                        type="submit" 
+                        variant="primary" 
+                        size="md"
+                        className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-xl px-8 h-10 text-[14px] font-bold"
+                        loading={schedule.isPending} 
+                        icon={<CalendarPlus className="h-4 w-4" />} 
+                        disabled={!form.scheduled_at}
+                      >
+                        Confirm & Schedule
+                      </Button>
+                    ) : (
+                      <Button 
+                        type="submit" 
+                        variant="primary" 
+                        size="md"
+                        className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-xl px-8 h-10 text-[14px] font-bold"
+                        loading={send.isPending} 
+                        icon={<Send className="h-4 w-4" />} 
+                      >
+                        Send Broadcast Now
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
