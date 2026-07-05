@@ -19,6 +19,7 @@ import { SectionCard } from "@/components/ui/SectionCard";
 
 export default function SettingsPage() {
   const router = useRouter();
+  const user = useAuthStore((state) => state.user);
   const clearSession = useAuthStore((state) => state.clearSession);
   const pushToast = useToastStore((state) => state.pushToast);
   
@@ -58,6 +59,14 @@ export default function SettingsPage() {
   const [allowSliders, setAllowSliders] = useState(true);
   const [allowLibraryInfo, setAllowLibraryInfo] = useState(true);
 
+  // SMTP Settings
+  const [smtpHost, setSmtpHost] = useState("");
+  const [smtpPort, setSmtpPort] = useState("");
+  const [smtpUser, setSmtpUser] = useState("");
+  const [smtpPass, setSmtpPass] = useState("");
+  const [smtpFromName, setSmtpFromName] = useState("");
+  const [smtpFromEmail, setSmtpFromEmail] = useState("");
+
   // Expired Student Permissions (API Paths)
   const [allowProfile, setAllowProfile] = useState(true);
   const [allowPlans, setAllowPlans] = useState(true);
@@ -85,6 +94,14 @@ export default function SettingsPage() {
         allow_non_premium_sliders: allowSliders,
         allow_non_premium_library_info: allowLibraryInfo,
         expired_student_permissions: { allowed_paths },
+        ...(user?.role === "super_admin" ? {
+          smtp_host: smtpHost,
+          smtp_port: smtpPort,
+          smtp_user: smtpUser,
+          smtp_pass: smtpPass || undefined, // don't send empty pass if it wasn't modified
+          smtp_from_name: smtpFromName,
+          smtp_from_email: smtpFromEmail,
+        } : {})
       });
     },
     onSuccess: (data) => {
@@ -107,6 +124,15 @@ export default function SettingsPage() {
       setAllowNotifications(settings.data.allow_non_premium_notifications ?? true);
       setAllowSliders(settings.data.allow_non_premium_sliders ?? true);
       setAllowLibraryInfo(settings.data.allow_non_premium_library_info ?? true);
+      
+      if (user?.role === "super_admin") {
+        setSmtpHost(settings.data.smtp_host || "");
+        setSmtpPort(settings.data.smtp_port || "");
+        setSmtpUser(settings.data.smtp_user || "");
+        setSmtpFromName(settings.data.smtp_from_name || "");
+        setSmtpFromEmail(settings.data.smtp_from_email || "");
+        setSmtpPass(settings.data.smtp_pass ? "******" : "");
+      }
 
       const paths = settings.data.expired_student_permissions?.allowed_paths ?? [
         '/api/v1/student/profile/',
@@ -255,6 +281,22 @@ export default function SettingsPage() {
                  )}
              </SectionCard>
           </div>
+
+          {user?.role === "super_admin" && (
+             <div className="mt-8">
+               <SectionCard title="SMTP Email Settings" eyebrow="Super Admin Only" className="border-purple-500/30">
+                 <p className="text-sm text-muted mb-5">Configure the global mail server used to send Welcome emails, OTPs, and Password Reset links.</p>
+                 <div className="grid sm:grid-cols-2 gap-6">
+                   <Input label="SMTP Host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" />
+                   <Input label="SMTP Port" type="number" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} placeholder="587" />
+                   <Input label="SMTP User" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} placeholder="your-email@gmail.com" />
+                   <Input label="SMTP Password" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} placeholder="App Password" />
+                   <Input label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="Shresht Library" />
+                   <Input label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} placeholder="no-reply@shreshtlibrary.com" />
+                 </div>
+               </SectionCard>
+             </div>
+          )}
         </form>
       </div>
     </>
