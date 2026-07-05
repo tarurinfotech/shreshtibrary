@@ -313,7 +313,7 @@ export default function SettingsPage() {
         </form>
 
         {user?.role === "super_admin" && (
-           <form onSubmit={submitSmtpSettings} className="lg:col-span-2">
+           <form onSubmit={submitSmtpSettings} className="lg:col-span-12">
              <SectionCard 
                title="SMTP Email Settings" 
                eyebrow="Super Admin Only" 
