@@ -4,7 +4,7 @@
 import { FormEvent, useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Save, Clock, ShieldAlert } from "lucide-react";
+import { Save, Clock, ShieldAlert, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { FormShell } from "@/components/ui/Form";
 import { Input } from "@/components/ui/Input";
@@ -28,6 +28,8 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordErrors, setPasswordErrors] = useState<Record<string, string>>({});
   const [settingsErrors, setSettingsErrors] = useState<Record<string, string>>({});
+  const [smtpErrors, setSmtpErrors] = useState<Record<string, string>>({});
+  const [showSmtpPass, setShowSmtpPass] = useState(false);
 
   const changePassword = useMutation({
     mutationFn: () =>
@@ -114,6 +116,27 @@ export default function SettingsPage() {
     },
   });
 
+  const updateSmtpSettings = useMutation({
+    mutationFn: () => {
+      return endpoints.updateSettings({
+        smtp_host: smtpHost,
+        smtp_port: smtpPort,
+        smtp_user: smtpUser,
+        smtp_pass: smtpPass || undefined,
+        smtp_from_name: smtpFromName,
+        smtp_from_email: smtpFromEmail,
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["settings"], data);
+      pushToast({ kind: "success", title: "SMTP Settings updated" });
+    },
+    onError: (error) => {
+      setSmtpErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) });
+    },
+  });
+
   // Effect to load settings
   useEffect(() => {
     if (settings.data) {
@@ -160,6 +183,12 @@ export default function SettingsPage() {
     event.preventDefault();
     setSettingsErrors({});
     updateSettings.mutate();
+  };
+
+  const submitSmtpSettings = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSmtpErrors({});
+    updateSmtpSettings.mutate();
   };
 
   return (
@@ -281,23 +310,51 @@ export default function SettingsPage() {
                  )}
              </SectionCard>
           </div>
-
-          {user?.role === "super_admin" && (
-             <div className="mt-8">
-               <SectionCard title="SMTP Email Settings" eyebrow="Super Admin Only" className="border-purple-500/30">
-                 <p className="text-sm text-muted mb-5">Configure the global mail server used to send Welcome emails, OTPs, and Password Reset links.</p>
-                 <div className="grid sm:grid-cols-2 gap-6">
-                   <Input label="SMTP Host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" />
-                   <Input label="SMTP Port" type="number" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} placeholder="587" />
-                   <Input label="SMTP User" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} placeholder="your-email@gmail.com" />
-                   <Input label="SMTP Password" type="password" value={smtpPass} onChange={(e) => setSmtpPass(e.target.value)} placeholder="App Password" />
-                   <Input label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="Shresht Library" />
-                   <Input label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} placeholder="no-reply@shreshtlibrary.com" />
-                 </div>
-               </SectionCard>
-             </div>
-          )}
         </form>
+
+        {user?.role === "super_admin" && (
+           <form onSubmit={submitSmtpSettings} className="mt-8">
+             <SectionCard 
+               title="SMTP Email Settings" 
+               eyebrow="Super Admin Only" 
+               className="border-purple-500/30"
+               actions={
+                 <Button type="submit" loading={updateSmtpSettings.isPending}>
+                   <Save className="mr-2 h-4 w-4" /> Save SMTP
+                 </Button>
+               }
+             >
+               <p className="text-sm text-muted mb-5">Configure the global mail server used to send Welcome emails, OTPs, and Password Reset links.</p>
+               <div className="grid sm:grid-cols-2 gap-6">
+                 <Input label="SMTP Host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" error={smtpErrors.smtp_host} />
+                 <Input label="SMTP Port" type="number" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} placeholder="587" error={smtpErrors.smtp_port} />
+                 <Input label="SMTP User" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} placeholder="your-email@gmail.com" error={smtpErrors.smtp_user} />
+                 
+                 <div className="relative">
+                   <Input 
+                     label="SMTP Password" 
+                     type={showSmtpPass ? "text" : "password"} 
+                     value={smtpPass} 
+                     onChange={(e) => setSmtpPass(e.target.value)} 
+                     placeholder="App Password" 
+                     error={smtpErrors.smtp_pass} 
+                   />
+                   <button
+                     type="button"
+                     className="absolute right-3 top-[34px] text-muted hover:text-foreground transition-colors"
+                     onClick={() => setShowSmtpPass(!showSmtpPass)}
+                     aria-label={showSmtpPass ? "Hide password" : "Show password"}
+                   >
+                     {showSmtpPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                   </button>
+                 </div>
+
+                 <Input label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="Shresht Library" error={smtpErrors.smtp_from_name} />
+                 <Input label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} placeholder="no-reply@shreshtlibrary.com" error={smtpErrors.smtp_from_email} />
+               </div>
+             </SectionCard>
+           </form>
+        )}
       </div>
     </>
   );
