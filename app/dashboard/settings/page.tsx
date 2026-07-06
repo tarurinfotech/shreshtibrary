@@ -60,6 +60,7 @@ export default function SettingsPage() {
   const [allowNotifications, setAllowNotifications] = useState(true);
   const [allowSliders, setAllowSliders] = useState(true);
   const [allowLibraryInfo, setAllowLibraryInfo] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   // SMTP Settings
   const [smtpHost, setSmtpHost] = useState("");
@@ -106,6 +107,7 @@ export default function SettingsPage() {
         expired_student_permissions: { allowed_paths },
         enable_whatsapp_service: enableWhatsappService,
         ...(user?.role === "super_admin" ? {
+          maintenance_mode: maintenanceMode,
           smtp_host: smtpHost,
           smtp_port: smtpPort,
           smtp_user: smtpUser,
@@ -177,6 +179,7 @@ export default function SettingsPage() {
       setEnableWhatsappService(settings.data.enable_whatsapp_service ?? false);
       
       if (user?.role === "super_admin") {
+        setMaintenanceMode(settings.data.maintenance_mode ?? false);
         setSmtpHost(settings.data.smtp_host || "");
         setSmtpPort(settings.data.smtp_port || "");
         setSmtpUser(settings.data.smtp_user || "");
@@ -436,6 +439,25 @@ export default function SettingsPage() {
                <div className="pt-4 border-t border-border mt-6 flex justify-end">
                  <Button type="submit" loading={updateWaSettings.isPending} icon={<Save className="h-4 w-4" />}>
                    Save WhatsApp Settings
+                 </Button>
+               </div>
+             </SectionCard>
+           </form>
+
+           <form onSubmit={submitSettings} className="lg:col-span-12 mt-6">
+             <SectionCard 
+               title="App Maintenance" 
+               eyebrow="Super Admin Only" 
+               className="border-red-500/30"
+             >
+               <p className="text-sm text-muted mb-5">Enable maintenance mode to temporarily block student access. A maintenance screen will be shown instead of the app.</p>
+               <div className="grid sm:grid-cols-2 gap-6">
+                 <Switch label="Enable Maintenance Mode" checked={maintenanceMode} onChange={(e) => setMaintenanceMode(e.target.checked)} />
+               </div>
+               
+               <div className="pt-4 border-t border-border mt-6 flex justify-end">
+                 <Button type="submit" loading={updateSettings.isPending} icon={<Save className="h-4 w-4" />}>
+                   Save Maintenance Settings
                  </Button>
                </div>
              </SectionCard>
