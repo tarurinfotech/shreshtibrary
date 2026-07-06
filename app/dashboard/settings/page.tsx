@@ -73,6 +73,7 @@ export default function SettingsPage() {
   const [waBaseUrl, setWaBaseUrl] = useState("");
   const [waSessionId, setWaSessionId] = useState("");
   const [waApiKey, setWaApiKey] = useState("");
+  const [enableWhatsappService, setEnableWhatsappService] = useState(false);
   const [waErrors, setWaErrors] = useState<Record<string, string>>({});
   const [showWaApiKey, setShowWaApiKey] = useState(false);
 
@@ -103,6 +104,7 @@ export default function SettingsPage() {
         allow_non_premium_sliders: allowSliders,
         allow_non_premium_library_info: allowLibraryInfo,
         expired_student_permissions: { allowed_paths },
+        enable_whatsapp_service: enableWhatsappService,
         ...(user?.role === "super_admin" ? {
           smtp_host: smtpHost,
           smtp_port: smtpPort,
@@ -172,6 +174,7 @@ export default function SettingsPage() {
       setAllowNotifications(settings.data.allow_non_premium_notifications ?? true);
       setAllowSliders(settings.data.allow_non_premium_sliders ?? true);
       setAllowLibraryInfo(settings.data.allow_non_premium_library_info ?? true);
+      setEnableWhatsappService(settings.data.enable_whatsapp_service ?? false);
       
       if (user?.role === "super_admin") {
         setSmtpHost(settings.data.smtp_host || "");
@@ -303,6 +306,13 @@ export default function SettingsPage() {
                     <Switch label="Payments & Transactions" checked={allowPayments} onChange={(e) => setAllowPayments(e.target.checked)} />
                     <Switch label="Leaderboard Access" checked={allowLeaderboard} onChange={(e) => setAllowLeaderboard(e.target.checked)} />
                     <Switch label="Notifications History" checked={allowNotificationsPaths} onChange={(e) => setAllowNotificationsPaths(e.target.checked)} />
+                </div>
+             </SectionCard>
+
+             <SectionCard title="Communication Features" eyebrow="Integration" className="h-full">
+                <p className="text-sm text-muted mb-5">Enable or disable third-party integrations.</p>
+                <div className="grid gap-6">
+                    <Switch label="Enable WhatsApp Service" checked={enableWhatsappService} onChange={(e) => setEnableWhatsappService(e.target.checked)} />
                 </div>
              </SectionCard>
 
