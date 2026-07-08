@@ -292,8 +292,8 @@ export function StudentDetailClient({ id }: { id: string }) {
                   <Td>
                     <Badge variant={
                       record.status === 'Pending' ? 'warning' :
-                      record.status === 'Absent' ? 'danger' :
-                      record.status === 'Present (Arrived Late)' ? 'warning' : 'success'
+                        record.status === 'Absent' ? 'danger' :
+                          record.status === 'Arrived Late' ? 'warning' : 'success'
                     }>
                       {record.status ?? (record.is_present ? "Present" : "Absent")}
                     </Badge>
