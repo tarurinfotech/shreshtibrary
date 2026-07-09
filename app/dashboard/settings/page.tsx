@@ -62,13 +62,10 @@ export default function SettingsPage() {
   const [allowLibraryInfo, setAllowLibraryInfo] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
-  // SMTP Settings
-  const [smtpHost, setSmtpHost] = useState("");
-  const [smtpPort, setSmtpPort] = useState("");
-  const [smtpUser, setSmtpUser] = useState("");
-  const [smtpPass, setSmtpPass] = useState("");
-  const [smtpFromName, setSmtpFromName] = useState("");
-  const [smtpFromEmail, setSmtpFromEmail] = useState("");
+  // Brevo Email Settings
+  const [brevoApiKey, setBrevoApiKey] = useState("");
+  const [brevoFromName, setBrevoFromName] = useState("");
+  const [brevoFromEmail, setBrevoFromEmail] = useState("");
 
   // WhatsApp Settings
   const [waBaseUrl, setWaBaseUrl] = useState("");
@@ -108,12 +105,9 @@ export default function SettingsPage() {
         enable_whatsapp_service: enableWhatsappService,
         ...(user?.role === "super_admin" ? {
           maintenance_mode: maintenanceMode,
-          smtp_host: smtpHost,
-          smtp_port: smtpPort,
-          smtp_user: smtpUser,
-          smtp_pass: smtpPass || undefined, // don't send empty pass if it wasn't modified
-          smtp_from_name: smtpFromName,
-          smtp_from_email: smtpFromEmail,
+          brevo_api_key: brevoApiKey || undefined,
+          brevo_from_name: brevoFromName,
+          brevo_from_email: brevoFromEmail,
         } : {})
       });
     },
@@ -127,20 +121,17 @@ export default function SettingsPage() {
     },
   });
 
-  const updateSmtpSettings = useMutation({
+  const updateBrevoSettings = useMutation({
     mutationFn: () => {
       return endpoints.updateSettings({
-        smtp_host: smtpHost,
-        smtp_port: smtpPort,
-        smtp_user: smtpUser,
-        smtp_pass: smtpPass || undefined,
-        smtp_from_name: smtpFromName,
-        smtp_from_email: smtpFromEmail,
+        brevo_api_key: brevoApiKey || undefined,
+        brevo_from_name: brevoFromName,
+        brevo_from_email: brevoFromEmail,
       });
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["settings"], data);
-      pushToast({ kind: "success", title: "SMTP Settings updated" });
+      pushToast({ kind: "success", title: "Brevo Email Settings updated" });
     },
     onError: (error) => {
       setSmtpErrors(getFieldErrors(error));
@@ -180,12 +171,9 @@ export default function SettingsPage() {
       
       if (user?.role === "super_admin") {
         setMaintenanceMode(settings.data.maintenance_mode ?? false);
-        setSmtpHost(settings.data.smtp_host || "");
-        setSmtpPort(settings.data.smtp_port || "");
-        setSmtpUser(settings.data.smtp_user || "");
-        setSmtpFromName(settings.data.smtp_from_name || "");
-        setSmtpFromEmail(settings.data.smtp_from_email || "");
-        setSmtpPass(settings.data.smtp_pass || "");
+        setBrevoApiKey(settings.data.brevo_api_key || "");
+        setBrevoFromName(settings.data.brevo_from_name || "");
+        setBrevoFromEmail(settings.data.brevo_from_email || "");
 
         setWaBaseUrl(settings.data.wa_base_url || "");
         setWaSessionId(settings.data.wa_session_id || "");
@@ -220,10 +208,10 @@ export default function SettingsPage() {
     updateSettings.mutate();
   };
 
-  const submitSmtpSettings = (event: FormEvent<HTMLFormElement>) => {
+  const submitBrevoSettings = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSmtpErrors({});
-    updateSmtpSettings.mutate();
+    updateBrevoSettings.mutate();
   };
 
   const submitWaSettings = (event: FormEvent<HTMLFormElement>) => {
@@ -362,44 +350,40 @@ export default function SettingsPage() {
 
         {user?.role === "super_admin" && (
           <>
-           <form onSubmit={submitSmtpSettings} className="lg:col-span-12">
+           <form onSubmit={submitBrevoSettings} className="lg:col-span-12">
              <SectionCard 
-               title="SMTP Email Settings" 
+               title="Brevo Email Settings" 
                eyebrow="Super Admin Only" 
                className="border-purple-500/30"
              >
-               <p className="text-sm text-muted mb-5">Configure the global mail server used to send Welcome emails, OTPs, and Password Reset links.</p>
+               <p className="text-sm text-muted mb-5">Configure the global mail server used to send Welcome emails, OTPs, and Password Reset links via Brevo HTTP API.</p>
                <div className="grid sm:grid-cols-2 gap-6">
-                 <Input label="SMTP Host" value={smtpHost} onChange={(e) => setSmtpHost(e.target.value)} placeholder="smtp.gmail.com" error={smtpErrors.smtp_host} />
-                 <Input label="SMTP Port" type="number" value={smtpPort} onChange={(e) => setSmtpPort(e.target.value)} placeholder="587" error={smtpErrors.smtp_port} />
-                 <Input label="SMTP User" value={smtpUser} onChange={(e) => setSmtpUser(e.target.value)} placeholder="your-email@gmail.com" error={smtpErrors.smtp_user} />
-                 
-                 <div className="relative">
+                 <div className="relative col-span-1 sm:col-span-2">
                    <Input 
-                     label="SMTP Password" 
+                     label="Brevo API Key" 
                      type={showSmtpPass ? "text" : "password"} 
-                     value={smtpPass} 
-                     onChange={(e) => setSmtpPass(e.target.value)} 
-                     placeholder="App Password" 
-                     error={smtpErrors.smtp_pass} 
+                     value={brevoApiKey} 
+                     onChange={(e) => setBrevoApiKey(e.target.value)} 
+                     placeholder="xkeysib-..." 
+                     error={smtpErrors.brevo_api_key} 
                    />
                    <button
                      type="button"
                      className="absolute right-3 top-[32px] text-muted hover:text-foreground transition-colors"
                      onClick={() => setShowSmtpPass(!showSmtpPass)}
-                     aria-label={showSmtpPass ? "Hide password" : "Show password"}
+                     aria-label={showSmtpPass ? "Hide API Key" : "Show API Key"}
                    >
                      {showSmtpPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                    </button>
                  </div>
 
-                 <Input label="From Name" value={smtpFromName} onChange={(e) => setSmtpFromName(e.target.value)} placeholder="Shresht Library" error={smtpErrors.smtp_from_name} />
-                 <Input label="From Email" value={smtpFromEmail} onChange={(e) => setSmtpFromEmail(e.target.value)} placeholder="no-reply@shreshtlibrary.com" error={smtpErrors.smtp_from_email} />
+                 <Input label="From Name" value={brevoFromName} onChange={(e) => setBrevoFromName(e.target.value)} placeholder="Shresht Library" error={smtpErrors.brevo_from_name} />
+                 <Input label="From Email" value={brevoFromEmail} onChange={(e) => setBrevoFromEmail(e.target.value)} placeholder="no-reply@shreshtlibrary.com" error={smtpErrors.brevo_from_email} />
                </div>
                
                <div className="pt-4 border-t border-border mt-6 flex justify-end">
-                 <Button type="submit" loading={updateSmtpSettings.isPending} icon={<Save className="h-4 w-4" />}>
-                   Save SMTP Settings
+                 <Button type="submit" loading={updateBrevoSettings.isPending} icon={<Save className="h-4 w-4" />}>
+                   Save Email Settings
                  </Button>
                </div>
              </SectionCard>
