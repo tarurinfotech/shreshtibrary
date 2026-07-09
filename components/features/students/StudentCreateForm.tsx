@@ -38,13 +38,26 @@ export function StudentCreateForm({ open, onClose }: StudentCreateFormProps) {
 
   const create = useMutation({
     mutationFn: () => endpoints.createStudent(form),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["students"] });
-      await queryClient.invalidateQueries({ queryKey: ["student-counts"] });
+    onSuccess: (newStudent) => {
+      // Close modal and show success toast immediately — don't block on refetch
       setForm(emptyStudent);
       setFormErrors({});
       onClose();
       pushToast({ kind: "success", title: "Student created" });
+
+      // Optimistically prepend the new student to all cached student list pages
+      // so the UI updates instantly without waiting for a network round-trip
+      queryClient.setQueriesData<{ data: typeof newStudent[]; [key: string]: unknown }>(
+        { queryKey: ["students"] },
+        (old) => {
+          if (!old) return old;
+          return { ...old, data: [newStudent, ...(old.data ?? [])] };
+        },
+      );
+
+      // Fire-and-forget invalidation so background refetch corrects any stale data
+      queryClient.invalidateQueries({ queryKey: ["students"] });
+      queryClient.invalidateQueries({ queryKey: ["student-counts"] });
     },
     onError: (error) => {
       const fieldErrors = getFieldErrors(error);
