@@ -570,16 +570,16 @@ export const endpoints = {
   reorderAchievers: (items: Array<{ id: number; order: number }>) =>
     patchData<any>("/admin/library/achievers/reorder", { items }),
 
-  publicReviews: () => getData<Review[]>("/admin/library/reviews"),
+  publicReviews: (params?: ListParams) => getPage<Review>("/admin/library/reviews", params),
 
   reviewSummary: () =>
     getData<{ average_rating: number; count: number; breakdown: Record<number, number> }>(
       "/admin/library/reviews/summary",
     ),
 
-  reviews: () => getData<Review[]>("/admin/reviews"),
+  reviews: (params?: ListParams) => getPage<Review>("/admin/reviews", params),
 
-  pendingReviews: () => getData<Review[]>("/admin/reviews/pending"),
+  pendingReviews: (params?: ListParams) => getPage<Review>("/admin/reviews/pending", params),
 
   approveReview: (id: number) => postData<Review>(`/admin/reviews/${id}/approve`),
 

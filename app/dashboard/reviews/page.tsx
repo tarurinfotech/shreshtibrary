@@ -63,7 +63,7 @@ export default function ReviewsPage() {
 
   const filtered = useMemo(
     () => {
-      const source = filter === "pending-only" ? pending.data ?? [] : reviews.data ?? [];
+      const source = filter === "pending-only" ? pending.data?.data ?? [] : reviews.data?.data ?? [];
       return source.filter((review) => {
         if (filter === "approved") return Boolean(review.is_approved);
         if (filter === "pending" || filter === "pending-only") return !review.is_approved && !review.rejection_reason;
@@ -80,7 +80,7 @@ export default function ReviewsPage() {
       <div className="grid gap-3 md:grid-cols-3">
         <MetricTile label="Average" value={Number(summary.data?.average_rating ?? 0).toFixed(1)} />
         <MetricTile label="Approved" value={summary.data?.count ?? 0} />
-        <MetricTile label="Pending" value={pending.data?.length ?? 0} />
+        <MetricTile label="Pending" value={pending.data?.count ?? 0} />
       </div>
 
       <div className="max-w-xs">

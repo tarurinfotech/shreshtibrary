@@ -550,17 +550,17 @@ export default function LibraryPage() {
       <section className="surface rounded-lg p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Public Reviews</h2>
-          <Badge variant="success">{reviewSummary.data?.count ?? reviews.data?.length ?? 0}</Badge>
+          <Badge variant="success">{reviewSummary.data?.count ?? reviews.data?.count ?? 0}</Badge>
         </div>
         {reviews.isLoading ? (
           <div className="py-8 text-center text-sm text-muted">Loading reviews...</div>
         ) : reviews.error ? (
           <div className="py-8 text-center text-sm text-red-500">Failed to load reviews</div>
-        ) : reviews.data?.length === 0 ? (
+        ) : reviews.data?.data?.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border py-8 text-center text-sm text-muted">No public reviews available.</div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {(reviews.data ?? []).slice(0, 6).map((review) => (
+            {(reviews.data?.data ?? []).slice(0, 6).map((review) => (
               <article key={review.id} className="rounded-lg border border-border bg-panel-strong p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
