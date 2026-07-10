@@ -4,14 +4,21 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import clsx from "clsx";
 import { BookMarked, LogOut } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { navItems } from "./nav";
 import type { AuthUser } from "@/types/api";
 import { useAuthStore } from "@/store/authStore";
+import { endpoints } from "@/lib/endpoints";
+import { mediaUrl } from "@/lib/media";
 
 export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expanded?: boolean; onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const clearSession = useAuthStore((state) => state.clearSession);
+
+  const info = useQuery({ queryKey: ["library-info"], queryFn: () => endpoints.libraryInfo() });
+  const logoUrl = info.data?.logo ? mediaUrl(info.data.logo) : null;
+  const bannerUrl = info.data?.banner_image ? mediaUrl(info.data.banner_image) : null;
 
   const logout = () => {
     clearSession();
@@ -24,13 +31,23 @@ export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expand
       expanded ? "px-4" : "pl-[26px]"
     )}>
       <div className={clsx("mb-8 flex items-center overflow-hidden transition-all duration-300 ease-in-out", expanded ? "w-[224px]" : "w-[48px] -ml-[2px]")}>
-        <div className="grid shrink-0 h-12 w-12 place-items-center rounded-full bg-primary text-[color:var(--primary-contrast)] shadow-[var(--shadow-soft)]">
-          <BookMarked className="h-6 w-6" />
-        </div>
-        <div className={clsx("flex flex-col ml-3 transition-opacity duration-300 ease-in-out", expanded ? "opacity-100" : "opacity-0")}>
-          <p className="text-sm font-bold tracking-normal text-foreground">Shresht</p>
-          <p className="text-[10px] uppercase tracking-wider text-muted">Library</p>
-        </div>
+        {expanded && bannerUrl ? (
+          <img src={bannerUrl} alt="Library Banner" className="h-12 w-full object-contain object-left" />
+        ) : (
+          <>
+            <div className={clsx("grid shrink-0 h-12 w-12 place-items-center rounded-full shadow-[var(--shadow-soft)] overflow-hidden", !logoUrl && "bg-primary text-[color:var(--primary-contrast)]")}>
+              {logoUrl ? (
+                <img src={logoUrl} alt="Library Logo" className="h-full w-full object-cover" />
+              ) : (
+                <BookMarked className="h-6 w-6" />
+              )}
+            </div>
+            <div className={clsx("flex flex-col ml-3 transition-opacity duration-300 ease-in-out", expanded ? "opacity-100" : "opacity-0")}>
+              <p className="text-sm font-bold tracking-normal text-foreground truncate">{info.data?.library_name || "Shresht"}</p>
+              <p className="text-[10px] uppercase tracking-wider text-muted">Library</p>
+            </div>
+          </>
+        )}
       </div>
 
       <nav className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar">

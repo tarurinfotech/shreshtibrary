@@ -3,10 +3,35 @@ import { cookies } from "next/headers";
 import "./globals.css";
 import { AppProviders } from "./providers";
 
-export const metadata: Metadata = {
-  title: "Shresht Library Admin",
-  description: "Admin dashboard for Shresht Library",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  let logoUrl = "/favicon.ico";
+  let libraryName = "Shresht Library Admin";
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:5242";
+    const res = await fetch(`${baseUrl}/api/v1/library/info`, { next: { revalidate: 3600 } });
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.data?.logo) {
+        const path = result.data.logo;
+        logoUrl = path.startsWith("http") ? path : `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+      }
+      if (result?.data?.library_name) {
+        libraryName = `${result.data.library_name} Admin`;
+      }
+    }
+  } catch (error) {
+    // Fallback to defaults
+  }
+
+  return {
+    title: libraryName,
+    description: `Admin dashboard for ${libraryName}`,
+    icons: {
+      icon: logoUrl,
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
