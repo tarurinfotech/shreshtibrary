@@ -30,9 +30,11 @@ export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expand
       "flex h-full w-full flex-col border-r border-border bg-[color:var(--sidebar)] py-5 shadow-[var(--shadow-soft)] overflow-hidden whitespace-nowrap",
       expanded ? "px-4" : "pl-[26px]"
     )}>
-      <div className={clsx("mb-8 flex items-center overflow-hidden transition-all duration-300 ease-in-out", expanded ? "w-[224px]" : "w-[48px] -ml-[2px]")}>
+      <div className={clsx("mb-8 flex items-center overflow-hidden transition-all duration-300 ease-in-out", expanded ? "w-full" : "w-[48px] -ml-[2px]")}>
         {expanded && bannerUrl ? (
-          <img src={bannerUrl} alt="Library Banner" className="h-12 w-full object-contain object-left" />
+          <div className="w-full flex items-center justify-center bg-white rounded-lg p-2 shadow-sm border border-border/50">
+            <img src={bannerUrl} alt="Library Banner" className="w-full h-auto max-h-14 object-contain" />
+          </div>
         ) : (
           <>
             <div className={clsx("grid shrink-0 h-12 w-12 place-items-center rounded-full shadow-[var(--shadow-soft)] overflow-hidden", !logoUrl && "bg-primary text-[color:var(--primary-contrast)]")}>
