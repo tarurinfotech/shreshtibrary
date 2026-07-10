@@ -22,9 +22,9 @@ export default function ReviewsPage() {
   const pushToast = useToastStore((state) => state.pushToast);
   const [filter, setFilter] = useState("all");
   const [rejectTarget, setRejectTarget] = useState<Review | null>(null);
-  const reviews = useQuery({ queryKey: ["reviews"], queryFn: endpoints.reviews });
-  const pending = useQuery({ queryKey: ["pending-reviews"], queryFn: endpoints.pendingReviews });
-  const summary = useQuery({ queryKey: ["review-summary"], queryFn: endpoints.reviewSummary });
+  const reviews = useQuery({ queryKey: ["reviews"], queryFn: () => endpoints.reviews() });
+  const pending = useQuery({ queryKey: ["pending-reviews"], queryFn: () => endpoints.pendingReviews() });
+  const summary = useQuery({ queryKey: ["review-summary"], queryFn: () => endpoints.reviewSummary() });
 
   const invalidate = async () => {
     await queryClient.invalidateQueries({ queryKey: ["reviews"] });

@@ -44,12 +44,12 @@ export default function LibraryPage() {
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
   
-  const info = useQuery({ queryKey: ["library-info"], queryFn: endpoints.libraryInfo });
-  const facilities = useQuery({ queryKey: ["facilities"], queryFn: endpoints.facilities });
-  const achievers = useQuery({ queryKey: ["achievers"], queryFn: endpoints.achievers });
-  const reviews = useQuery({ queryKey: ["public-reviews"], queryFn: endpoints.publicReviews });
-  const reviewSummary = useQuery({ queryKey: ["review-summary"], queryFn: endpoints.reviewSummary });
-  const gallery = useQuery({ queryKey: ["gallery"], queryFn: endpoints.galleryImages });
+  const info = useQuery({ queryKey: ["library-info"], queryFn: () => endpoints.libraryInfo() });
+  const facilities = useQuery({ queryKey: ["facilities"], queryFn: () => endpoints.facilities() });
+  const achievers = useQuery({ queryKey: ["achievers"], queryFn: () => endpoints.achievers() });
+  const reviews = useQuery({ queryKey: ["public-reviews"], queryFn: () => endpoints.publicReviews() });
+  const reviewSummary = useQuery({ queryKey: ["review-summary"], queryFn: () => endpoints.reviewSummary() });
+  const gallery = useQuery({ queryKey: ["gallery"], queryFn: () => endpoints.galleryImages() });
   
   const activeTab = (searchParams.get("tab") as Tab) || "basic";
   
