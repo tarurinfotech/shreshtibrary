@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Activity, ArrowLeft, Camera, Clock, Upload } from "lucide-react";
+import { Activity, ArrowLeft, Camera, Clock, Upload, CheckCircle, Calendar, Plus } from "lucide-react";
 import { StudentEditForm } from "@/components/features/students/StudentEditForm";
 import { StudentAttendanceCalendar } from "@/components/features/students/StudentAttendanceCalendar";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -41,6 +41,17 @@ export function StudentDetailClient({ id }: { id: string }) {
   const analytics = useQuery({
     queryKey: ["student-analytics", id, period],
     queryFn: () => endpoints.studentAnalytics(id, period),
+  });
+  const allPlans = useQuery({ queryKey: ["admin-plans"], queryFn: () => endpoints.plans() });
+
+  const assignPlan = useMutation({
+    mutationFn: (planId: number) => endpoints.assignMembership({ student_id: Number(id), plan_id: planId }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student-memberships", id] });
+      queryClient.invalidateQueries({ queryKey: ["student-payments", id] });
+      pushToast({ kind: "success", title: "Plan assigned successfully" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Failed to assign plan", message: getErrorMessage(error) }),
   });
 
   const update = useMutation({
@@ -155,6 +166,59 @@ export function StudentDetailClient({ id }: { id: string }) {
 
       <section className="surface rounded-lg p-5">
         <h2 className="mb-4 font-semibold">Plan Details</h2>
+        
+        {(() => {
+          const activePlans = (memberships.data?.data ?? []).filter(m => m.status.toLowerCase() === 'active');
+          if (activePlans.length > 0) {
+            const active = activePlans[0];
+            return (
+              <div className="mb-6 rounded-xl bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-sm">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-2xl font-bold">{active.plan_name}</h3>
+                    <div className="mt-2 flex items-center gap-2 text-primary-foreground/90">
+                      <Calendar className="h-4 w-4" />
+                      <span>{formatDate(active.start_date)} — {formatDate(active.end_date)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-full bg-primary-foreground/20 px-3 py-1 font-semibold">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="text-sm">ACTIVE</span>
+                  </div>
+                </div>
+              </div>
+            );
+          } else {
+            return (
+              <div className="mb-6">
+                <p className="mb-4 text-sm text-muted">No active plan found. Select a plan below to assign.</p>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {(allPlans.data ?? []).filter(p => p.is_active !== false).map(plan => (
+                    <div key={plan.id} className="flex flex-col justify-between rounded-xl border border-border bg-panel-strong p-4">
+                      <div>
+                        <h4 className="font-semibold text-foreground">{plan.name}</h4>
+                        <p className="mt-1 text-xs text-muted">{plan.duration_months} Months</p>
+                      </div>
+                      <div className="mt-4 flex items-center justify-between">
+                        <span className="font-bold">{formatMoney(plan.price)}</span>
+                        <Button 
+                          size="sm" 
+                          icon={<Plus className="h-4 w-4" />}
+                          loading={assignPlan.isPending}
+                          onClick={() => assignPlan.mutate(plan.id)}
+                        >
+                          Buy / Assign
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          }
+        })()}
+
+        <h3 className="mb-3 mt-6 font-semibold text-sm text-muted">Membership History</h3>
         <TableShell className="rounded-none border-0 bg-transparent">
           <Table>
             <thead>
@@ -176,7 +240,7 @@ export function StudentDetailClient({ id }: { id: string }) {
               ))}
               {memberships.isSuccess && memberships.data?.data?.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="text-center py-6 text-muted text-sm border-b border-border">No active or historical plans found for this student.</td>
+                  <td colSpan={4} className="text-center py-6 text-muted text-sm border-b border-border">No historical plans found for this student.</td>
                 </tr>
               )}
               {memberships.isLoading && (
@@ -215,14 +279,21 @@ export function StudentDetailClient({ id }: { id: string }) {
                 </tr>
               </thead>
               <tbody>
-                {(payments.data ?? []).slice(0, 8).map((payment) => (
-                  <tr key={payment.id}>
-                    <Td>{payment.plan_name}</Td>
-                    <Td>{formatMoney(payment.amount)}</Td>
-                    <Td><Badge variant={statusVariant(payment.status)}>{payment.status}</Badge></Td>
-                    <Td>{formatDate(payment.payment_date)}</Td>
-                  </tr>
-                ))}
+                {(payments.data ?? []).slice(0, 8).map((payment) => {
+                  const isRefunded = payment.status.toLowerCase() === 'refunded';
+                  return (
+                    <tr key={payment.id}>
+                      <Td>{payment.plan_name}</Td>
+                      <Td>
+                        <span className={isRefunded ? "line-through text-muted" : "font-semibold"}>
+                          {formatMoney(payment.amount)}
+                        </span>
+                      </Td>
+                      <Td><Badge variant={statusVariant(payment.status)}>{payment.status}</Badge></Td>
+                      <Td>{formatDate(payment.payment_date)}</Td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </TableShell>
