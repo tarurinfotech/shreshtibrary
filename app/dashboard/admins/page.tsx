@@ -101,8 +101,8 @@ export default function AdminsPage() {
       header: "Admin",
       cell: (admin) => (
         <>
-          <div className="font-medium">{fullName(admin.first_name, admin.last_name, admin.username)}</div>
-          <div className="text-xs text-muted">@{admin.username}</div>
+          <div className="font-medium">{fullName(admin?.first_name, admin?.last_name, admin?.username)}</div>
+          <div className="text-xs text-muted">@{admin?.username}</div>
         </>
       ),
     },
@@ -111,23 +111,23 @@ export default function AdminsPage() {
       header: "Contact",
       cell: (admin) => (
         <>
-          <div>{admin.mobile}</div>
-          <div className="text-xs text-muted">{admin.email}</div>
+          <div>{admin?.mobile}</div>
+          <div className="text-xs text-muted">{admin?.email}</div>
         </>
       ),
     },
-    { id: "role", header: "Role", cell: (admin) => <Badge variant={admin.role === "super_admin" ? "info" : "neutral"}>{admin.role.replace("_", " ")}</Badge> },
-    { id: "status", header: "Status", cell: (admin) => <Badge variant={statusVariant(admin.is_active ? "active" : "inactive")}>{admin.is_active ? "Active" : "Inactive"}</Badge> },
-    { id: "joined", header: "Joined", cell: (admin) => formatDate(admin.date_joined) },
+    { id: "role", header: "Role", cell: (admin) => <Badge variant={admin?.role === "super_admin" ? "info" : "neutral"}>{admin?.role?.replace("_", " ") ?? "Admin"}</Badge> },
+    { id: "status", header: "Status", cell: (admin) => <Badge variant={statusVariant(admin?.is_active ? "active" : "inactive")}>{admin?.is_active ? "Active" : "Inactive"}</Badge> },
+    { id: "joined", header: "Joined", cell: (admin) => formatDate(admin?.date_joined) },
     {
       id: "actions",
       header: "Actions",
       cell: (admin) => {
-        const isCurrent = admin.id === currentUser?.id;
+        const isCurrent = admin?.id === currentUser?.id;
         return (
           <div className="flex flex-wrap gap-2">
             {canEdit && <Button variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => openAdmin(admin)}>Edit</Button>}
-            {canSuspend && <Button variant="secondary" size="sm" disabled={isCurrent} loading={deactivate.isPending} icon={<Power className="h-4 w-4" />} onClick={() => deactivate.mutate(admin.id)}>Deactivate</Button>}
+            {canSuspend && <Button variant="secondary" size="sm" disabled={isCurrent} loading={deactivate.isPending} icon={<Power className="h-4 w-4" />} onClick={() => deactivate.mutate(admin?.id)}>Deactivate</Button>}
             {canDelete && <Button variant="danger" size="sm" disabled={isCurrent} loading={remove.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => setRemoveTarget(admin)}>Remove</Button>}
           </div>
         );
@@ -136,9 +136,9 @@ export default function AdminsPage() {
   ];
 
   const activityColumns: Array<DataTableColumn<ActivityLogItem>> = [
-    { id: "action", header: "Action", cell: (item) => item.action },
-    { id: "admin", header: "Admin", cell: (item) => item.admin_name },
-    { id: "time", header: "Time", cell: (item) => formatDateTime(item.created_at) },
+    { id: "action", header: "Action", cell: (item) => item?.action ?? "Unknown" },
+    { id: "admin", header: "Admin", cell: (item) => item?.admin_name ?? "System" },
+    { id: "time", header: "Time", cell: (item) => formatDateTime(item?.created_at) },
   ];
 
   return (
@@ -173,14 +173,14 @@ export default function AdminsPage() {
           </div>
           <div className="grid gap-2">
             {(admins.data ?? []).map((admin) => (
-              <div key={admin.id} className="rounded-lg border border-border bg-panel-strong p-3">
-                <p className="font-medium">{admin.username}</p>
+              <div key={admin?.id ?? Math.random()} className="rounded-lg border border-border bg-panel-strong p-3">
+                <p className="font-medium">{admin?.username ?? "Unknown Admin"}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {Array.isArray(admin.permissions) && admin.permissions.length > 0 ? (
-                    admin.permissions.map((key) => (
+                  {Array.isArray(admin?.permissions) && (admin?.permissions ?? []).length > 0 ? (
+                    (admin?.permissions ?? []).map((key) => (
                       <Badge key={key} variant="info">{key}</Badge>
                     ))
-                  ) : admin.role === "super_admin" || admin.role === "sub_super_admin" ? (
+                  ) : admin?.role === "super_admin" || admin?.role === "sub_super_admin" ? (
                     <Badge variant="success">All Permissions</Badge>
                   ) : (
                     <span className="text-sm text-muted">No permissions.</span>

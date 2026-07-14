@@ -56,7 +56,7 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
 
   useEffect(() => {
     if (admin) {
-      setForm({ ...admin, permissions: Array.isArray(admin.permissions) ? admin.permissions : [], password: "" });
+      setForm({ ...admin, permissions: Array.isArray(admin?.permissions) ? admin.permissions : [], password: "" });
     } else {
       setForm(emptyAdmin);
     }
@@ -125,14 +125,14 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
   const currentUserRole = currentUser?.role;
 
   // Filter groups based on search
-  const filteredGroups = permissionsData.map(group => {
-    const safePermissions = group.permissions ?? [];
-    const safeCategory = group.category ?? "";
+  const filteredGroups = (permissionsData ?? []).map(group => {
+    const safePermissions = group?.permissions ?? [];
+    const safeCategory = group?.category ?? "";
     if (!searchQuery) return { ...group, permissions: safePermissions, category: safeCategory };
     const lowerQuery = searchQuery.toLowerCase();
     const matchCat = safeCategory.toLowerCase().includes(lowerQuery);
-    const matchedPerms = safePermissions.filter(p => p.toLowerCase().includes(lowerQuery));
-    if (matchCat || matchedPerms.length > 0) {
+    const matchedPerms = safePermissions.filter(p => p?.toLowerCase().includes(lowerQuery));
+    if (matchCat || (matchedPerms ?? []).length > 0) {
       return {
         ...group,
         category: safeCategory,
@@ -250,8 +250,8 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
               {filteredGroups.map((group) => {
                 const isExpanded = expandedCategories[group.category];
                 const formPerms = Array.isArray(form.permissions) ? form.permissions : [];
-                const allChecked = group.permissions.length > 0 && group.permissions.every(p => formPerms.includes(p));
-                const someChecked = group.permissions.some(p => formPerms.includes(p));
+                const allChecked = (group?.permissions ?? []).length > 0 && (group?.permissions ?? []).every(p => formPerms.includes(p));
+                const someChecked = (group?.permissions ?? []).some(p => formPerms.includes(p));
                 
                 return (
                   <div key={group.category} className="rounded-lg border border-border bg-panel-strong overflow-hidden">
@@ -281,8 +281,8 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
                     
                     {isExpanded && (
                       <div className="p-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 bg-panel-strong border-t border-border">
-                        {group.permissions.map((perm) => {
-                           const actionName = perm.split('.').pop() || perm;
+                        {(group?.permissions ?? []).map((perm) => {
+                           const actionName = perm?.split('.').pop() || perm;
                            return (
                              <label key={perm} className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors group">
                                <input
