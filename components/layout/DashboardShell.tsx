@@ -57,8 +57,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
-    if (pathname.startsWith("/dashboard/admins") && user.role !== "super_admin") {
-      router.replace("/dashboard");
+    if (pathname.startsWith("/dashboard/admins") && user.role !== "super_admin" && user.role !== "sub_super_admin") {
+      const hasPerm = Array.isArray(user.permissions) ? user.permissions.includes("AdminManagement.View") : Boolean((user.permissions as Record<string, unknown>)?.[("AdminManagement.View")]);
+      if (!hasPerm) {
+        router.replace("/dashboard");
+      }
     }
   }, [access, hydrated, isRefreshingSession, pathname, router, user]);
 
