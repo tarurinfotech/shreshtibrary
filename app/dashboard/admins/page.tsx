@@ -156,7 +156,7 @@ export default function AdminsPage() {
       </div>
 
       <DataTable
-        data={admins.data ?? []}
+        data={Array.isArray(admins?.data) ? admins.data : []}
         columns={adminColumns}
         getRowKey={(admin) => admin.id}
         loading={admins.isLoading}
@@ -172,12 +172,12 @@ export default function AdminsPage() {
             <ShieldCheck className="h-4 w-4 text-muted" />
           </div>
           <div className="grid gap-2">
-            {(admins.data ?? []).map((admin) => (
+            {Array.isArray(admins?.data) ? admins.data.map((admin) => (
               <div key={admin?.id ?? Math.random()} className="rounded-lg border border-border bg-panel-strong p-3">
                 <p className="font-medium">{admin?.username ?? "Unknown Admin"}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {Array.isArray(admin?.permissions) && (admin?.permissions ?? []).length > 0 ? (
-                    (admin?.permissions ?? []).map((key) => (
+                  {Array.isArray(admin?.permissions) && admin.permissions.length > 0 ? (
+                    admin.permissions.map((key) => (
                       <Badge key={key} variant="info">{key}</Badge>
                     ))
                   ) : admin?.role === "super_admin" || admin?.role === "sub_super_admin" ? (
@@ -187,7 +187,7 @@ export default function AdminsPage() {
                   )}
                 </div>
               </div>
-            ))}
+            )) : null}
           </div>
         </div>
 
@@ -197,7 +197,7 @@ export default function AdminsPage() {
             {canBackupCreate && <Button size="sm" loading={createBackup.isPending} icon={<DatabaseBackup className="h-4 w-4" />} onClick={() => createBackup.mutate()}>Create</Button>}
           </div>
           <div className="grid gap-2">
-            {(backups.data ?? []).map((backup) => (
+            {Array.isArray(backups?.data) ? backups.data.map((backup) => (
               <EntityListItem
                 key={backup.id}
                 title={backup.id}
@@ -213,8 +213,8 @@ export default function AdminsPage() {
                   </div>
                 }
               />
-            ))}
-            {(backups.data ?? []).length === 0 ? <EmptyState title="No backups configured" /> : null}
+            )) : null}
+            {(!Array.isArray(backups?.data) || backups.data.length === 0) ? <EmptyState title="No backups configured" /> : null}
           </div>
         </div>
       </section>
@@ -222,7 +222,7 @@ export default function AdminsPage() {
       <section className="surface rounded-lg p-5">
         <h2 className="mb-4 font-semibold">Activity Log</h2>
         <DataTable
-          data={(activity.data ?? []).slice(0, 12)}
+          data={Array.isArray(activity?.data) ? activity.data.slice(0, 12) : []}
           columns={activityColumns}
           getRowKey={(item) => item.id}
           loading={activity.isLoading}
