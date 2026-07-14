@@ -54,13 +54,18 @@ export default function ReportsPage() {
   const [range, setRange] = useState<Range>("30");
   const user = useAuthStore((s) => s.user);
   const isSuper = user?.role === "super_admin";
-  const hasPerm = (key: string) => isSuper || Boolean(user?.permissions?.[key]);
+  const hasPerm = (key: string) => {
+    if (isSuper || user?.role === "sub_super_admin") return true;
+    if (!user?.permissions) return false;
+    if (Array.isArray(user.permissions)) return user.permissions.includes(key);
+    return Boolean((user.permissions as Record<string, unknown>)[key]);
+  };
 
-  const canAttendance = hasPerm("manage_attendance");
-  const canPayments = hasPerm("manage_payments");
-  const canStudents = hasPerm("manage_students");
-  const canPlans = hasPerm("manage_plans");
-  const canSeats = hasPerm("manage_seats");
+  const canAttendance = hasPerm("Attendance.View") || hasPerm("manage_attendance");
+  const canPayments = hasPerm("Payment.View") || hasPerm("manage_payments");
+  const canStudents = hasPerm("StudentManagement.View") || hasPerm("manage_students");
+  const canPlans = hasPerm("Membership.View") || hasPerm("manage_plans");
+  const canSeats = hasPerm("LibraryManagement.Seat") || hasPerm("manage_seats");
 
   const stats = useQuery({ queryKey: ["dashboard-stats"], queryFn: () => endpoints.dashboardStats() });
   const charts = useQuery({ queryKey: ["dashboard-charts", range], queryFn: () => endpoints.dashboardCharts(range === "14" ? "week" : (range === "30" ? "month" : "month")) });

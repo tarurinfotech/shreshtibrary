@@ -60,9 +60,12 @@ export function GlobalSearch() {
 
   // Filter navigation items
   const filteredNav = navItems.filter((item) => {
+    if (!item.label || !item.href || !item.icon) return false;
     if (item.superOnly && user?.role !== "super_admin") return false;
-    if (item.permissionKey && user?.role !== "super_admin") {
-      return Boolean(user?.permissions?.[item.permissionKey]);
+    if (item.permissionKey && user?.role !== "super_admin" && user?.role !== "sub_super_admin") {
+      if (!user?.permissions) return false;
+      if (Array.isArray(user.permissions)) return user.permissions.includes(item.permissionKey);
+      return Boolean((user.permissions as Record<string, unknown>)[item.permissionKey]);
     }
     return item.label.toLowerCase().includes(query.toLowerCase());
   });
@@ -229,11 +232,12 @@ export function GlobalSearch() {
                 {filteredNav.length > 0 ? (
                   filteredNav.map((item) => {
                     const Icon = item.icon;
+                    if (!Icon) return null;
                     return (
                       <button
                         key={item.href}
                         type="button"
-                        onClick={() => handleSelect(item.href)}
+                        onClick={() => handleSelect(item.href as string)}
                         className="group flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition hover:bg-[color:var(--hover)] hover:text-primary"
                       >
                         <div className="flex items-center gap-3">

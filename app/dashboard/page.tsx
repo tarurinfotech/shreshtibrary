@@ -146,14 +146,19 @@ function ActivityRow({ item, isLast }: { item: any; isLast: boolean }) {
 export default function DashboardPage() {
   const user = useAuthStore((s) => s.user);
   const isSuper = user?.role === "super_admin";
-  const hasPerm = (key: string) => isSuper || Boolean(user?.permissions?.[key]);
+  const hasPerm = (key: string) => {
+    if (isSuper || user?.role === "sub_super_admin") return true;
+    if (!user?.permissions) return false;
+    if (Array.isArray(user.permissions)) return user.permissions.includes(key);
+    return Boolean((user.permissions as Record<string, unknown>)[key]);
+  };
 
-  const canAttendance = hasPerm("manage_attendance");
-  const canPayments = hasPerm("manage_payments");
-  const canStudents = hasPerm("manage_students");
-  const canPlans = hasPerm("manage_plans");
-  const canSeats = hasPerm("manage_seats");
-  const canNotifications = hasPerm("manage_notifications");
+  const canAttendance = hasPerm("Attendance.View");
+  const canPayments = hasPerm("Payment.View");
+  const canStudents = hasPerm("StudentManagement.View");
+  const canPlans = hasPerm("Membership.View");
+  const canSeats = hasPerm("LibraryManagement.Seat");
+  const canNotifications = hasPerm("NotificationManagement.View");
 
   const allowedDomains = chartDomains.filter(domain => {
     if (domain === "attendance") return canAttendance;

@@ -92,6 +92,7 @@ export function AttendanceMatrix({
   holidayList,
   settings,
   onDeleteHoliday,
+  canManageHoliday,
   loading,
   actions,
 }: {
@@ -102,6 +103,7 @@ export function AttendanceMatrix({
   holidayList: HolidayRecord[];
   settings?: { library_open_time?: string; attendance_padding_time?: string };
   onDeleteHoliday: (id: number) => void;
+  canManageHoliday?: boolean;
   loading: boolean;
   actions: ReactNode;
 }) {
@@ -140,13 +142,13 @@ export function AttendanceMatrix({
                   key={holiday.id}
                   size="sm"
                   variant="secondary"
-                  className={`group h-6 rounded-full px-2.5 ${isPast ? "pl-3 pr-3" : "pl-3 pr-2"} text-[10px] flex items-center gap-1.5 ${!isPast ? "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20" : ""}`}
-                  tooltip={isPast ? "Past holiday (read-only)" : "Click to delete holiday"}
-                  onClick={() => { if (!isPast) onDeleteHoliday(holiday.id); }}
-                  disabled={isPast}
+                  className={`group h-6 rounded-full px-2.5 ${isPast ? "pl-3 pr-3" : "pl-3 pr-2"} text-[10px] flex items-center gap-1.5 ${!isPast && canManageHoliday ? "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20" : ""}`}
+                  tooltip={isPast ? "Past holiday (read-only)" : canManageHoliday ? "Click to delete holiday" : undefined}
+                  onClick={() => { if (!isPast && canManageHoliday) onDeleteHoliday(holiday.id); }}
+                  disabled={isPast || !canManageHoliday}
                 >
                   <span>{holiday.date.slice(-2)} {holiday.title}</span>
-                  {!isPast && <X className="h-3 w-3 opacity-50 group-hover:opacity-100" />}
+                  {!isPast && canManageHoliday && <X className="h-3 w-3 opacity-50 group-hover:opacity-100" />}
                 </Button>
               );
             })}

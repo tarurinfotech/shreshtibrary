@@ -19,6 +19,7 @@ import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/StateBlock
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDateTime, fullName } from "@/lib/format";
+import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import type { Seat, SeatHistoryItem } from "@/types/api";
 import { seatCreateSchema, getZodFieldErrors } from "@/lib/validations";
@@ -48,6 +49,17 @@ export default function SeatsPage() {
   const [bulkReserveOpen, setBulkReserveOpen] = useState(false);
   const [bulkSelectedIds, setBulkSelectedIds] = useState<number[]>([]);
   const [bulkIsReserved, setBulkIsReserved] = useState(true);
+
+  const currentUser = useAuthStore((state) => state.user);
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canManageSeat = hasPerm("LibraryManagement.Seat");
+  const canManageFloor = hasPerm("LibraryManagement.Floor");
 
   const seats = useQuery({ queryKey: ["flat-seats"], queryFn: endpoints.flatSeats });
   const layout = useQuery({ queryKey: ["seat-layout"], queryFn: endpoints.seatLayout });
@@ -235,26 +247,30 @@ export default function SeatsPage() {
         eyebrow="Layout"
         actions={
           <>
-            <Button 
-              variant="danger" 
-              icon={<Trash2 className="h-4 w-4" />} 
-              loading={releaseAll.isPending} 
-              onClick={() => {
-                if (window.confirm("Are you sure you want to release all occupied seats? This cannot be undone.")) {
-                  releaseAll.mutate();
-                }
-              }}
-            >
-              Release All
-            </Button>
-            <Button 
-              variant="secondary" 
-              icon={<Armchair className="h-4 w-4" />} 
-              onClick={() => { setBulkSelectedIds([]); setBulkIsReserved(true); setBulkReserveOpen(true); }}
-            >
-              Reserve Seat
-            </Button>
-            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAddOpen(true)}>Add Seat</Button>
+            {canManageSeat && (
+              <>
+                <Button 
+                  variant="danger" 
+                  icon={<Trash2 className="h-4 w-4" />} 
+                  loading={releaseAll.isPending} 
+                  onClick={() => {
+                    if (window.confirm("Are you sure you want to release all occupied seats? This cannot be undone.")) {
+                      releaseAll.mutate();
+                    }
+                  }}
+                >
+                  Release All
+                </Button>
+                <Button 
+                  variant="secondary" 
+                  icon={<Armchair className="h-4 w-4" />} 
+                  onClick={() => { setBulkSelectedIds([]); setBulkIsReserved(true); setBulkReserveOpen(true); }}
+                >
+                  Reserve Seat
+                </Button>
+                <Button icon={<Plus className="h-4 w-4" />} onClick={() => setAddOpen(true)}>Add Seat</Button>
+              </>
+            )}
           </>
         }
       />
@@ -268,24 +284,28 @@ export default function SeatsPage() {
 
       <SectionCard title="Floors and Rows">
         <div className="grid gap-4 lg:grid-cols-2">
-          <FormShell className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={(event) => { event.preventDefault(); setFieldErrors({}); createFloor.mutate(); }}>
-            <Input label="Floor Name" value={floorName} onChange={(event) => setFloorName(event.target.value)} error={fieldErrors.name} required />
-            <div className="self-end"><Button type="submit" loading={createFloor.isPending} icon={<Plus className="h-4 w-4" />}>Add Floor</Button></div>
-          </FormShell>
-          <FormShell className="grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={(event) => { event.preventDefault(); createRow.mutate(); }}>
-            <Select
-              label="Floor"
-              value={rowFloorId}
-              onChange={setRowFloorId}
-              required
-              options={[
-                { value: "", label: "Select" },
-                ...(layout.data ?? []).map((floor) => ({ value: String(floor.id), label: floor.name })),
-              ]}
-            />
-            <Input label="Row" value={rowLabel} onChange={(event) => setRowLabel(event.target.value)} error={fieldErrors.label} required />
-            <div className="self-end"><Button type="submit" loading={createRow.isPending} icon={<Plus className="h-4 w-4" />}>Add Row</Button></div>
-          </FormShell>
+          {canManageFloor && (
+            <>
+              <FormShell className="grid gap-3 md:grid-cols-[1fr_auto]" onSubmit={(event) => { event.preventDefault(); setFieldErrors({}); createFloor.mutate(); }}>
+                <Input label="Floor Name" value={floorName} onChange={(event) => setFloorName(event.target.value)} error={fieldErrors.name} required />
+                <div className="self-end"><Button type="submit" loading={createFloor.isPending} icon={<Plus className="h-4 w-4" />}>Add Floor</Button></div>
+              </FormShell>
+              <FormShell className="grid gap-3 md:grid-cols-[1fr_1fr_auto]" onSubmit={(event) => { event.preventDefault(); createRow.mutate(); }}>
+                <Select
+                  label="Floor"
+                  value={rowFloorId}
+                  onChange={setRowFloorId}
+                  required
+                  options={[
+                    { value: "", label: "Select" },
+                    ...(layout.data ?? []).map((floor) => ({ value: String(floor.id), label: floor.name })),
+                  ]}
+                />
+                <Input label="Row" value={rowLabel} onChange={(event) => setRowLabel(event.target.value)} error={fieldErrors.label} required />
+                <div className="self-end"><Button type="submit" loading={createRow.isPending} icon={<Plus className="h-4 w-4" />}>Add Row</Button></div>
+              </FormShell>
+            </>
+          )}
         </div>
         <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
           {(layout.data ?? []).map((floor) => (
@@ -294,20 +314,24 @@ export default function SeatsPage() {
                 <span className="font-medium">{floor.name}</span>
                 <div className="flex items-center gap-2">
                   <Badge variant={floor.is_active ? "success" : "danger"}>{floor.rows.length} rows</Badge>
-                  <Button variant="danger" size="sm" loading={deleteFloor.isPending && deleteFloor.variables === floor.id} disabled={deleteFloor.isPending} onClick={() => { if(confirm("Delete floor and all its seats?")) deleteFloor.mutate(floor.id); }} icon={<Trash2 className="h-3 w-3" />} />
+                  {canManageFloor && (
+                    <Button variant="danger" size="sm" loading={deleteFloor.isPending && deleteFloor.variables === floor.id} disabled={deleteFloor.isPending} onClick={() => { if(confirm("Delete floor and all its seats?")) deleteFloor.mutate(floor.id); }} icon={<Trash2 className="h-3 w-3" />} />
+                  )}
                 </div>
               </div>
               <div className="mt-4 flex flex-col gap-2">
                 {floor.rows.map((row) => (
                   <div key={row.id} className="flex items-center justify-between text-sm text-muted hover:text-foreground transition-colors px-1">
                     <span>Row {row.label}</span>
-                    <button type="button" className="text-danger hover:text-danger/80 transition-colors disabled:opacity-50" disabled={deleteRow.isPending} onClick={() => { if(confirm("Delete row?")) deleteRow.mutate(row.id); }} title="Delete Row">
-                      {deleteRow.isPending && deleteRow.variables === row.id ? (
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </button>
+                    {canManageFloor && (
+                      <button type="button" className="text-danger hover:text-danger/80 transition-colors disabled:opacity-50" disabled={deleteRow.isPending} onClick={() => { if(confirm("Delete row?")) deleteRow.mutate(row.id); }} title="Delete Row">
+                        {deleteRow.isPending && deleteRow.variables === row.id ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-rose-500 border-t-transparent" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    )}
                   </div>
                 ))}
                 {floor.rows.length === 0 && <span className="text-sm text-muted px-1">No rows</span>}
@@ -437,10 +461,14 @@ export default function SeatsPage() {
             />
             <FormActions>
               <Button type="button" variant="secondary" icon={<History className="h-4 w-4" />} onClick={() => setHistorySeat(selected)}>History</Button>
-              <Button type="button" variant="secondary" loading={assign.isPending} icon={<UserPlus className="h-4 w-4" />} onClick={() => assign.mutate()}>Assign</Button>
-              <Button type="button" variant="danger" loading={unassign.isPending} icon={<UserMinus className="h-4 w-4" />} onClick={() => unassign.mutate()}>Unassign</Button>
-              <Button type="button" variant="danger" loading={deleteSeat.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => { if(confirm("Delete this seat?")) deleteSeat.mutate(selected.id); }}>Delete</Button>
-              <Button type="submit" loading={updateSeatInfo.isPending} icon={<Save className="h-4 w-4" />}>Save Status</Button>
+              {canManageSeat && (
+                <>
+                  <Button type="button" variant="secondary" loading={assign.isPending} icon={<UserPlus className="h-4 w-4" />} onClick={() => assign.mutate()}>Assign</Button>
+                  <Button type="button" variant="danger" loading={unassign.isPending} icon={<UserMinus className="h-4 w-4" />} onClick={() => unassign.mutate()}>Unassign</Button>
+                  <Button type="button" variant="danger" loading={deleteSeat.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => { if(confirm("Delete this seat?")) deleteSeat.mutate(selected.id); }}>Delete</Button>
+                  <Button type="submit" loading={updateSeatInfo.isPending} icon={<Save className="h-4 w-4" />}>Save Status</Button>
+                </>
+              )}
             </FormActions>
           </form>
         ) : null}

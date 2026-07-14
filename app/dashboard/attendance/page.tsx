@@ -23,6 +23,7 @@ import { Table, TableShell, Td, Th } from "@/components/ui/Table";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate, formatDateTime, fullName, isDateWithinAllowedWindow } from "@/lib/format";
+import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import type { AttendanceRecord, QRCodeRecord } from "@/types/api";
 
@@ -95,6 +96,19 @@ export default function AttendancePage() {
   const pushToast = useToastStore((state) => state.pushToast);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canMarkAttendance = hasPerm("Attendance.Mark");
+  const canManageQR = hasPerm("QRAttendance.Generate");
+  const canDeleteQR = hasPerm("QRAttendance.Delete");
+  const canManageHoliday = hasPerm("LibraryManagement.Holiday");
 
   // URL synced tab state (survives reload)
   const tab = (searchParams.get("tab") as TabType) ?? "logs";
@@ -445,12 +459,16 @@ export default function AttendancePage() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <Button size="sm" variant="secondary" icon={<Plus className="h-3.5 w-3.5" />} onClick={openManualAttendance}>
-            Manual Entry
-          </Button>
-          <Button size="sm" loading={qrAction.isPending} icon={<QrCode className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("generate")}>
-            Generate QR
-          </Button>
+          {canMarkAttendance && (
+            <Button size="sm" variant="secondary" icon={<Plus className="h-3.5 w-3.5" />} onClick={openManualAttendance}>
+              Manual Entry
+            </Button>
+          )}
+          {canManageQR && (
+            <Button size="sm" loading={qrAction.isPending} icon={<QrCode className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("generate")}>
+              Generate QR
+            </Button>
+          )}
         </div>
       </div>
 
@@ -460,12 +478,16 @@ export default function AttendancePage() {
             <div className="mb-4 flex items-center justify-between gap-2 border-b border-border pb-3">
               <h2 className="text-sm font-bold">Active QR Code</h2>
               <div className="flex items-center gap-1.5">
-                <Button size="sm" variant="secondary" className="h-7 px-2.5 text-xs" loading={qrAction.isPending} icon={<RefreshCcw className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("regenerate")}>
-                  Regen
-                </Button>
-                <Button size="sm" variant="danger" className="h-7 px-2.5 text-xs" loading={qrAction.isPending} icon={<TimerOff className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("expire")}>
-                  Expire
-                </Button>
+                {canManageQR && (
+                  <>
+                    <Button size="sm" variant="secondary" className="h-7 px-2.5 text-xs" loading={qrAction.isPending} icon={<RefreshCcw className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("regenerate")}>
+                      Regen
+                    </Button>
+                    <Button size="sm" variant="danger" className="h-7 px-2.5 text-xs" loading={qrAction.isPending} icon={<TimerOff className="h-3.5 w-3.5" />} onClick={() => qrAction.mutate("expire")}>
+                      Expire
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 
@@ -553,7 +575,7 @@ export default function AttendancePage() {
                             <Button size="sm" variant="secondary" aria-label={`View scans for ${formatDate(qr.valid_date)}`} className="h-6 px-2 text-[10px]" icon={<Eye className="h-3 w-3" />} onClick={() => setSelectedQr(qr)}>
                               View Scans
                             </Button>
-                            {!qr.is_active && (
+                            {!qr.is_active && canDeleteQR && (
                               <Button size="sm" variant="danger" aria-label={`Delete QR`} className="h-6 px-2 text-[10px]" icon={<Trash2 className="h-3 w-3" />} onClick={() => deleteQrAction.mutate(qr.id)}>
                                 Delete
                               </Button>
@@ -585,6 +607,7 @@ export default function AttendancePage() {
             holidayList={holidays.data ?? []}
             settings={settings.data}
             onDeleteHoliday={(id) => deleteHoliday.mutate(id)}
+            canManageHoliday={canManageHoliday}
             loading={matrixStudents.isLoading || attendanceMatrix.isLoading || holidays.isLoading || settings.isLoading}
             actions={
               <div className="relative z-30 flex flex-wrap items-center justify-end gap-2">
@@ -602,18 +625,20 @@ export default function AttendancePage() {
                   onChange={setSelectedWeek}
                   className="w-32"
                 />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  icon={<CalendarPlus className="h-4 w-4" />}
-                  onClick={() => {
-                    setHolidayForm({ date: attendanceRange.from, title: "", description: "" });
-                    setHolidayErrors({});
-                    setHolidayOpen(true);
-                  }}
-                >
-                  Holiday
-                </Button>
+                {canManageHoliday && (
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    icon={<CalendarPlus className="h-4 w-4" />}
+                    onClick={() => {
+                      setHolidayForm({ date: attendanceRange.from, title: "", description: "" });
+                      setHolidayErrors({});
+                      setHolidayOpen(true);
+                    }}
+                  >
+                    Holiday
+                  </Button>
+                )}
               </div>
             }
           />

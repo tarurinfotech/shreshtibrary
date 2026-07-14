@@ -46,6 +46,17 @@ export default function StudentsPage() {
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
   const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canCreate = hasPerm("StudentManagement.Add");
+  const canSuspend = hasPerm("StudentManagement.Suspend");
+  const canDelete = hasPerm("StudentManagement.Delete");
   
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -117,7 +128,6 @@ export default function StudentsPage() {
     { label: "Boys", value: counts.data?.boys ?? 0, color: "#38bdf8", emoji: "👦" },
   ].filter((item) => item.value > 0);
   const genderTotal = genderRows.reduce((sum, item) => sum + item.value, 0);
-  const isSuperAdmin = currentUser?.role === "super_admin";
 
   // ── Columns ───────────────────────────────────────────────────────────────
   const studentColumns: Array<DataTableColumn<StudentProfile>> = [
@@ -209,7 +219,7 @@ export default function StudentsPage() {
               View
             </Link>
 
-            {student.status === "SUSPENDED" ? (
+            {canSuspend && student.status === "SUSPENDED" ? (
               <Button
                 variant="success"
                 size="sm"
@@ -221,7 +231,7 @@ export default function StudentsPage() {
               >
                 Activate
               </Button>
-            ) : (
+            ) : canSuspend ? (
               <Button
                 variant="secondary"
                 size="sm"
@@ -234,9 +244,9 @@ export default function StudentsPage() {
               >
                 Suspend
               </Button>
-            )}
+            ) : null}
 
-            {isSuperAdmin && (
+            {canDelete && (
               <Button
                 variant="danger"
                 size="sm"
@@ -269,9 +279,11 @@ export default function StudentsPage() {
             >
               Export
             </Button>
-            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)}>
-              Add Student
-            </Button>
+            {canCreate && (
+              <Button icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)}>
+                Add Student
+              </Button>
+            )}
           </div>
         }
       />

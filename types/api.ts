@@ -1,4 +1,4 @@
-export type Role = "admin" | "super_admin";
+export type Role = "admin" | "super_admin" | "sub_super_admin";
 
 export type ApiResponse<T> = {
   success?: boolean;
@@ -39,7 +39,7 @@ export type AuthUser = {
   email: string;
   mobile: string;
   role: Role;
-  permissions: Record<string, unknown>;
+  permissions: string[] | Record<string, unknown>;
   profile_image?: string | null;
   is_active: boolean;
   date_joined?: string;

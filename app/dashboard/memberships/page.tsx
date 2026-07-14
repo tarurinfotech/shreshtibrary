@@ -21,6 +21,7 @@ import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/StateBlock
 import { getErrorMessage } from "@/lib/api";
 import { endpoints, type MembershipPayload, type PlanUpdatePayload } from "@/lib/endpoints";
 import { formatDate, formatMoney, fullName } from "@/lib/format";
+import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import type { MembershipPlan, MembershipRecord } from "@/types/api";
 
@@ -54,6 +55,19 @@ export default function MembershipsPage() {
   const [membershipMode, setMembershipMode] = useState<"assign" | "renew" | "upgrade">("assign");
   const [membershipForm, setMembershipForm] = useState<MembershipPayload>(emptyMembership);
   const [studentPlanId, setStudentPlanId] = useState<number | null>(null);
+
+  const currentUser = useAuthStore((state) => state.user);
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canManagePlans = hasPerm("Membership.ManagePlans");
+  const canAssign = hasPerm("Membership.Create");
+  const canRenew = hasPerm("Membership.Renew");
+  const canUpgrade = hasPerm("Membership.Edit");
 
   const plans = useQuery({ queryKey: ["plans"], queryFn: endpoints.plans });
   const planStats = useQuery({ queryKey: ["plan-stats"], queryFn: endpoints.planStats });
@@ -167,13 +181,17 @@ export default function MembershipsPage() {
         eyebrow="Plans and Students"
         actions={
           tab === "plans" ? (
-            <Button icon={<Plus className="h-4 w-4" />} onClick={() => openPlan()}>
-              Add Plan
-            </Button>
+            canManagePlans && (
+              <Button icon={<Plus className="h-4 w-4" />} onClick={() => openPlan()}>
+                Add Plan
+              </Button>
+            )
           ) : (
-            <Button icon={<Plus className="h-4 w-4" />} onClick={() => openMembership("assign")}>
-              Assign Plan
-            </Button>
+            canAssign && (
+              <Button icon={<Plus className="h-4 w-4" />} onClick={() => openMembership("assign")}>
+                Assign Plan
+              </Button>
+            )
           )
         }
       />
@@ -212,8 +230,12 @@ export default function MembershipsPage() {
                   }
                   actions={
                     <>
-                      <Button variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => openPlan(plan)}>Edit</Button>
-                      <Button variant="secondary" size="sm" icon={<Power className="h-4 w-4" />} loading={togglePlan.isPending} onClick={() => togglePlan.mutate(plan)}>Toggle</Button>
+                      {canManagePlans && (
+                        <>
+                          <Button variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => openPlan(plan)}>Edit</Button>
+                          <Button variant="secondary" size="sm" icon={<Power className="h-4 w-4" />} loading={togglePlan.isPending} onClick={() => togglePlan.mutate(plan)}>Toggle</Button>
+                        </>
+                      )}
                       <Button variant="secondary" size="sm" icon={<Eye className="h-4 w-4" />} onClick={() => setStudentPlanId(plan.id)}>Students</Button>
                     </>
                   }
@@ -230,9 +252,9 @@ export default function MembershipsPage() {
             <MetricTile label="Expired Today" value={expiredToday.data?.length ?? 0} tone="red" />
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" onClick={() => openMembership("assign")}>Assign</Button>
-            <Button variant="secondary" onClick={() => openMembership("renew")}>Renew</Button>
-            <Button variant="secondary" onClick={() => openMembership("upgrade")}>Upgrade</Button>
+            {canAssign && <Button variant="secondary" onClick={() => openMembership("assign")}>Assign</Button>}
+            {canRenew && <Button variant="secondary" onClick={() => openMembership("renew")}>Renew</Button>}
+            {canUpgrade && <Button variant="secondary" onClick={() => openMembership("upgrade")}>Upgrade</Button>}
           </div>
           <DataTable
             data={memberships.data?.data ?? []}

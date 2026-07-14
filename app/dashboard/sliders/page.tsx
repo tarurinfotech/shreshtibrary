@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { endpoints } from "@/lib/endpoints";
 import { useToastStore } from "@/store/toastStore";
+import { useAuthStore } from "@/store/authStore";
 import { getErrorMessage } from "@/lib/api";
 import { mediaUrl } from "@/lib/media";
 import { SliderModal } from "./components/SliderModal";
@@ -17,6 +18,16 @@ export default function SlidersPage() {
   const [editingSlider, setEditingSlider] = useState<HomeSlider | undefined>();
   const pushToast = useToastStore((state) => state.pushToast);
   const queryClient = useQueryClient();
+  const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canManageSliders = hasPerm("LibraryManagement.Slider");
 
   const { data: sliders = [], isLoading } = useQuery({
     queryKey: ["sliders"],
@@ -38,9 +49,11 @@ export default function SlidersPage() {
         title="Home Sliders"
         eyebrow="Library"
         actions={
-          <Button onClick={() => { setEditingSlider(undefined); setIsModalOpen(true); }} icon={<Plus className="h-4 w-4" />}>
-            Add Slider
-          </Button>
+          canManageSliders ? (
+            <Button onClick={() => { setEditingSlider(undefined); setIsModalOpen(true); }} icon={<Plus className="h-4 w-4" />}>
+              Add Slider
+            </Button>
+          ) : undefined
         }
       />
 
@@ -77,12 +90,16 @@ export default function SlidersPage() {
                   <p className="text-xs text-muted-foreground mt-2 font-mono line-clamp-1">{slider.link_url}</p>
                   
                   <div className="mt-4 flex items-center justify-end gap-2 pt-4 border-t border-border/50">
-                    <Button variant="ghost" size="sm" onClick={() => { setEditingSlider(slider); setIsModalOpen(true); }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => { if (confirm("Delete this slider?")) deleteSlider.mutate(slider.id); }} className="text-danger hover:bg-danger/10">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {canManageSliders && (
+                      <>
+                        <Button variant="ghost" size="sm" onClick={() => { setEditingSlider(slider); setIsModalOpen(true); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => { if (confirm("Delete this slider?")) deleteSlider.mutate(slider.id); }} className="text-danger hover:bg-danger/10">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

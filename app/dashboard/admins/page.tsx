@@ -24,7 +24,22 @@ export default function AdminsPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const pushToast = useToastStore((state) => state.pushToast);
-  
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canCreate = hasPerm("AdminManagement.Create");
+  const canEdit = hasPerm("AdminManagement.Edit");
+  const canDelete = hasPerm("AdminManagement.Delete");
+  const canSuspend = hasPerm("AdminManagement.Suspend");
+  const canBackupCreate = hasPerm("Backup.Create");
+  const canBackupRestore = hasPerm("Backup.Restore");
+  const canBackupDownload = hasPerm("Backup.Download");
+
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<AdminUser | null>(null);
   const [removeTarget, setRemoveTarget] = useState<AdminUser | null>(null);
@@ -111,9 +126,9 @@ export default function AdminsPage() {
         const isCurrent = admin.id === currentUser?.id;
         return (
           <div className="flex flex-wrap gap-2">
-            <Button variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => openAdmin(admin)}>Edit</Button>
-            <Button variant="secondary" size="sm" disabled={isCurrent} loading={deactivate.isPending} icon={<Power className="h-4 w-4" />} onClick={() => deactivate.mutate(admin.id)}>Deactivate</Button>
-            <Button variant="danger" size="sm" disabled={isCurrent} loading={remove.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => setRemoveTarget(admin)}>Remove</Button>
+            {canEdit && <Button variant="secondary" size="sm" icon={<Edit3 className="h-4 w-4" />} onClick={() => openAdmin(admin)}>Edit</Button>}
+            {canSuspend && <Button variant="secondary" size="sm" disabled={isCurrent} loading={deactivate.isPending} icon={<Power className="h-4 w-4" />} onClick={() => deactivate.mutate(admin.id)}>Deactivate</Button>}
+            {canDelete && <Button variant="danger" size="sm" disabled={isCurrent} loading={remove.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => setRemoveTarget(admin)}>Remove</Button>}
           </div>
         );
       },
@@ -131,7 +146,7 @@ export default function AdminsPage() {
       <PageHeader
         title="Admins"
         eyebrow="Super Admin"
-        actions={<Button icon={<Plus className="h-4 w-4" />} onClick={() => openAdmin()}>Add Admin</Button>}
+        actions={canCreate ? <Button icon={<Plus className="h-4 w-4" />} onClick={() => openAdmin()}>Add Admin</Button> : undefined}
       />
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -161,10 +176,12 @@ export default function AdminsPage() {
               <div key={admin.id} className="rounded-lg border border-border bg-panel-strong p-3">
                 <p className="font-medium">{admin.username}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {Object.keys(admin.permissions || {}).length > 0 ? (
-                    Object.keys(admin.permissions || {}).map((key) => (
-                      <Badge key={key} variant="info">{key.replace("_", " ")}</Badge>
+                  {Array.isArray(admin.permissions) && admin.permissions.length > 0 ? (
+                    admin.permissions.map((key) => (
+                      <Badge key={key} variant="info">{key}</Badge>
                     ))
+                  ) : admin.role === "super_admin" || admin.role === "sub_super_admin" ? (
+                    <Badge variant="success">All Permissions</Badge>
                   ) : (
                     <span className="text-sm text-muted">No permissions.</span>
                   )}
@@ -177,7 +194,7 @@ export default function AdminsPage() {
         <div className="surface rounded-lg p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="font-semibold">Backups</h2>
-            <Button size="sm" loading={createBackup.isPending} icon={<DatabaseBackup className="h-4 w-4" />} onClick={() => createBackup.mutate()}>Create</Button>
+            {canBackupCreate && <Button size="sm" loading={createBackup.isPending} icon={<DatabaseBackup className="h-4 w-4" />} onClick={() => createBackup.mutate()}>Create</Button>}
           </div>
           <div className="grid gap-2">
             {(backups.data ?? []).map((backup) => (
@@ -187,10 +204,12 @@ export default function AdminsPage() {
                 meta={formatDateTime(backup.created_at)}
                 actions={
                   <div className="flex gap-2">
-                    <Button size="sm" variant="secondary" loading={restoreBackup.isPending && restoreBackup.variables === backup.id} onClick={() => restoreBackup.mutate(backup.id)}>Restore</Button>
-                    <a href={`${API_BASE_URL}/superadmin/backup/${backup.id}/download`} download>
-                      <Button size="sm" variant="secondary" className="px-3" icon={<DatabaseBackup className="h-4 w-4" />}>Download</Button>
-                    </a>
+                    {canBackupRestore && <Button size="sm" variant="secondary" loading={restoreBackup.isPending && restoreBackup.variables === backup.id} onClick={() => restoreBackup.mutate(backup.id)}>Restore</Button>}
+                    {canBackupDownload && (
+                      <a href={`${API_BASE_URL}/superadmin/backup/${backup.id}/download`} download>
+                        <Button size="sm" variant="secondary" className="px-3" icon={<DatabaseBackup className="h-4 w-4" />}>Download</Button>
+                      </a>
+                    )}
                   </div>
                 }
               />

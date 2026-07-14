@@ -18,6 +18,7 @@ import { Select } from "@/components/ui/Select";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints, type PaymentPayload } from "@/lib/endpoints";
 import { formatDate, formatMoney, fullName } from "@/lib/format";
+import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import type { PaymentRecord } from "@/types/api";
 
@@ -42,6 +43,18 @@ export default function PaymentsPage() {
   const [refundTarget, setRefundTarget] = useState<PaymentRecord | null>(null);
 
   const [page, setPage] = useState(1);
+  const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canCreate = hasPerm("Payment.Create");
+  const canVerify = hasPerm("Payment.Verify");
+  const canRefund = hasPerm("Payment.Refund");
 
   // Reset page when search or status filter changes
   useEffect(() => {
@@ -233,16 +246,18 @@ export default function PaymentsPage() {
       header: "Actions",
       cell: (payment) => (
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant="success"
-            size="sm"
-            loading={verify.isPending}
-            disabled={payment.status.toLowerCase() !== "pending"}
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            onClick={() => verify.mutate(payment.id)}
-          >
-            Verify
-          </Button>
+          {canVerify && (
+            <Button
+              variant="success"
+              size="sm"
+              loading={verify.isPending}
+              disabled={payment.status.toLowerCase() !== "pending"}
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              onClick={() => verify.mutate(payment.id)}
+            >
+              Verify
+            </Button>
+          )}
           <Button
             variant="secondary"
             size="sm"
@@ -252,16 +267,18 @@ export default function PaymentsPage() {
             Receipt
           </Button>
 
-          <Button
-            variant="danger"
-            size="sm"
-            loading={refund.isPending}
-            disabled={payment.status.toLowerCase() === "refunded"}
-            icon={<RotateCcw className="h-4 w-4" />}
-            onClick={() => setRefundTarget(payment)}
-          >
-            Refund
-          </Button>
+          {canRefund && (
+            <Button
+              variant="danger"
+              size="sm"
+              loading={refund.isPending}
+              disabled={payment.status.toLowerCase() === "refunded"}
+              icon={<RotateCcw className="h-4 w-4" />}
+              onClick={() => setRefundTarget(payment)}
+            >
+              Refund
+            </Button>
+          )}
         </div>
       ),
     },
@@ -286,9 +303,11 @@ export default function PaymentsPage() {
         title="Payments"
         eyebrow="Verification"
         actions={
-          <Button icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)}>
-            Record Payment
-          </Button>
+          canCreate ? (
+            <Button icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)}>
+              Record Payment
+            </Button>
+          ) : undefined
         }
       />
 

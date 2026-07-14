@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Activity, ArrowLeft, Camera, Clock, Upload, CheckCircle, Calendar, Plus } from "lucide-react";
 import { StudentEditForm } from "@/components/features/students/StudentEditForm";
 import { StudentAttendanceCalendar } from "@/components/features/students/StudentAttendanceCalendar";
+import { useAuthStore } from "@/store/authStore";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { ChartPanel, SharedAreaChart } from "@/components/ui/ChartWidgets";
@@ -31,6 +32,18 @@ const periods: Array<{ value: StudentAnalytics["period"]; label: string }> = [
 export function StudentDetailClient({ id }: { id: string }) {
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
+  const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canEdit = hasPerm("StudentManagement.Edit");
+  const canAssignPlan = hasPerm("Membership.Create");
+
   const [photo, setPhoto] = useState<File | null>(null);
   const [period, setPeriod] = useState<StudentAnalytics["period"]>("weekly");
   const student = useQuery({ queryKey: ["student", id], queryFn: () => endpoints.student(id) });
@@ -113,24 +126,26 @@ export function StudentDetailClient({ id }: { id: string }) {
             <Badge variant={statusVariant(student.data.status)}>{student.data.status}</Badge>
           </div>
 
-          <div className="mt-5 rounded-lg border border-border bg-panel-strong p-3">
-            <FileInput
-              accept="image/*"
-              label="Profile Image"
-              fileName={photo ? `${photo.name} selected` : null}
-              onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
-            />
-            <Button
-              className="mt-3 w-full"
-              disabled={!photo}
-              icon={<Upload className="h-4 w-4" />}
-              loading={uploadPhoto.isPending}
-              onClick={() => photo && uploadPhoto.mutate(photo)}
-              type="button"
-            >
-              Upload Image
-            </Button>
-          </div>
+          {canEdit && (
+            <div className="mt-5 rounded-lg border border-border bg-panel-strong p-3">
+              <FileInput
+                accept="image/*"
+                label="Profile Image"
+                fileName={photo ? `${photo.name} selected` : null}
+                onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
+              />
+              <Button
+                className="mt-3 w-full"
+                disabled={!photo}
+                icon={<Upload className="h-4 w-4" />}
+                loading={uploadPhoto.isPending}
+                onClick={() => photo && uploadPhoto.mutate(photo)}
+                type="button"
+              >
+                Upload Image
+              </Button>
+            </div>
+          )}
 
           <dl className="mt-5 grid gap-4 text-sm">
             <div>
@@ -161,6 +176,7 @@ export function StudentDetailClient({ id }: { id: string }) {
           student={student.data}
           saving={update.isPending}
           onSubmit={(payload) => update.mutate(payload)}
+          readOnly={!canEdit}
         />
       </div>
 
@@ -205,7 +221,9 @@ export function StudentDetailClient({ id }: { id: string }) {
                           size="sm" 
                           icon={<Plus className="h-4 w-4" />}
                           loading={assignPlan.isPending}
+                          disabled={!canAssignPlan}
                           onClick={() => assignPlan.mutate(plan.id)}
+                          title={!canAssignPlan ? "You do not have permission to assign plans" : undefined}
                         >
                           Buy / Assign
                         </Button>

@@ -57,19 +57,30 @@ export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expand
           {navItems
           .filter((item) => {
             if (item.superOnly && user.role !== "super_admin") return false;
-            if (item.permissionKey && user.role !== "super_admin") {
-              return Boolean(user.permissions?.[item.permissionKey]);
+            if (item.permissionKey && user.role !== "super_admin" && user.role !== "sub_super_admin") {
+              if (Array.isArray(user.permissions)) {
+                return user.permissions.includes(item.permissionKey);
+              }
+              // Fallback for old object format
+              return Boolean(user.permissions?.[item.permissionKey as keyof typeof user.permissions]);
             }
             return true;
           })
-          .map((item) => {
-            const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+          .map((item, index) => {
+            if (item.divider) {
+              return <div key={`divider-${index}`} className="my-1 h-px w-full bg-border" />;
+            }
+
+            const href = item.href as string;
+            const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
             const Icon = item.icon;
+
+            if (!Icon) return null;
 
             return (
               <Link
-                key={item.href}
-                href={item.href}
+                key={href}
+                href={href}
                 onClick={onNavigate}
                 className={clsx(
                   "focus-ring group relative flex h-11 items-center rounded-lg transition-all duration-300 ease-in-out overflow-hidden",

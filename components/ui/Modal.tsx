@@ -16,6 +16,7 @@ export function Modal({
   closeLabel = "Close",
   iconOnlyClose = false,
   layout = "default",
+  size = "default",
 }: {
   open: boolean;
   title: string;
@@ -28,6 +29,7 @@ export function Modal({
   closeLabel?: string;
   iconOnlyClose?: boolean;
   layout?: "default" | "centered";
+  size?: "default" | "lg" | "xl" | "full";
 }) {
   const titleId = useId();
   const descriptionId = useId();
@@ -108,6 +110,13 @@ export function Modal({
     }
   };
 
+  const sizeClasses = {
+    default: "sm:min-w-[32rem] md:min-w-[36rem]",
+    lg: "sm:min-w-[40rem] md:min-w-[48rem]",
+    xl: "sm:min-w-[48rem] md:min-w-[56rem]",
+    full: "w-[95vw] h-[95vh]",
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4 transition-all duration-300 animate-in fade-in"
@@ -116,7 +125,7 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className={`surface max-h-[95vh] flex flex-col w-full sm:w-auto sm:min-w-[32rem] md:min-w-[36rem] overflow-hidden rounded-2xl shadow-2xl animate-modal-in relative ${className ?? "max-w-[95vw] md:max-w-fit"}`}
+        className={`surface max-h-[95vh] flex flex-col w-full sm:w-auto ${sizeClasses[size ?? "default"]} overflow-hidden rounded-2xl shadow-2xl animate-modal-in relative ${className ?? "max-w-[95vw] md:max-w-fit"}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

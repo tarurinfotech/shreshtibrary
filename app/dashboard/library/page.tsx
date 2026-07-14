@@ -21,6 +21,7 @@ import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import { formatDate } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
+import { useAuthStore } from "@/store/authStore";
 import { useToastStore } from "@/store/toastStore";
 import type { Achiever, Facility, LibraryInfo } from "@/types/api";
 
@@ -43,6 +44,19 @@ export default function LibraryPage() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
+  const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canEditInfo = hasPerm("LibraryManagement.Info");
+  const canManageFacilities = hasPerm("LibraryManagement.Facilities");
+  const canManageAchievers = hasPerm("LibraryManagement.Achiever");
+  const canManageGallery = hasPerm("LibraryManagement.Gallery");
   
   const info = useQuery({ queryKey: ["library-info"], queryFn: () => endpoints.libraryInfo() });
   const facilities = useQuery({ queryKey: ["facilities"], queryFn: () => endpoints.facilities() });
@@ -384,10 +398,12 @@ export default function LibraryPage() {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium">FAQ</label>
-                <Button type="button" size="sm" onClick={() => {
-                  const faqs = (getVal("faq") as any[]) || [];
-                  setField("faq", [...faqs, { question: "", answer: "" }]);
-                }}>Add FAQ</Button>
+                {canEditInfo && (
+                  <Button type="button" size="sm" onClick={() => {
+                    const faqs = (getVal("faq") as any[]) || [];
+                    setField("faq", [...faqs, { question: "", answer: "" }]);
+                  }}>Add FAQ</Button>
+                )}
               </div>
               {((getVal("faq") as any[]) || []).map((faq, i) => (
                 <div key={i} className="flex gap-2 items-start border p-3 rounded bg-panel">
@@ -403,11 +419,13 @@ export default function LibraryPage() {
                       setField("faq", faqs);
                     }} />
                   </div>
-                  <Button type="button" variant="danger" onClick={() => {
-                    const faqs = [...((getVal("faq") as any[]) || [])];
-                    faqs.splice(i, 1);
-                    setField("faq", faqs);
-                  }}>Remove</Button>
+                  {canEditInfo && (
+                    <Button type="button" variant="danger" onClick={() => {
+                      const faqs = [...((getVal("faq") as any[]) || [])];
+                      faqs.splice(i, 1);
+                      setField("faq", faqs);
+                    }}>Remove</Button>
+                  )}
                 </div>
               ))}
             </div>
@@ -419,7 +437,7 @@ export default function LibraryPage() {
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-sm font-semibold">Gallery Images</h3>
-              <Button type="button" size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setGalleryOpen(true)}>Add Image</Button>
+              {canManageGallery && <Button type="button" size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => setGalleryOpen(true)}>Add Image</Button>}
             </div>
             {gallery.isLoading ? (
               <div className="py-8 text-center text-sm text-muted">Loading gallery...</div>
@@ -437,9 +455,11 @@ export default function LibraryPage() {
                       className="w-full h-32 object-cover" 
                       onError={(e) => { e.currentTarget.src = 'https://placehold.co/600x400?text=Image+Not+Found'; }}
                     />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Button type="button" size="sm" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteGalleryImage.mutate(img.id)}>Delete</Button>
-                    </div>
+                    {canManageGallery && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button type="button" size="sm" variant="danger" icon={<Trash2 className="h-4 w-4" />} onClick={() => deleteGalleryImage.mutate(img.id)}>Delete</Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -447,7 +467,7 @@ export default function LibraryPage() {
           </div>
         )}
 
-        {activeTab !== "gallery" && (
+        {activeTab !== "gallery" && canEditInfo && (
           <FormActions><Button type="submit" loading={saveInfo.isPending} icon={<Save className="h-4 w-4" />}>Save Info</Button></FormActions>
         )}
       </FormShell>
@@ -455,7 +475,7 @@ export default function LibraryPage() {
       <section className="surface rounded-lg p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Facilities</h2>
-          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setFacilityForm(emptyFacility); setFacilityImage(null); setFacilityOpen(true); }}>Add</Button>
+          {canManageFacilities && <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setFacilityForm(emptyFacility); setFacilityImage(null); setFacilityOpen(true); }}>Add</Button>}
         </div>
         {facilities.isLoading ? (
           <div className="py-8 text-center text-sm text-muted">Loading facilities...</div>
@@ -483,13 +503,15 @@ export default function LibraryPage() {
                 subtitle={facility.description || facility.icon_key || "No description"}
                 badge={<Badge variant={statusVariant(facility.is_active ? "active" : "inactive")}>{facility.is_active ? "Active" : "Inactive"}</Badge>}
                 actions={
-                  <>
-                    <Button size="sm" variant="secondary" onClick={() => { setFacilityForm(facility); setFacilityImage(null); setFacilityOpen(true); }}>Edit</Button>
-                    <Button size="sm" variant="secondary" loading={toggleFacility.isPending && toggleFacility.variables?.id === facility.id} onClick={() => toggleFacility.mutate(facility)}>
-                      {facility.is_active ? "Inactive" : "Active"}
-                    </Button>
-                    <Button size="sm" variant="danger" loading={deleteFacility.isPending && deleteFacility.variables === facility.id} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
-                  </>
+                  canManageFacilities ? (
+                    <>
+                      <Button size="sm" variant="secondary" onClick={() => { setFacilityForm(facility); setFacilityImage(null); setFacilityOpen(true); }}>Edit</Button>
+                      <Button size="sm" variant="secondary" loading={toggleFacility.isPending && toggleFacility.variables?.id === facility.id} onClick={() => toggleFacility.mutate(facility)}>
+                        {facility.is_active ? "Inactive" : "Active"}
+                      </Button>
+                      <Button size="sm" variant="danger" loading={deleteFacility.isPending && deleteFacility.variables === facility.id} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteFacility.mutate(facility.id)}>Delete</Button>
+                    </>
+                  ) : undefined
                 }
               />
             ))}
@@ -500,7 +522,7 @@ export default function LibraryPage() {
       <section className="surface rounded-lg p-5">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-semibold">Achievers</h2>
-          <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setAchieverForm(emptyAchiever); setAchieverPhoto(null); setAchieverOpen(true); }}>Add</Button>
+          {canManageAchievers && <Button size="sm" icon={<Plus className="h-4 w-4" />} onClick={() => { setAchieverForm(emptyAchiever); setAchieverPhoto(null); setAchieverOpen(true); }}>Add</Button>}
         </div>
         {achievers.isLoading ? (
           <div className="py-8 text-center text-sm text-muted">Loading achievers...</div>
@@ -532,13 +554,15 @@ export default function LibraryPage() {
                     <span className="text-xs text-amber-300">{achiever.year} {achiever.goal ? `/ ${achiever.goal}` : ""}</span>
                   }
                   actions={
-                    <>
-                      <Button size="sm" variant="secondary" onClick={() => { setAchieverForm(achiever); setAchieverPhoto(null); setAchieverOpen(true); }}>Edit</Button>
-                      <Button size="sm" variant="secondary" loading={toggleAchiever.isPending && toggleAchiever.variables?.id === achiever.id} onClick={() => toggleAchiever.mutate(achiever)}>
-                        {achiever.is_active ? "Inactive" : "Active"}
-                      </Button>
-                      <Button size="sm" variant="danger" loading={deleteAchiever.isPending && deleteAchiever.variables === achiever.id} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteAchiever.mutate(achiever.id)}>Delete</Button>
-                    </>
+                    canManageAchievers ? (
+                      <>
+                        <Button size="sm" variant="secondary" onClick={() => { setAchieverForm(achiever); setAchieverPhoto(null); setAchieverOpen(true); }}>Edit</Button>
+                        <Button size="sm" variant="secondary" loading={toggleAchiever.isPending && toggleAchiever.variables?.id === achiever.id} onClick={() => toggleAchiever.mutate(achiever)}>
+                          {achiever.is_active ? "Inactive" : "Active"}
+                        </Button>
+                        <Button size="sm" variant="danger" loading={deleteAchiever.isPending && deleteAchiever.variables === achiever.id} icon={<Trash2 className="h-4 w-4" aria-hidden="true" />} onClick={() => deleteAchiever.mutate(achiever.id)}>Delete</Button>
+                      </>
+                    ) : undefined
                   }
                 />
               );
