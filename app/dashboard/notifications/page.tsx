@@ -22,6 +22,7 @@ import { getErrorMessage } from "@/lib/api";
 import { endpoints, type NotificationPayload } from "@/lib/endpoints";
 import { formatDateTime } from "@/lib/format";
 import { useToastStore } from "@/store/toastStore";
+import { useAuthStore } from "@/store/authStore";
 import type { NotificationRecord, StudentProfile } from "@/types/api";
 
 const emptyNotification: NotificationPayload = {
@@ -51,6 +52,18 @@ const emptyNotification: NotificationPayload = {
 export default function NotificationsPage() {
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
+  const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canDelete = hasPerm("NotificationManagement.Delete");
+  const canCreate = hasPerm("NotificationManagement.Create");
+
   const [tab, setTab] = useState<"send" | "template" | "history" | "scheduled">("send");
   const [form, setForm] = useState<NotificationPayload>(emptyNotification);
   const [deliveryMethod, setDeliveryMethod] = useState<"now" | "later">("now");
@@ -635,7 +648,7 @@ export default function NotificationsPage() {
                         className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-xl px-8 h-10 text-[14px] font-bold"
                         loading={schedule.isPending} 
                         icon={<CalendarPlus className="h-4 w-4" />} 
-                        disabled={!form.scheduled_at}
+                        disabled={!form.scheduled_at || !canCreate}
                       >
                         Confirm & Schedule
                       </Button>
@@ -647,6 +660,7 @@ export default function NotificationsPage() {
                         className="w-full sm:w-auto shadow-primary/40 shadow-xl rounded-xl px-8 h-10 text-[14px] font-bold"
                         loading={send.isPending} 
                         icon={<Send className="h-4 w-4" />} 
+                        disabled={!canCreate}
                       >
                         Send Broadcast Now
                       </Button>
@@ -709,9 +723,11 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                 </div>
-                <Button size="sm" variant="danger" className="shrink-0 rounded-xl" loading={cancel.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => cancel.mutate(item.id)}>
-                  Cancel Send
-                </Button>
+                {canDelete && (
+                  <Button size="sm" variant="danger" className="shrink-0 rounded-xl" loading={cancel.isPending} icon={<Trash2 className="h-4 w-4" />} onClick={() => cancel.mutate(item.id)}>
+                    Cancel Send
+                  </Button>
+                )}
               </div>
             ))}
             {(scheduled.data ?? []).length === 0 ? <EmptyState title="No scheduled notifications" /> : null}

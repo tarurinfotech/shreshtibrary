@@ -290,7 +290,7 @@ export default function PaymentsPage() {
     if (!membershipQuery.data?.data?.length) return base;
     return [
       ...base,
-      ...membershipQuery.data.data.map((m) => ({
+      ...(membershipQuery.data.data ?? []).map((m) => ({
         value: String(m.id),
         label: `${m.plan_name} · ${m.status} · ${formatDate(m.start_date)} → ${formatDate(m.end_date)}`,
       })),

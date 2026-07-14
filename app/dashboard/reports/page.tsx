@@ -86,7 +86,7 @@ export default function ReportsPage() {
 
   const attendanceByDate = useMemo(() => {
     if (!dashboardTrends?.attendance_trend) return [];
-    return dashboardTrends.attendance_trend.labels.map((label: string, index: number) => ({
+    return (dashboardTrends.attendance_trend.labels ?? []).map((label: string, index: number) => ({
       label,
       present: dashboardTrends.attendance_trend.data[index]
     }));
@@ -94,7 +94,7 @@ export default function ReportsPage() {
 
   const revenueByMonth = useMemo(() => {
     if (!dashboardTrends?.revenue_trend) return [];
-    return dashboardTrends.revenue_trend.labels.map((label: string, index: number) => ({
+    return (dashboardTrends.revenue_trend.labels ?? []).map((label: string, index: number) => ({
       label,
       amount: dashboardTrends.revenue_trend.data[index]
     }));

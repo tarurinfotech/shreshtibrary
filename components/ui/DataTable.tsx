@@ -53,7 +53,7 @@ export function DataTable<T>({
     return <ErrorState message={typeof error === "string" ? error : "Unable to load records."} />;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     return <EmptyState title={emptyTitle} message={emptyMessage} />;
   }
 

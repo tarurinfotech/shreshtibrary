@@ -146,7 +146,7 @@ export function GlobalSearch() {
                     Students
                   </div>
                   <div className="grid gap-1">
-                    {searchResults.data.students.map((student) => (
+                    {(searchResults.data.students ?? []).map((student) => (
                       <button
                         key={student.id}
                         type="button"
@@ -173,7 +173,7 @@ export function GlobalSearch() {
                     Seats
                   </div>
                   <div className="grid gap-1">
-                    {searchResults.data.seats.map((seat) => (
+                    {(searchResults.data.seats ?? []).map((seat) => (
                       <button
                         key={seat.id}
                         type="button"
@@ -202,7 +202,7 @@ export function GlobalSearch() {
                     Payments
                   </div>
                   <div className="grid gap-1">
-                    {searchResults.data.payments.map((payment) => (
+                    {(searchResults.data.payments ?? []).map((payment) => (
                       <button
                         key={payment.id}
                         type="button"

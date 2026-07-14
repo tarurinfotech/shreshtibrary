@@ -59,7 +59,7 @@ export function MetricCard({
 }
 
 export function MiniAreaChart({ data, dataKey }: { data: Array<Record<string, string | number>>; dataKey: string }) {
-  if (!data.length) {
+  if (!data || !data.length) {
     return <ChartEmpty label="No trend data" compact />;
   }
 
@@ -82,8 +82,8 @@ export function MiniAreaChart({ data, dataKey }: { data: Array<Record<string, st
 }
 
 export function DonutChart({ data }: { data: Array<{ label: string; value: number }> }) {
-  const total = data.reduce((sum, item) => sum + item.value, 0);
-  if (!data.length || total === 0) {
+  const total = (data ?? []).reduce((sum, item) => sum + item.value, 0);
+  if (!data || !data.length || total === 0) {
     return <ChartEmpty label="No chart data" compact />;
   }
 
@@ -104,7 +104,7 @@ export function DonutChart({ data }: { data: Array<{ label: string; value: numbe
 export function LegendList({ data }: { data: Array<{ label: string; value: number }> }) {
   return (
     <div className="grid content-center gap-1.5">
-      {data.map((item, index) => (
+      {(data ?? []).map((item, index) => (
         <div key={item.label} className="flex items-center justify-between gap-2 rounded-lg bg-panel-strong px-2.5 py-1.5 text-xs">
           <span className="flex min-w-0 items-center gap-2">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: reportPalette[index % reportPalette.length] }} />

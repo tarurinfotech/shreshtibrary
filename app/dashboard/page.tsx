@@ -416,10 +416,10 @@ export default function DashboardPage() {
           {activity.error ? <ErrorState message="Unable to load activity." /> : null}
           {activity.data && (
           <div className="flex flex-col px-2 py-1 max-h-[380px] overflow-y-auto pr-3">
-            {activity.data.slice(0, 15).map((item, index, arr) => (
+            {(Array.isArray(activity.data) ? activity.data : []).slice(0, 15).map((item, index, arr) => (
               <ActivityRow key={item.id} item={item} isLast={index === arr.length - 1} />
             ))}
-            {activity.data.length === 0 && (
+            {(Array.isArray(activity.data) ? activity.data : []).length === 0 && (
               <div className="py-4 text-sm text-muted">No recent activity found.</div>
             )}
           </div>

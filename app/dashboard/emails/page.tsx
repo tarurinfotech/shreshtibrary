@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Send, Eye, Copy } from "lucide-react";
 import { useToastStore } from "@/store/toastStore";
+import { useAuthStore } from "@/store/authStore";
 
 type EmailTemplate = {
   id: string;
@@ -170,6 +171,16 @@ const emailTemplates: EmailTemplate[] = [
 export default function EmailSystemPage() {
   const [activeTemplate, setActiveTemplate] = useState(emailTemplates[0]);
   const addToast = useToastStore((state) => state.pushToast);
+  const currentUser = useAuthStore((state) => state.user);
+
+  const hasPerm = (key: string) => {
+    if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
+    if (!currentUser?.permissions) return false;
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+  };
+
+  const canCreate = hasPerm("NotificationManagement.Create");
 
   const handleSendTest = () => {
     addToast({
@@ -228,7 +239,7 @@ export default function EmailSystemPage() {
               <Button size="sm" variant="secondary" icon={<Copy className="w-4 h-4" />}>
                 Copy HTML
               </Button>
-              <Button size="sm" variant="primary" icon={<Send className="w-4 h-4" />} onClick={handleSendTest}>
+              <Button size="sm" variant="primary" icon={<Send className="w-4 h-4" />} onClick={handleSendTest} disabled={!canCreate}>
                 Send Test
               </Button>
             </div>
