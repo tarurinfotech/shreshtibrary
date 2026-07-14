@@ -57,8 +57,8 @@ export default function NotificationsPage() {
   const hasPerm = (key: string) => {
     if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
     if (!currentUser?.permissions) return false;
-    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
-    return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
+    if (Array.isArray(currentUser?.permissions)) return currentUser.permissions.includes(key);
+    return Boolean((currentUser?.permissions as Record<string, unknown>)?.[key]);
   };
 
   const canDelete = hasPerm("NotificationManagement.Delete");
@@ -96,9 +96,9 @@ export default function NotificationsPage() {
   });
 
   const selectedStudentIds = useMemo(() => {
-    if (!form.selected_students) return [];
-    return form.selected_students.split(',').map(s => parseInt(s.trim())).filter(id => !isNaN(id));
-  }, [form.selected_students]);
+    if (!form?.selected_students) return [];
+    return (form.selected_students.split(',') ?? []).map(s => parseInt(s.trim())).filter(id => !isNaN(id));
+  }, [form?.selected_students]);
 
   const toggleStudent = (id: number) => {
     const isSelected = selectedStudentIds.includes(id);
@@ -211,7 +211,7 @@ export default function NotificationsPage() {
   // Mobile Preview Component
   const MobilePreview = () => {
     const bgUrl = backgroundImage ? URL.createObjectURL(backgroundImage) : null;
-    const galleryUrls = galleryImages.map(f => URL.createObjectURL(f));
+    const galleryUrls = (galleryImages ?? []).map(f => URL.createObjectURL(f));
 
     return (
       <div className="sticky top-6 rounded-[2rem] border-[6px] border-panel-strong bg-background overflow-hidden shadow-xl h-[550px] w-full max-w-[320px] mx-auto flex flex-col items-center justify-center relative">
@@ -291,10 +291,10 @@ export default function NotificationsPage() {
 
                   <div className={`p-4 relative z-10 ${form.layout === 'background_image' ? 'text-white' : 'text-foreground'}`}>
                     
-                    {form.layout === 'full_image' && galleryUrls.length > 0 && (
+                    {form.layout === 'full_image' && (galleryUrls ?? []).length > 0 && (
                       <img src={galleryUrls[0]} alt="gallery" className="w-full h-32 rounded-xl mb-3 object-cover shadow-sm" />
                     )}
-                    {form.layout === 'half_image' && galleryUrls.length > 0 && (
+                    {form.layout === 'half_image' && (galleryUrls ?? []).length > 0 && (
                       <img src={galleryUrls[0]} alt="gallery" className="w-full h-20 object-cover rounded-xl mb-3 shadow-sm" />
                     )}
 
@@ -446,7 +446,7 @@ export default function NotificationsPage() {
                     <div className="mt-6 bg-background/50 p-5 rounded-2xl border border-border/60 border-dashed transition-all">
                       <label className="mb-3 block text-sm font-bold text-foreground">Upload Gallery Images</label>
                       <input type="file" accept="image/*" multiple onChange={(e) => setGalleryImages(Array.from(e.target.files ?? []))} className="block w-full text-sm text-muted file:mr-4 file:rounded-full file:border-0 file:bg-primary/10 file:text-primary file:px-5 file:py-2.5 file:font-bold file:cursor-pointer hover:file:bg-primary/20 transition-colors" />
-                      {galleryImages.length > 0 && <p className="mt-4 text-xs font-bold text-primary flex items-center gap-1.5 bg-primary/5 w-fit px-3 py-1.5 rounded-md"><Check className="w-3.5 h-3.5"/> {galleryImages.length} image(s) ready</p>}
+                      {(galleryImages ?? []).length > 0 && <p className="mt-4 text-xs font-bold text-primary flex items-center gap-1.5 bg-primary/5 w-fit px-3 py-1.5 rounded-md"><Check className="w-3.5 h-3.5"/> {(galleryImages ?? []).length} image(s) ready</p>}
                     </div>
                   )}
                 </div>
@@ -533,10 +533,10 @@ export default function NotificationsPage() {
                       </div>
                       <div className="overflow-y-auto p-2">
                         {allStudents.isLoading && <div className="p-8 text-center text-sm font-medium text-muted animate-pulse">Loading student database...</div>}
-                        {(allStudents.data || [])
-                          .filter(s => s.first_name.toLowerCase().includes(studentSearch.toLowerCase()) || s.last_name.toLowerCase().includes(studentSearch.toLowerCase()))
+                        {(allStudents?.data ?? [])
+                          .filter(s => (s?.first_name || "").toLowerCase().includes((studentSearch || "").toLowerCase()) || (s?.last_name || "").toLowerCase().includes((studentSearch || "").toLowerCase()))
                           .map(student => (
-                            <div key={student.id} onClick={() => toggleStudent(student.id)} className="flex items-center justify-between p-3 hover:bg-panel rounded-xl cursor-pointer transition-colors mb-1 group">
+                            <div key={student?.id} onClick={() => toggleStudent(student?.id)} className="flex items-center justify-between p-3 hover:bg-panel rounded-xl cursor-pointer transition-colors mb-1 group">
                               <div className="flex items-center gap-4">
                                 <Avatar src={student.profile_image} name={`${student.first_name} ${student.last_name}`} size="md" />
                                 <div>
@@ -552,7 +552,7 @@ export default function NotificationsPage() {
                       </div>
                       <div className="p-3 border-t border-border/80 bg-panel text-sm font-semibold flex justify-between items-center">
                         <span className="text-muted-foreground ml-2">Selected Students</span>
-                        <Badge variant="info" className="rounded-full px-3 py-1 font-bold">{selectedStudentIds.length}</Badge>
+                        <Badge variant="info" className="rounded-full px-3 py-1 font-bold">{(selectedStudentIds ?? []).length}</Badge>
                       </div>
                     </div>
                   )}
@@ -686,7 +686,7 @@ export default function NotificationsPage() {
       {tab === "history" ? (
         <div className="bg-panel rounded-2xl border border-border shadow-sm overflow-hidden p-1">
           <DataTable
-            data={notifications.data?.data ?? []}
+            data={notifications?.data?.data ?? []}
             columns={notificationColumns}
             getRowKey={(item) => item.id}
             loading={notifications.isLoading}
@@ -708,7 +708,7 @@ export default function NotificationsPage() {
             </div>
           </div>
           <div className="grid gap-4">
-            {(scheduled.data ?? []).map((item) => (
+            {(scheduled?.data ?? []).map((item) => (
               <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 border border-border/60 rounded-2xl bg-background/50 hover:bg-panel-strong transition-colors gap-4">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mt-0.5 shrink-0">
@@ -730,7 +730,7 @@ export default function NotificationsPage() {
                 )}
               </div>
             ))}
-            {(scheduled.data ?? []).length === 0 ? <EmptyState title="No scheduled notifications" /> : null}
+            {(scheduled?.data ?? []).length === 0 ? <EmptyState title="No scheduled notifications" /> : null}
           </div>
         </section>
       ) : null}
@@ -738,7 +738,7 @@ export default function NotificationsPage() {
       <Modal open={Boolean(selected)} title="Recipients List" onClose={() => setSelected(null)}>
         {recipients.isLoading ? <LoadingBlock label="Loading recipient data..." /> : null}
         <div className="grid gap-2 max-h-[60vh] overflow-y-auto">
-          {(recipients.data ?? []).map((item) => (
+          {(recipients?.data ?? []).map((item) => (
             <div key={item.id} className="flex items-center justify-between p-3.5 border-b border-border/50 last:border-0 hover:bg-panel rounded-xl transition-colors">
               <div className="flex items-center gap-3.5">
                 <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
@@ -755,7 +755,7 @@ export default function NotificationsPage() {
       </Modal>
       <Modal open={templateModalOpen} title="Quick Templates" onClose={() => setTemplateModalOpen(false)}>
         <div className="grid gap-3 max-h-[60vh] overflow-y-auto pr-1">
-          {(templates.data ?? []).map((template) => (
+          {(templates?.data ?? []).map((template) => (
             <button 
               key={template.id} 
               type="button"
@@ -769,7 +769,7 @@ export default function NotificationsPage() {
               <span className="block text-xs font-medium text-muted line-clamp-2 leading-relaxed">{template.body}</span>
             </button>
           ))}
-          {(templates.data ?? []).length === 0 ? <EmptyState title="No templates found" icon={<Sparkles className="w-8 h-8 opacity-20" />} /> : null}
+          {(templates?.data ?? []).length === 0 ? <EmptyState title="No templates found" icon={<Sparkles className="w-8 h-8 opacity-20" />} /> : null}
         </div>
       </Modal>
     </div>
