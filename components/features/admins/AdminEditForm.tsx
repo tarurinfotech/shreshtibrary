@@ -174,9 +174,9 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
   }
 
   return (
-    <Modal open={open} title={admin ? "Edit Admin" : "Add Admin"} onClose={onClose} size="xl">
+    <Modal open={open} title={admin ? "Edit Admin" : "Add Admin"} onClose={onClose} size="2xl">
       <FormShell onSubmit={submit}>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-[350px_1fr] lg:grid-cols-[400px_1fr]">
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-[320px_1fr] lg:grid-cols-[380px_1fr]">
           
           {/* LEFT SECTION: Admin Details */}
           <div>
@@ -316,7 +316,7 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
                       </div>
                       
                       {isExpanded && (
-                        <div className="p-4 grid gap-3 sm:grid-cols-2 bg-panel-strong border-t border-border">
+                        <div className="p-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 bg-panel-strong border-t border-border">
                           {safePerms.map((perm) => {
                              const actionName = perm?.split('.').pop() || perm;
                              return (

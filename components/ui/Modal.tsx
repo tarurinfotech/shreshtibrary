@@ -29,7 +29,7 @@ export function Modal({
   closeLabel?: string;
   iconOnlyClose?: boolean;
   layout?: "default" | "centered";
-  size?: "default" | "lg" | "xl" | "full";
+  size?: "default" | "lg" | "xl" | "2xl" | "full";
 }) {
   const titleId = useId();
   const descriptionId = useId();
@@ -114,6 +114,7 @@ export function Modal({
     default: "sm:min-w-[32rem] md:min-w-[36rem]",
     lg: "sm:min-w-[40rem] md:min-w-[48rem]",
     xl: "sm:min-w-[48rem] md:min-w-[56rem]",
+    "2xl": "sm:min-w-[56rem] md:min-w-[72rem]",
     full: "w-[95vw] h-[95vh]",
   };
 
