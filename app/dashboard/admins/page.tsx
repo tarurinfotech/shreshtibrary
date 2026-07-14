@@ -206,9 +206,7 @@ export default function AdminsPage() {
                   <div className="flex gap-2">
                     {canBackupRestore && <Button size="sm" variant="secondary" loading={restoreBackup.isPending && restoreBackup.variables === backup.id} onClick={() => restoreBackup.mutate(backup.id)}>Restore</Button>}
                     {canBackupDownload && (
-                      <a href={`${API_BASE_URL}/superadmin/backup/${backup.id}/download`} download>
-                        <Button size="sm" variant="secondary" className="px-3" icon={<DatabaseBackup className="h-4 w-4" />}>Download</Button>
-                      </a>
+                      <Button size="sm" variant="secondary" className="px-3" icon={<DatabaseBackup className="h-4 w-4" />} onClick={() => endpoints.downloadBackup(backup.id)}>Download</Button>
                     )}
                   </div>
                 }

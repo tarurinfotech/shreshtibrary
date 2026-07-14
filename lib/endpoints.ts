@@ -625,7 +625,7 @@ export const endpoints = {
     postData<AdminUser>(`/superadmin/admins/${id}/deactivate`),
 
   permissionGroups: () =>
-    getData<Array<{ key: string; label: string }>>("/superadmin/permissions"),
+    getData<Array<{ category: string; permissions: string[] }>>("/superadmin/permissions"),
 
   assignPermissions: (adminId: number, permissions: string[] | Record<string, unknown>) =>
     postData<AdminUser>("/superadmin/permissions/assign", { adminId, permissions }),
@@ -637,6 +637,8 @@ export const endpoints = {
     getData<Array<{ id: string; created_at: string; status: string }>>("/superadmin/backup/list"),
 
   restoreBackup: (id: string) => postData<any>("/superadmin/backup/restore", { backupId: id }),
+
+  downloadBackup: (id: string) => downloadFile(`/superadmin/backup/${id}/download`, `backup-${id}.json`),
 
   superActivityLog: () => getData<ActivityLogItem[]>("/superadmin/activity-log"),
 
