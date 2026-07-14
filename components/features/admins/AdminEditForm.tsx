@@ -174,163 +174,176 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
   }
 
   return (
-    <Modal open={open} title={admin ? "Edit Admin" : "Add Admin"} onClose={onClose} size="lg">
+    <Modal open={open} title={admin ? "Edit Admin" : "Add Admin"} onClose={onClose} size="xl">
       <FormShell onSubmit={submit}>
-        <FormGrid columns={2}>
-          <Input 
-            label="Username" 
-            value={form.username ?? ""} 
-            onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} 
-            error={fieldErrors.username} 
-            required 
-          />
-          <Input 
-            label="Mobile" 
-            value={form.mobile ?? ""} 
-            onChange={(event) => {
-              const val = event.target.value.replace(/\D/g, "").slice(0, 10);
-              setForm((current) => ({ ...current, mobile: val }));
-            }} 
-            error={fieldErrors.mobile} 
-            maxLength={10}
-            required 
-          />
-          <Input 
-            label="First Name" 
-            value={form.first_name ?? ""} 
-            onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} 
-            error={fieldErrors.first_name} 
-          />
-          <Input 
-            label="Last Name" 
-            value={form.last_name ?? ""} 
-            onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} 
-            error={fieldErrors.last_name} 
-          />
-          <Input 
-            label="Email" 
-            type="email" 
-            value={form.email ?? ""} 
-            onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} 
-            error={fieldErrors.email} 
-          />
-          <Input 
-            label={admin ? "New Password" : "Password"} 
-            type="password" 
-            value={form.password || ""} 
-            onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} 
-            error={fieldErrors.password} 
-            required={!admin} 
-          />
-          <Select
-            label="Role"
-            value={form.role ?? "admin"}
-            onChange={(v) => setForm((current) => ({ ...current, role: v as AdminUser["role"], permissions: [] }))}
-            disabled={currentUserRole === "sub_super_admin" || admin?.role === "super_admin"}
-            options={roleOptions}
-          />
-          <Select
-            label="Status"
-            value={form.is_active ? "active" : "inactive"}
-            onChange={(v) => setForm((current) => ({ ...current, is_active: v === "active" }))}
-            options={[
-              { value: "active", label: "Active" },
-              { value: "inactive", label: "Inactive" },
-            ]}
-          />
-        </FormGrid>
-
-        <div className="mt-6 border-t border-border pt-4">
-          <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> Permission Assignment</h3>
-              <p className="text-sm text-muted">Assign granular access control to this account.</p>
-            </div>
-            <Input 
-               label=""
-               placeholder="Search permissions..." 
-               value={searchQuery}
-               onChange={(e) => {
-                 setSearchQuery(e.target.value);
-                 if (e.target.value) {
-                    const allExpanded: Record<string, boolean> = {};
-                    permissionsData.forEach(g => allExpanded[g.category] = true);
-                    setExpandedCategories(allExpanded);
-                 }
-               }}
-               className="max-w-xs"
-            />
-          </div>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-[350px_1fr] lg:grid-cols-[400px_1fr]">
           
-          {isSuperAdmin ? (
-            <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 text-center">
-              <ShieldCheck className="h-8 w-8 text-primary mx-auto mb-2" />
-              <p className="font-medium text-primary">Full Access Granted</p>
-              <p className="text-sm text-muted">Super Admins and Sub Super Admins automatically inherit all system permissions. No manual assignment required.</p>
+          {/* LEFT SECTION: Admin Details */}
+          <div>
+            <div className="mb-4">
+              <h3 className="font-semibold text-lg flex items-center gap-2">Admin Details</h3>
+              <p className="text-sm text-muted">Personal and account information.</p>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-              {filteredGroups.map((group) => {
-                const isExpanded = expandedCategories[group.category];
-                const formPerms = Array.isArray(form.permissions) ? form.permissions : [];
-                const safePerms = Array.isArray(group?.permissions) ? group.permissions : [];
-                const allChecked = safePerms.length > 0 && safePerms.every(p => formPerms.includes(p));
-                const someChecked = safePerms.some(p => formPerms.includes(p));
-                
-                return (
-                  <div key={group.category} className="rounded-lg border border-border bg-panel-strong overflow-hidden">
-                    <div 
-                      className="flex items-center justify-between p-3 bg-panel hover:bg-panel-hover cursor-pointer select-none"
-                      onClick={() => toggleCategory(group.category)}
-                    >
-                      <div className="flex items-center gap-2">
-                        {isExpanded ? <ChevronDown className="h-4 w-4 text-muted" /> : <ChevronRight className="h-4 w-4 text-muted" />}
-                        <span className="font-medium">{group.category}</span>
-                        {someChecked && !allChecked && <span className="flex h-2 w-2 rounded-full bg-primary ml-2"></span>}
-                        {allChecked && <span className="flex h-2 w-2 rounded-full bg-success ml-2"></span>}
+            <FormGrid columns={1}>
+              <Input 
+                label="Username" 
+                value={form.username ?? ""} 
+                onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))} 
+                error={fieldErrors.username} 
+                required 
+              />
+              <Input 
+                label="Mobile" 
+                value={form.mobile ?? ""} 
+                onChange={(event) => {
+                  const val = event.target.value.replace(/\D/g, "").slice(0, 10);
+                  setForm((current) => ({ ...current, mobile: val }));
+                }} 
+                error={fieldErrors.mobile} 
+                maxLength={10}
+                required 
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input 
+                  label="First Name" 
+                  value={form.first_name ?? ""} 
+                  onChange={(event) => setForm((current) => ({ ...current, first_name: event.target.value }))} 
+                  error={fieldErrors.first_name} 
+                />
+                <Input 
+                  label="Last Name" 
+                  value={form.last_name ?? ""} 
+                  onChange={(event) => setForm((current) => ({ ...current, last_name: event.target.value }))} 
+                  error={fieldErrors.last_name} 
+                />
+              </div>
+              <Input 
+                label="Email" 
+                type="email" 
+                value={form.email ?? ""} 
+                onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} 
+                error={fieldErrors.email} 
+              />
+              <Input 
+                label={admin ? "New Password" : "Password"} 
+                type="password" 
+                value={form.password || ""} 
+                onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} 
+                error={fieldErrors.password} 
+                required={!admin} 
+              />
+              <Select
+                label="Role"
+                value={form.role ?? "admin"}
+                onChange={(v) => setForm((current) => ({ ...current, role: v as AdminUser["role"], permissions: [] }))}
+                disabled={currentUserRole === "sub_super_admin" || admin?.role === "super_admin"}
+                options={roleOptions}
+              />
+              <Select
+                label="Status"
+                value={form.is_active ? "active" : "inactive"}
+                onChange={(v) => setForm((current) => ({ ...current, is_active: v === "active" }))}
+                options={[
+                  { value: "active", label: "Active" },
+                  { value: "inactive", label: "Inactive" },
+                ]}
+              />
+            </FormGrid>
+          </div>
+
+          {/* RIGHT SECTION: Permissions */}
+          <div className="flex flex-col border-t border-border pt-6 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+            <div className="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-semibold text-lg flex items-center gap-2"><ShieldCheck className="h-5 w-5 text-primary" /> Permission Assignment</h3>
+                <p className="text-sm text-muted">Assign granular access control.</p>
+              </div>
+              <Input 
+                 label=""
+                 placeholder="Search..." 
+                 value={searchQuery}
+                 onChange={(e) => {
+                   setSearchQuery(e.target.value);
+                   if (e.target.value) {
+                      const allExpanded: Record<string, boolean> = {};
+                      permissionsData.forEach(g => allExpanded[g.category] = true);
+                      setExpandedCategories(allExpanded);
+                   }
+                 }}
+                 className="max-w-[150px]"
+              />
+            </div>
+            
+            {isSuperAdmin ? (
+              <div className="rounded-lg border border-primary/30 bg-primary/5 p-8 text-center flex-1 flex flex-col items-center justify-center">
+                <ShieldCheck className="h-12 w-12 text-primary mx-auto mb-4" />
+                <p className="font-semibold text-lg text-primary mb-1">Full Access Granted</p>
+                <p className="text-sm text-muted max-w-sm mx-auto">Super Admins and Sub Super Admins automatically inherit all system permissions. No manual assignment required.</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                {filteredGroups.map((group) => {
+                  const isExpanded = expandedCategories[group.category];
+                  const formPerms = Array.isArray(form.permissions) ? form.permissions : [];
+                  const safePerms = Array.isArray(group?.permissions) ? group.permissions : [];
+                  const allChecked = safePerms.length > 0 && safePerms.every(p => formPerms.includes(p));
+                  const someChecked = safePerms.some(p => formPerms.includes(p));
+                  
+                  return (
+                    <div key={group.category} className="rounded-lg border border-border bg-panel-strong overflow-hidden shrink-0">
+                      <div 
+                        className="flex items-center justify-between p-3 bg-panel hover:bg-panel-hover cursor-pointer select-none"
+                        onClick={() => toggleCategory(group.category)}
+                      >
+                        <div className="flex items-center gap-2">
+                          {isExpanded ? <ChevronDown className="h-4 w-4 text-muted" /> : <ChevronRight className="h-4 w-4 text-muted" />}
+                          <span className="font-medium">{group.category}</span>
+                          {someChecked && !allChecked && <span className="flex h-2 w-2 rounded-full bg-primary ml-2"></span>}
+                          {allChecked && <span className="flex h-2 w-2 rounded-full bg-success ml-2"></span>}
+                        </div>
+                        <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
+                          <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-muted">
+                            <input 
+                               type="checkbox" 
+                               checked={allChecked} 
+                               ref={input => { if (input) input.indeterminate = someChecked && !allChecked; }}
+                               onChange={(e) => toggleCategoryAll(group.permissions, e.target.checked)}
+                               className="h-4 w-4 rounded border-input text-primary focus:ring-primary bg-panel"
+                            />
+                            Select All
+                          </label>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3" onClick={e => e.stopPropagation()}>
-                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-muted">
-                          <input 
-                             type="checkbox" 
-                             checked={allChecked} 
-                             ref={input => { if (input) input.indeterminate = someChecked && !allChecked; }}
-                             onChange={(e) => toggleCategoryAll(group.permissions, e.target.checked)}
-                             className="h-4 w-4 rounded border-input text-primary focus:ring-primary bg-panel"
-                          />
-                          Select All
-                        </label>
-                      </div>
+                      
+                      {isExpanded && (
+                        <div className="p-4 grid gap-3 sm:grid-cols-2 bg-panel-strong border-t border-border">
+                          {safePerms.map((perm) => {
+                             const actionName = perm?.split('.').pop() || perm;
+                             return (
+                               <label key={perm} className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors group">
+                                 <input
+                                   type="checkbox"
+                                   checked={formPerms.includes(perm)}
+                                   onChange={(e) => togglePermission(perm, e.target.checked)}
+                                   className="h-4 w-4 rounded border-input text-primary focus:ring-primary bg-panel group-hover:border-primary"
+                                 />
+                                 <span className="text-sm select-none text-muted-foreground group-hover:text-foreground">{actionName}</span>
+                               </label>
+                             );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    
-                    {isExpanded && (
-                      <div className="p-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 bg-panel-strong border-t border-border">
-                        {safePerms.map((perm) => {
-                           const actionName = perm?.split('.').pop() || perm;
-                           return (
-                             <label key={perm} className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors group">
-                               <input
-                                 type="checkbox"
-                                 checked={formPerms.includes(perm)}
-                                 onChange={(e) => togglePermission(perm, e.target.checked)}
-                                 className="h-4 w-4 rounded border-input text-primary focus:ring-primary bg-panel group-hover:border-primary"
-                               />
-                               <span className="text-sm select-none text-muted-foreground group-hover:text-foreground">{actionName}</span>
-                             </label>
-                           );
-                        })}
-                      </div>
-                    )}
+                  );
+                })}
+                {filteredGroups.length === 0 && (
+                  <div className="text-center p-8 text-muted border border-dashed border-border rounded-lg">
+                    No permissions match your search.
                   </div>
-                );
-              })}
-              {filteredGroups.length === 0 && (
-                <div className="text-center p-8 text-muted border border-dashed border-border rounded-lg">
-                  No permissions match your search.
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <FormActions className="mt-6">
