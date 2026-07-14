@@ -34,6 +34,30 @@ interface PermissionGroup {
   permissions: string[];
 }
 
+/** The API might return flat `{ key, label }` items or grouped `{ category, permissions }` items. */
+function groupPermissions(flat: any[]): PermissionGroup[] {
+  if (!Array.isArray(flat) || flat.length === 0) return [];
+
+  // If the data already has `category` + `permissions`, it's already grouped
+  const first = flat[0] as Record<string, unknown>;
+  if (typeof first?.category === "string" && Array.isArray(first?.permissions)) {
+    return flat as PermissionGroup[];
+  }
+
+  // Otherwise treat it as flat { key, label } items
+  const map = new Map<string, string[]>();
+  for (const item of flat) {
+    const key = item?.key ?? "";
+    if (!key) continue;
+    const dotIdx = key.indexOf(".");
+    const category = dotIdx > 0 ? key.slice(0, dotIdx) : key || "Other";
+    if (!map.has(category)) map.set(category, []);
+    map.get(category)!.push(key);
+  }
+
+  return Array.from(map.entries()).map(([category, permissions]) => ({ category, permissions }));
+}
+
 interface AdminEditFormProps {
   open: boolean;
   admin: AdminUser | null;
@@ -50,9 +74,9 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
   const [searchQuery, setSearchQuery] = useState("");
 
-  const permissionsQuery = useQuery<PermissionGroup[]>({ queryKey: ["permission-groups"], queryFn: endpoints.permissionGroups as any });
+  const permissionsQuery = useQuery<any[]>({ queryKey: ["permission-groups"], queryFn: endpoints.permissionGroups as any });
   
-  const permissionsData = permissionsQuery.data ?? [];
+  const permissionsData = groupPermissions(permissionsQuery.data ?? []);
 
   useEffect(() => {
     if (admin) {

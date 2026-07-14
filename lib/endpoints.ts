@@ -625,7 +625,7 @@ export const endpoints = {
     postData<AdminUser>(`/superadmin/admins/${id}/deactivate`),
 
   permissionGroups: () =>
-    getData<Array<{ category: string; permissions: string[] }>>("/superadmin/permissions"),
+    getData<any[]>("/superadmin/permissions"),
 
   assignPermissions: (adminId: number, permissions: string[] | Record<string, unknown>) =>
     postData<AdminUser>("/superadmin/permissions/assign", { adminId, permissions }),
