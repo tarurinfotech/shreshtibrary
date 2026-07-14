@@ -126,14 +126,17 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
 
   // Filter groups based on search
   const filteredGroups = permissionsData.map(group => {
-    if (!searchQuery) return group;
+    const safePermissions = group.permissions ?? [];
+    const safeCategory = group.category ?? "";
+    if (!searchQuery) return { ...group, permissions: safePermissions, category: safeCategory };
     const lowerQuery = searchQuery.toLowerCase();
-    const matchCat = group.category.toLowerCase().includes(lowerQuery);
-    const matchedPerms = group.permissions.filter(p => p.toLowerCase().includes(lowerQuery));
+    const matchCat = safeCategory.toLowerCase().includes(lowerQuery);
+    const matchedPerms = safePermissions.filter(p => p.toLowerCase().includes(lowerQuery));
     if (matchCat || matchedPerms.length > 0) {
       return {
         ...group,
-        permissions: matchCat ? group.permissions : matchedPerms
+        category: safeCategory,
+        permissions: matchCat ? safePermissions : matchedPerms
       };
     }
     return null;

@@ -313,14 +313,14 @@ export default function SeatsPage() {
               <div className="flex items-center justify-between">
                 <span className="font-medium">{floor.name}</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant={floor.is_active ? "success" : "danger"}>{floor.rows.length} rows</Badge>
+                  <Badge variant={floor.is_active ? "success" : "danger"}>{(floor.rows ?? []).length} rows</Badge>
                   {canManageFloor && (
                     <Button variant="danger" size="sm" loading={deleteFloor.isPending && deleteFloor.variables === floor.id} disabled={deleteFloor.isPending} onClick={() => { if(confirm("Delete floor and all its seats?")) deleteFloor.mutate(floor.id); }} icon={<Trash2 className="h-3 w-3" />} />
                   )}
                 </div>
               </div>
               <div className="mt-4 flex flex-col gap-2">
-                {floor.rows.map((row) => (
+                {(floor.rows ?? []).map((row) => (
                   <div key={row.id} className="flex items-center justify-between text-sm text-muted hover:text-foreground transition-colors px-1">
                     <span>Row {row.label}</span>
                     {canManageFloor && (
@@ -334,7 +334,7 @@ export default function SeatsPage() {
                     )}
                   </div>
                 ))}
-                {floor.rows.length === 0 && <span className="text-sm text-muted px-1">No rows</span>}
+                {(floor.rows ?? []).length === 0 && <span className="text-sm text-muted px-1">No rows</span>}
               </div>
             </div>
           ))}
