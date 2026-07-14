@@ -522,6 +522,9 @@ export const endpoints = {
   cancelScheduledNotification: (id: number) =>
     deleteData<any>(`/admin/notifications/scheduled/${id}/cancel`),
 
+  clearAllNotifications: () =>
+    deleteData<any>("/admin/notifications/clear-all"),
+
   notificationTemplates: () =>
     getData<Array<{ id: string; title: string; body: string }>>("/admin/notifications/templates"),
 

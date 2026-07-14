@@ -72,6 +72,8 @@ export default function NotificationsPage() {
   const [selected, setSelected] = useState<NotificationRecord | null>(null);
   const [studentSearch, setStudentSearch] = useState("");
   const [templateModalOpen, setTemplateModalOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [viewingNotification, setViewingNotification] = useState<NotificationRecord | null>(null);
   
   // Selected IDs string processing to Array and vice versa
   const settings = useQuery({ queryKey: ["settings"], queryFn: endpoints.settings });
@@ -111,7 +113,7 @@ export default function NotificationsPage() {
     setForm(curr => ({ ...curr, selected_students: newIds.join(',') }));
   };
 
-  const notifications = useQuery({ queryKey: ["notifications"], queryFn: () => endpoints.notifications({ page_size: 50 }) });
+  const notifications = useQuery({ queryKey: ["notifications", page], queryFn: () => endpoints.notifications({ page, page_size: 20 }) });
   const scheduled = useQuery({ queryKey: ["scheduled-notifications"], queryFn: endpoints.scheduledNotifications });
   const templates = useQuery({ queryKey: ["notification-templates"], queryFn: endpoints.notificationTemplates });
   const allStudents = useQuery({ queryKey: ["all-students"], queryFn: () => endpoints.allStudents() });
@@ -175,6 +177,15 @@ export default function NotificationsPage() {
     onError: (error) => pushToast({ kind: "error", title: "Cancel failed", message: getErrorMessage(error) }),
   });
 
+  const clearAll = useMutation({
+    mutationFn: endpoints.clearAllNotifications,
+    onSuccess: async () => {
+      await invalidate();
+      pushToast({ kind: "success", title: "All notifications cleared" });
+    },
+    onError: (error) => pushToast({ kind: "error", title: "Failed to clear", message: getErrorMessage(error) }),
+  });
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (tab === "template") {
@@ -204,7 +215,19 @@ export default function NotificationsPage() {
     {
       id: "action",
       header: "Action",
-      cell: (item) => <Button size="sm" variant="secondary" icon={<Users className="h-4 w-4" />} onClick={() => setSelected(item)}>Recipients</Button>,
+      cell: (item) => (
+        <Button 
+          size="sm" 
+          variant="secondary" 
+          icon={<Users className="h-4 w-4" />} 
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelected(item);
+          }}
+        >
+          Recipients
+        </Button>
+      ),
     },
   ];
 
@@ -684,15 +707,45 @@ export default function NotificationsPage() {
       ) : null}
 
       {tab === "history" ? (
-        <div className="bg-panel rounded-2xl border border-border shadow-sm overflow-hidden p-1">
-          <DataTable
-            data={notifications?.data?.data ?? []}
-            columns={notificationColumns}
-            getRowKey={(item) => item.id}
-            loading={notifications.isLoading}
-            error={notifications.error ? "Unable to load notifications." : false}
-            emptyTitle="No past notifications found"
-          />
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-bold text-foreground">Notification History</h2>
+            {canDelete && (
+              <Button 
+                variant="danger" 
+                size="sm" 
+                icon={<Trash2 className="w-4 h-4" />} 
+                loading={clearAll.isPending}
+                onClick={() => {
+                  if (confirm("Are you sure you want to delete all notification history? This action cannot be undone.")) {
+                    clearAll.mutate();
+                  }
+                }}
+              >
+                Clear All History
+              </Button>
+            )}
+          </div>
+          <div className="bg-panel rounded-2xl border border-border shadow-sm overflow-hidden p-1">
+            <DataTable
+              data={notifications?.data?.data ?? []}
+              columns={notificationColumns}
+              getRowKey={(item) => item.id}
+              loading={notifications.isLoading}
+              error={notifications.error ? "Unable to load notifications." : false}
+              emptyTitle="No past notifications found"
+              onRowClick={(row) => setViewingNotification(row)}
+              pagination={
+                notifications?.data?.total_pages && notifications.data.total_pages > 1
+                  ? {
+                      currentPage: notifications.data.current_page ?? page,
+                      totalPages: notifications.data.total_pages,
+                      onPageChange: (p) => setPage(p),
+                    }
+                  : undefined
+              }
+            />
+          </div>
         </div>
       ) : null}
 
@@ -771,6 +824,35 @@ export default function NotificationsPage() {
           ))}
           {(templates?.data ?? []).length === 0 ? <EmptyState title="No templates found" icon={<Sparkles className="w-8 h-8 opacity-20" />} /> : null}
         </div>
+      </Modal>
+
+      <Modal open={Boolean(viewingNotification)} title="Notification Details" onClose={() => setViewingNotification(null)}>
+        {viewingNotification && (
+          <div className="space-y-4">
+             <div className="grid grid-cols-2 gap-4">
+               <div>
+                  <div className="text-xs text-muted">Title</div>
+                  <div className="font-medium">{viewingNotification.title}</div>
+               </div>
+               <div>
+                  <div className="text-xs text-muted">Type / Target</div>
+                  <div className="font-medium">{viewingNotification.type} - {viewingNotification.target_group}</div>
+               </div>
+               <div className="col-span-2">
+                  <div className="text-xs text-muted">Body</div>
+                  <div className="text-sm bg-background p-3 rounded-md border mt-1">{viewingNotification.body}</div>
+               </div>
+               <div>
+                  <div className="text-xs text-muted">Sent At</div>
+                  <div className="font-medium">{formatDateTime(viewingNotification.sent_at ?? viewingNotification.created_at)}</div>
+               </div>
+               <div>
+                  <div className="text-xs text-muted">Success / Total</div>
+                  <div className="font-medium text-green-600">{viewingNotification.success_count} / {viewingNotification.total_recipients}</div>
+               </div>
+             </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
