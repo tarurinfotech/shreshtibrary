@@ -326,6 +326,13 @@ export type NotificationRecord = {
   success_count: number;
   failure_count: number;
   created_at?: string | null;
+  background_image?: string | null;
+  layout?: string | null;
+  subtitle?: string | null;
+  description?: string | null;
+  link_url?: string | null;
+  link_button_text?: string | null;
+  images?: string[];
 };
 
 export type AdminInboxNotificationRecord = {

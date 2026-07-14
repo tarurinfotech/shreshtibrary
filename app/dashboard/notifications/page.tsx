@@ -828,23 +828,74 @@ export default function NotificationsPage() {
 
       <Modal open={Boolean(viewingNotification)} title="Notification Details" onClose={() => setViewingNotification(null)}>
         {viewingNotification && (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
              <div className="grid grid-cols-2 gap-4">
-               <div>
+               
+               {/* Display background image or first gallery image if available */}
+               {(viewingNotification.background_image || (viewingNotification.images && viewingNotification.images.length > 0)) && (
+                 <div className="col-span-2 mb-2 border rounded-xl overflow-hidden bg-background relative flex justify-center">
+                    <img 
+                      src={viewingNotification.background_image || viewingNotification.images?.[0]} 
+                      alt="Notification Media" 
+                      className="max-h-48 object-contain w-full"
+                    />
+                 </div>
+               )}
+
+               <div className="col-span-2 sm:col-span-1">
                   <div className="text-xs text-muted">Title</div>
-                  <div className="font-medium">{viewingNotification.title}</div>
+                  <div className="font-medium text-foreground">{viewingNotification.title}</div>
                </div>
-               <div>
+               <div className="col-span-2 sm:col-span-1">
                   <div className="text-xs text-muted">Type / Target</div>
-                  <div className="font-medium">{viewingNotification.type} - {viewingNotification.target_group}</div>
+                  <div className="font-medium text-foreground">{viewingNotification.type} - {viewingNotification.target_group}</div>
                </div>
+               
+               {viewingNotification.subtitle && (
+                 <div className="col-span-2">
+                    <div className="text-xs text-muted">Subtitle</div>
+                    <div className="font-medium text-foreground">{viewingNotification.subtitle}</div>
+                 </div>
+               )}
+
                <div className="col-span-2">
                   <div className="text-xs text-muted">Body</div>
-                  <div className="text-sm bg-background p-3 rounded-md border mt-1">{viewingNotification.body}</div>
+                  <div className="text-sm bg-background p-3 rounded-md border mt-1 text-foreground">{viewingNotification.body}</div>
                </div>
+
+               {viewingNotification.description && (
+                 <div className="col-span-2">
+                    <div className="text-xs text-muted">Description</div>
+                    <div className="text-sm bg-background p-3 rounded-md border mt-1 text-foreground whitespace-pre-wrap">{viewingNotification.description}</div>
+                 </div>
+               )}
+
+               {viewingNotification.link_url && (
+                 <div className="col-span-2">
+                    <div className="text-xs text-muted">Link</div>
+                    <a href={viewingNotification.link_url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline font-medium break-all">
+                      {viewingNotification.link_button_text || viewingNotification.link_url}
+                    </a>
+                 </div>
+               )}
+
+               <div>
+                  <div className="text-xs text-muted">Layout Mode</div>
+                  <div className="font-medium capitalize text-foreground">{(viewingNotification.layout || "text_only").replace("_", " ")}</div>
+               </div>
+
+               <div>
+                  <div className="text-xs text-muted">Channels</div>
+                  <div className="flex gap-1.5 mt-1 flex-wrap">
+                    {viewingNotification.send_push && <Badge variant="neutral" className="text-[10px]">Push</Badge>}
+                    {viewingNotification.send_email && <Badge variant="neutral" className="text-[10px]">Email</Badge>}
+                    {viewingNotification.send_sms && <Badge variant="neutral" className="text-[10px]">SMS</Badge>}
+                  </div>
+               </div>
+
                <div>
                   <div className="text-xs text-muted">Sent At</div>
-                  <div className="font-medium">{formatDateTime(viewingNotification.sent_at ?? viewingNotification.created_at)}</div>
+                  <div className="font-medium text-foreground">{formatDateTime(viewingNotification.sent_at ?? viewingNotification.created_at)}</div>
                </div>
                <div>
                   <div className="text-xs text-muted">Success / Total</div>
