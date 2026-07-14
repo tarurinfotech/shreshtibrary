@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any */
 "use client";
 
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, ChevronDown, ChevronRight, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -148,6 +148,27 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
   const isSuperAdmin = form.role === "super_admin" || form.role === "sub_super_admin";
   const currentUserRole = currentUser?.role;
 
+  const allAvailablePerms = useMemo(() => {
+    const perms: string[] = [];
+    permissionsData.forEach(g => {
+       if (Array.isArray(g?.permissions)) {
+          g.permissions.forEach(p => perms.push(p));
+       }
+    });
+    return Array.from(new Set(perms));
+  }, [permissionsData]);
+
+  const formPermsArray = Array.isArray(form.permissions) ? form.permissions : [];
+  const globalAllChecked = allAvailablePerms.length > 0 && allAvailablePerms.every(p => formPermsArray.includes(p));
+  const globalSomeChecked = allAvailablePerms.some(p => formPermsArray.includes(p));
+
+  const toggleGlobalAll = (checked: boolean) => {
+    setForm(current => ({
+      ...current,
+      permissions: checked ? [...allAvailablePerms] : []
+    }));
+  };
+
   const filteredGroups = (Array.isArray(permissionsData) ? permissionsData : []).map(group => {
     const safePermissions = Array.isArray(group?.permissions) ? group.permissions : [];
     const safeCategory = group?.category ?? "";
@@ -281,8 +302,28 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
                 <p className="text-sm text-muted max-w-sm mx-auto">Super Admins and Sub Super Admins automatically inherit all system permissions. No manual assignment required.</p>
               </div>
             ) : (
-              <div className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                {filteredGroups.map((group) => {
+              <div className="flex flex-col gap-3 flex-1 overflow-hidden">
+                {permissionsData.length > 0 && (
+                  <div className="shrink-0 flex items-center justify-between rounded-lg border border-primary/20 bg-primary/5 p-3">
+                    <div className="flex items-center gap-2">
+                       <ShieldCheck className="h-5 w-5 text-primary" />
+                       <span className="font-semibold text-primary">Full Access</span>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:text-primary/80 transition-colors">
+                      <input 
+                         type="checkbox" 
+                         checked={globalAllChecked} 
+                         ref={input => { if (input) input.indeterminate = globalSomeChecked && !globalAllChecked; }}
+                         onChange={(e) => toggleGlobalAll(e.target.checked)}
+                         className="h-4 w-4 rounded border-primary text-primary focus:ring-primary bg-panel cursor-pointer"
+                      />
+                      Select All Permissions
+                    </label>
+                  </div>
+                )}
+                
+                <div className="flex flex-col gap-3 max-h-[440px] overflow-y-auto pr-2 custom-scrollbar">
+                  {filteredGroups.map((group) => {
                   const isExpanded = expandedCategories[group.category];
                   const formPerms = Array.isArray(form.permissions) ? form.permissions : [];
                   const safePerms = Array.isArray(group?.permissions) ? group.permissions : [];
@@ -342,6 +383,7 @@ export function AdminEditForm({ open, admin, onClose }: AdminEditFormProps) {
                   </div>
                 )}
               </div>
+            </div>
             )}
           </div>
         </div>
