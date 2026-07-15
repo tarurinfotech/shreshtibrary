@@ -75,6 +75,13 @@ export default function SettingsPage() {
   const [waErrors, setWaErrors] = useState<Record<string, string>>({});
   const [showWaApiKey, setShowWaApiKey] = useState(false);
 
+  // Cloudinary Settings
+  const [cloudinaryCloudName, setCloudinaryCloudName] = useState("");
+  const [cloudinaryApiKey, setCloudinaryApiKey] = useState("");
+  const [cloudinaryApiSecret, setCloudinaryApiSecret] = useState("");
+  const [cloudinaryErrors, setCloudinaryErrors] = useState<Record<string, string>>({});
+  const [showCloudinaryApiSecret, setShowCloudinaryApiSecret] = useState(false);
+
   // Expired Student Permissions (API Paths)
   const [allowProfile, setAllowProfile] = useState(true);
   const [allowPlans, setAllowPlans] = useState(true);
@@ -157,6 +164,24 @@ export default function SettingsPage() {
     },
   });
 
+  const updateCloudinarySettings = useMutation({
+    mutationFn: () => {
+      return endpoints.updateSettings({
+        cloudinary_cloud_name: cloudinaryCloudName,
+        cloudinary_api_key: cloudinaryApiKey || undefined,
+        cloudinary_api_secret: cloudinaryApiSecret || undefined,
+      });
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["settings"], data);
+      pushToast({ kind: "success", title: "Cloudinary Settings updated" });
+    },
+    onError: (error) => {
+      setCloudinaryErrors(getFieldErrors(error));
+      pushToast({ kind: "error", title: "Update failed", message: getErrorMessage(error) });
+    },
+  });
+
   // Effect to load settings
   useEffect(() => {
     if (settings.data) {
@@ -178,6 +203,12 @@ export default function SettingsPage() {
         setWaBaseUrl(settings.data.wa_base_url || "");
         setWaSessionId(settings.data.wa_session_id || "");
         setWaApiKey(settings.data.wa_api_key || "");
+      }
+      
+      if (user?.role === "super_admin" || user?.role === "sub_super_admin") {
+        setCloudinaryCloudName(settings.data.cloudinary_cloud_name || "");
+        setCloudinaryApiKey(settings.data.cloudinary_api_key || "");
+        setCloudinaryApiSecret(settings.data.cloudinary_api_secret || "");
       }
 
       const paths = settings.data.expired_student_permissions?.allowed_paths ?? [
@@ -218,6 +249,12 @@ export default function SettingsPage() {
     event.preventDefault();
     setWaErrors({});
     updateWaSettings.mutate();
+  };
+
+  const submitCloudinarySettings = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setCloudinaryErrors({});
+    updateCloudinarySettings.mutate();
   };
 
   return (
@@ -447,6 +484,48 @@ export default function SettingsPage() {
              </SectionCard>
            </form>
           </>
+         )}
+
+         {(user?.role === "super_admin" || user?.role === "sub_super_admin") && (
+           <form onSubmit={submitCloudinarySettings} className="lg:col-span-12 mt-6">
+             <SectionCard 
+               title="Cloudinary API Settings" 
+               eyebrow="Storage Integration" 
+               className="border-blue-500/30"
+             >
+               <p className="text-sm text-muted mb-5">Configure Cloudinary API details used for media storage.</p>
+               <div className="grid sm:grid-cols-2 gap-6">
+                 <Input label="Cloud Name" value={cloudinaryCloudName} onChange={(e) => setCloudinaryCloudName(e.target.value)} placeholder="dyr9..." error={cloudinaryErrors.cloudinary_cloud_name} className="col-span-1 sm:col-span-2" />
+                 
+                 <Input label="API Key" value={cloudinaryApiKey} onChange={(e) => setCloudinaryApiKey(e.target.value)} placeholder="API Key" error={cloudinaryErrors.cloudinary_api_key} />
+                 
+                 <div className="relative">
+                   <Input 
+                     label="API Secret" 
+                     type={showCloudinaryApiSecret ? "text" : "password"} 
+                     value={cloudinaryApiSecret} 
+                     onChange={(e) => setCloudinaryApiSecret(e.target.value)} 
+                     placeholder="API Secret" 
+                     error={cloudinaryErrors.cloudinary_api_secret} 
+                   />
+                   <button
+                     type="button"
+                     className="absolute right-3 top-[32px] text-muted hover:text-foreground transition-colors"
+                     onClick={() => setShowCloudinaryApiSecret(!showCloudinaryApiSecret)}
+                     aria-label={showCloudinaryApiSecret ? "Hide API secret" : "Show API secret"}
+                   >
+                     {showCloudinaryApiSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                   </button>
+                 </div>
+               </div>
+               
+               <div className="pt-4 border-t border-border mt-6 flex justify-end">
+                 <Button type="submit" loading={updateCloudinarySettings.isPending} icon={<Save className="h-4 w-4" />}>
+                   Save Cloudinary Settings
+                 </Button>
+               </div>
+             </SectionCard>
+           </form>
          )}
       </div>
     </>
