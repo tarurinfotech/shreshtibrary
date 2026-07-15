@@ -277,7 +277,7 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-7 lg:grid-cols-3">
+      <div className="grid gap-4 md:gap-7 lg:grid-cols-3">
         <SectionCard menu padding="lg"
           className="lg:col-span-2"
           title="Reports"
@@ -410,7 +410,7 @@ export default function DashboardPage() {
         )}
       </div>
 
-      <div className="grid gap-7 lg:grid-cols-2">
+      <div className="grid gap-4 md:gap-7 lg:grid-cols-2">
         <SectionCard menu padding="lg" title="Recent Activity">
           {activity.isLoading ? <LoadingBlock label="Loading activity" /> : null}
           {activity.error ? <ErrorState message="Unable to load activity." /> : null}

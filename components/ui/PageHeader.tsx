@@ -15,7 +15,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         ) : null}
-        <h1 className="mt-1 text-3xl font-bold tracking-normal text-foreground">{title}</h1>
+        <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-normal text-foreground">{title}</h1>
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
     </div>

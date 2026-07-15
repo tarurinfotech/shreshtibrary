@@ -88,10 +88,18 @@ export function GlobalSearch() {
       <button
         type="button"
         onClick={() => handleOpenChange(true)}
-        className="focus-within:ring-primary/30 flex h-11 w-full max-w-sm items-center gap-3 rounded-lg border border-border bg-panel px-4 text-sm text-muted shadow-[var(--shadow-soft)] transition hover:ring-4 hover:ring-primary/30"
+        className="focus-within:ring-primary/30 hidden md:flex h-11 w-full max-w-sm items-center gap-3 rounded-lg border border-border bg-panel px-4 text-sm text-muted shadow-[var(--shadow-soft)] transition hover:ring-4 hover:ring-primary/30"
       >
         <span className="min-w-0 flex-1 text-left">Search anything... (Ctrl+K)</span>
         <Search className="h-4 w-4 shrink-0" />
+      </button>
+      <button
+        type="button"
+        onClick={() => handleOpenChange(true)}
+        className="md:hidden flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-panel text-muted shadow-sm transition hover:bg-hover hover:text-foreground"
+        aria-label="Search"
+      >
+        <Search className="h-5 w-5" />
       </button>
 
       {open && (

@@ -19,8 +19,8 @@ type SurfaceProps<T extends ElementType> = SurfaceOwnProps<T> &
 const paddingClasses: Record<SurfacePadding, string> = {
   none: "",
   sm: "p-3",
-  md: "p-4",
-  lg: "p-5",
+  md: "p-3 sm:p-4",
+  lg: "p-4 sm:p-5",
 };
 
 const variantClasses: Record<SurfaceVariant, string> = {

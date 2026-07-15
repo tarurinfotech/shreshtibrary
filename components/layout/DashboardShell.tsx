@@ -116,13 +116,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         className={`hidden md:flex md:flex-col md:flex-1 md:min-w-0 transition-[margin-left] duration-300 ease-in-out ${desktopSidebarOpen ? "ml-[256px]" : "ml-[96px]"}`}
       >
         <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={() => setDesktopSidebarOpen((open) => !open)} />
-        <main id="main-content" tabIndex={-1} className="mx-auto grid w-full max-w-[1760px] gap-7 px-4 py-6 md:px-8 focus:outline-none">{children}</main>
+        <main id="main-content" tabIndex={-1} className="mx-auto grid w-full max-w-[1760px] gap-4 px-4 py-4 md:gap-7 md:px-8 md:py-6 focus:outline-none">{children}</main>
       </div>
 
       {/* Mobile: no sidebar offset */}
       <div className="flex flex-col flex-1 min-w-0 md:hidden">
         <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={() => setDesktopSidebarOpen((open) => !open)} />
-        <main id="main-content-mobile" tabIndex={-1} className="mx-auto grid w-full max-w-[1760px] gap-7 px-4 py-6 focus:outline-none">{children}</main>
+        <main id="main-content-mobile" tabIndex={-1} className="mx-auto grid w-full max-w-[1760px] gap-4 px-4 py-4 md:gap-7 md:px-8 md:py-6 focus:outline-none">{children}</main>
       </div>
     </div>
   );
