@@ -10,7 +10,7 @@ export function TableShell({
   innerClassName?: string;
 }) {
   return (
-    <div className={clsx("surface overflow-hidden rounded-lg p-3", className)}>
+    <div className={clsx("surface w-full min-w-0 overflow-hidden rounded-lg p-3", className)}>
       <div className={clsx("overflow-x-auto", innerClassName)}>{children}</div>
     </div>
   );

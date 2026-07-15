@@ -289,7 +289,7 @@ export default function StudentsPage() {
       />
 
       {/* ── Stat Cards ──────────────────────────────────────────────────────── */}
-      <div className="mb-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-3 grid gap-2 grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
         <GradientStatCard
           label="Total"
           value={counts.data?.total ?? 0}
