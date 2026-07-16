@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { endpoints } from "@/lib/endpoints";
 import { useToastStore } from "@/store/toastStore";
 import { Button } from "@/components/ui/Button";
+import { Modal } from "@/components/ui/Modal";
 import { ShieldCheck, Plus, CheckCircle2 } from "lucide-react";
 import { getErrorMessage } from "@/lib/api";
 
@@ -12,6 +13,8 @@ export default function PlatformLicensingPage() {
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
   const [activeTab, setActiveTab] = useState("payments");
+
+  const [isCreatePlanOpen, setIsCreatePlanOpen] = useState(false);
 
   // Queries
   const { data: plans, isLoading: plansLoading } = useQuery({
@@ -38,6 +41,53 @@ export default function PlatformLicensingPage() {
     },
     onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
   });
+
+  const createPlan = useMutation({
+    mutationFn: (payload: any) => endpoints.createPlatformPlan(payload),
+    onSuccess: () => {
+      pushToast({ kind: "success", title: "Plan Created", message: "Successfully created new subscription plan." });
+      queryClient.invalidateQueries({ queryKey: ["platformPlans"] });
+      setIsCreatePlanOpen(false);
+    },
+    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
+  });
+
+  const updateSettings = useMutation({
+    mutationFn: (payload: any) => endpoints.updatePlatformPaymentSettings(payload),
+    onSuccess: () => {
+      pushToast({ kind: "success", title: "Settings Saved", message: "Payment settings updated successfully." });
+      queryClient.invalidateQueries({ queryKey: ["platformPaymentSettings"] });
+    },
+    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
+  });
+
+  const handleCreatePlan = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const featuresList = formData.get("features")?.toString().split(",").map(f => f.trim()).filter(Boolean);
+    
+    createPlan.mutate({
+      name: formData.get("planName"),
+      monthlyPrice: Number(formData.get("monthlyPrice")),
+      quarterlyPrice: 0,
+      halfYearlyPrice: 0,
+      yearlyPrice: 0,
+      maxStudents: Number(formData.get("maxStudents")),
+      maxStaff: 5,
+      isRecommended: formData.get("isRecommended") === "on",
+      features: featuresList
+    });
+  };
+
+  const handleSaveSettings = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    updateSettings.mutate({
+      merchantName: formData.get("merchantName"),
+      upiId: formData.get("upiId"),
+      paymentInstructions: formData.get("paymentInstructions")
+    });
+  };
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-6">
@@ -107,7 +157,7 @@ export default function PlatformLicensingPage() {
                         {payment.status === 'Pending' && (
                           <Button 
                             onClick={() => approvePayment.mutate(payment.id)}
-                            disabled={approvePayment.isPending}
+                            loading={approvePayment.isPending}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white !py-1 !px-3 h-8 text-xs"
                           >
                             <CheckCircle2 className="w-3 h-3 mr-1" /> Approve
@@ -130,7 +180,7 @@ export default function PlatformLicensingPage() {
         {activeTab === "plans" && (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button>
+              <Button onClick={() => setIsCreatePlanOpen(true)}>
                 <Plus className="w-4 h-4 mr-2" /> Create Plan
               </Button>
             </div>
@@ -156,33 +206,69 @@ export default function PlatformLicensingPage() {
                   </div>
                 </div>
               ))}
+              {!plans?.length && !plansLoading && (
+                <div className="col-span-3 text-center py-12 text-muted border border-border rounded-xl">
+                  No subscription plans created yet.
+                </div>
+              )}
             </div>
           </div>
         )}
 
         {activeTab === "settings" && (
           <div className="space-y-4">
-            <div className="bg-panel rounded-xl border border-border p-6 max-w-2xl">
+            <form onSubmit={handleSaveSettings} className="bg-panel rounded-xl border border-border p-6 max-w-2xl">
               <h3 className="text-lg font-bold text-foreground mb-6">Payment Settings</h3>
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-muted block mb-1">Merchant Name</label>
-                  <input type="text" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={settings?.merchantName} />
+                  <input type="text" name="merchantName" required className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={settings?.merchantName} />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted block mb-1">UPI ID</label>
-                  <input type="text" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={settings?.upiId} />
+                  <input type="text" name="upiId" required className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={settings?.upiId} />
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted block mb-1">Payment Instructions</label>
-                  <textarea className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none h-24" defaultValue={settings?.paymentInstructions} />
+                  <textarea name="paymentInstructions" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none h-24" defaultValue={settings?.paymentInstructions} />
                 </div>
-                <Button className="w-full">Save Settings</Button>
+                <Button type="submit" loading={updateSettings.isPending} className="w-full">Save Settings</Button>
               </div>
-            </div>
+            </form>
           </div>
         )}
       </div>
+
+      <Modal open={isCreatePlanOpen} onClose={() => setIsCreatePlanOpen(false)} title="Create Subscription Plan">
+        <form id="createPlanForm" onSubmit={handleCreatePlan} className="space-y-4 py-4 min-w-[300px] md:min-w-[400px]">
+          <div>
+            <label className="text-sm font-medium text-muted block mb-1">Plan Name</label>
+            <input type="text" name="planName" required placeholder="e.g. Starter Plan" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted block mb-1">Monthly Price (₹)</label>
+              <input type="number" name="monthlyPrice" required placeholder="999" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted block mb-1">Max Students</label>
+              <input type="number" name="maxStudents" required placeholder="50" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" />
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted block mb-1">Features (comma separated)</label>
+            <textarea name="features" placeholder="Unlimited seats, Premium support..." className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none h-24" />
+          </div>
+          <div className="flex items-center gap-2 mt-2">
+            <input type="checkbox" name="isRecommended" id="isRecommended" className="h-4 w-4 rounded border-border" />
+            <label htmlFor="isRecommended" className="text-sm text-foreground">Highlight as Recommended Plan</label>
+          </div>
+          <div className="pt-4 flex justify-end gap-3">
+            <Button type="button" variant="ghost" onClick={() => setIsCreatePlanOpen(false)}>Cancel</Button>
+            <Button type="submit" loading={createPlan.isPending}>Create Plan</Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
