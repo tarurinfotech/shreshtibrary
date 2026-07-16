@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { endpoints } from "@/lib/endpoints";
-import { toast } from "react-hot-toast";
+import { useToastStore } from "@/store/toastStore";
 import { Button } from "@/components/ui/Button";
 import { ShieldCheck, Plus, CheckCircle2 } from "lucide-react";
 import { getErrorMessage } from "@/lib/api";
 
 export default function PlatformLicensingPage() {
   const queryClient = useQueryClient();
+  const pushToast = useToastStore((state) => state.pushToast);
   const [activeTab, setActiveTab] = useState("payments");
 
   // Queries
@@ -32,10 +33,10 @@ export default function PlatformLicensingPage() {
   const approvePayment = useMutation({
     mutationFn: (id: number) => endpoints.approveLibraryPayment(id),
     onSuccess: () => {
-      toast.success("Payment approved & subscription activated!");
+      pushToast({ kind: "success", title: "Payment Approved", message: "Payment approved & subscription activated!" });
       queryClient.invalidateQueries({ queryKey: ["libraryPayments"] });
     },
-    onError: (err) => toast.error(getErrorMessage(err))
+    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
   });
 
   return (

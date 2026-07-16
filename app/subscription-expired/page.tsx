@@ -8,7 +8,7 @@ import { useEffect, useState, useRef } from "react";
 import { endpoints } from "@/lib/endpoints";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
-import { toast } from "react-hot-toast";
+import { useToastStore } from "@/store/toastStore";
 import { getErrorMessage } from "@/lib/api";
 
 import { QRCodeSVG } from "qrcode.react";
@@ -17,6 +17,7 @@ export default function SubscriptionExpiredPage() {
   const router = useRouter();
   const clearSession = useAuthStore((state) => state.clearSession);
   const userRole = useAuthStore((state) => state.user?.role);
+  const pushToast = useToastStore((state) => state.pushToast);
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubSuperAdmin, setIsSubSuperAdmin] = useState(false);
@@ -65,11 +66,11 @@ export default function SubscriptionExpiredPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Payment submitted successfully! Waiting for Super Admin approval.");
+      pushToast({ kind: "success", title: "Payment submitted", message: "Payment submitted successfully! Waiting for Super Admin approval." });
       setStep("locked");
     },
     onError: (err) => {
-      toast.error(getErrorMessage(err));
+      pushToast({ kind: "error", title: "Payment failed", message: getErrorMessage(err) });
     }
   });
 
@@ -117,7 +118,7 @@ export default function SubscriptionExpiredPage() {
             )}
             
             <Button 
-              variant="outline" 
+              variant="secondary" 
               onClick={handleLogout}
               className="w-full border-neutral-800 hover:bg-neutral-800/50 text-neutral-300 py-6 rounded-xl bg-neutral-900/50 backdrop-blur-sm"
             >
