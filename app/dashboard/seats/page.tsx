@@ -62,7 +62,7 @@ export default function SeatsPage() {
   const canManageFloor = hasPerm("LibraryManagement.Floor");
 
   const seats = useQuery({ queryKey: ["flat-seats"], queryFn: endpoints.flatSeats });
-  const layout = useQuery({ queryKey: ["seat-layout"], queryFn: endpoints.seatLayout });
+  const layout = useQuery({ queryKey: ["seat-layout"], queryFn: endpoints.seatLayout, staleTime: 60000 });
   const stats = useQuery({ queryKey: ["seat-stats"], queryFn: endpoints.seatStats });
   const available = useQuery({ queryKey: ["available-seats"], queryFn: endpoints.availableSeats });
   const history = useQuery({

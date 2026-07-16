@@ -55,49 +55,27 @@ export type DashboardStats = {
   students?: {
     total: number;
     live: number;
-    pending: number;
     expired: number;
     suspended: number;
-    girls?: number;
-    boys?: number;
-    other?: number;
-    new_this_month?: number;
+    pending: number;
+    girls: number;
+    boys: number;
+    other: number;
+  };
+  payments?: {
+    month_amount: number;
+    month_count: number;
   };
   attendance?: {
     today_present: number;
-    today_pending?: number;
     today_absent: number;
-    today_total: number;
-    today_percentage: number;
-  };
-  payments?: {
-    today_amount: string;
-    today_count: number;
-    month_amount: string;
-    month_count: number;
-    pending_count?: number;
-  };
-  memberships?: {
-    active: number;
-    expiring_in_7_days: number;
-    expired_today: number;
+    today_pending: number;
   };
   seats?: {
     total: number;
-    occupied: number;
     available: number;
-    reserved: number;
+    occupied: number;
   };
-  notifications?: {
-    sent_today: number;
-    unread_count: number;
-  };
-  total_registered_students?: number;
-  active_memberships?: number;
-  today_attendance_count?: number;
-  total_seats?: number;
-  occupied_seats?: number;
-  available_seats?: number;
 };
 
 export type DashboardChart = {
@@ -119,13 +97,12 @@ export type StudentProfile = {
   first_name: string;
   middle_name?: string | null;
   last_name: string;
-  email: string;
-  mobile: string;
+  email: string | null;
+  mobile: string | null;
   is_active: boolean;
   goal: string;
   dob: string | null;
-  date_of_birth?: string | null;
-  gender?: string | null;
+  gender: string;
   caste?: string | null;
   address: string | null;
   profile_photo?: string | null;
@@ -134,14 +111,12 @@ export type StudentProfile = {
   status: StudentStatus;
   suspension_reason?: string | null;
   suspended_at?: string | null;
-  preferred_language?: string;
-  referral_code?: string | null;
+  preferred_language: string;
   created_at?: string | null;
   updated_at?: string | null;
   joining_date?: string | null;
   membership_start_date?: string | null;
   membership_end_date?: string | null;
-  attendance_status?: string;
 };
 
 export type StudentTimelineItem = {
@@ -167,6 +142,16 @@ export type StudentAnalytics = {
 };
 
 export type PaymentStatus = "PENDING" | "VERIFIED" | "REFUNDED" | "FAILED" | string;
+
+export type AttendanceAbsentee = {
+  user_id: number;
+  student_id: string | null;
+  username: string;
+  first_name: string;
+  last_name: string;
+  mobile: string | null;
+  attendance_status: "absent" | "pending" | "not_joined";
+};
 
 export type PaymentRecord = {
   id: number;

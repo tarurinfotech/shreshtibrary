@@ -44,3 +44,11 @@ export function isDateWithinAllowedWindow(dateStr: string | null | undefined): b
   const diffDays = Math.floor(diffTime / (1000 * 3600 * 24));
   return diffDays >= 0 && diffDays <= 2;
 }
+
+export function getTodayDate(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}

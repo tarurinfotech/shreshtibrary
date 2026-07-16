@@ -189,7 +189,7 @@ export default function DashboardPage() {
       value: chart.data?.present?.[index] ?? chart.data?.revenue?.[index] ?? 0,
     })) ?? [];
 
-  const totalStudents = stats.data?.students?.total ?? stats.data?.total_registered_students ?? 0;
+  const totalStudents = stats.data?.students?.total ?? 0;
   const donutData = useMemo(
     () =>
       [
@@ -246,14 +246,14 @@ export default function DashboardPage() {
             <>
               <MetricTile
                 label="Students"
-                value={stats.data.students?.total ?? stats.data.total_registered_students ?? 0}
+                value={stats.data.students?.total ?? 0}
                 icon={<Users className="h-9 w-9" strokeWidth={1.8} />}
                 tone="violet"
                 helper="Registered profiles"
               />
               <MetricTile
                 label="Live Members"
-                value={stats.data.students?.live ?? stats.data.active_memberships ?? 0}
+                value={stats.data.students?.live ?? 0}
                 icon={<CalendarCheck className="h-9 w-9" strokeWidth={1.8} />}
                 tone="blue"
                 helper="Currently active"
@@ -269,7 +269,7 @@ export default function DashboardPage() {
           />}
           {canSeats && <MetricTile
             label="Seats"
-            value={stats.data.seats?.available ?? stats.data.available_seats ?? 0}
+            value={stats.data.seats?.available ?? 0}
             icon={<Armchair className="h-9 w-9" strokeWidth={1.8} />}
             tone="emerald"
             helper={`${stats.data.seats?.occupied ?? 0} occupied`}

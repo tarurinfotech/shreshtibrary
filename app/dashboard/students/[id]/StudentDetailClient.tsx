@@ -9,11 +9,9 @@ import { StudentAttendanceCalendar } from "@/components/features/students/Studen
 import { useAuthStore } from "@/store/authStore";
 import { Badge, statusVariant } from "@/components/ui/Badge";
 import { Button, buttonClasses } from "@/components/ui/Button";
-import { ChartPanel, SharedAreaChart } from "@/components/ui/ChartWidgets";
 import { FileInput } from "@/components/ui/FileInput";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
-import { Select } from "@/components/ui/Select";
 import { ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { Table, TableShell, Td, Th } from "@/components/ui/Table";
 import { getErrorMessage } from "@/lib/api";
@@ -21,13 +19,10 @@ import { endpoints, type StudentUpdatePayload } from "@/lib/endpoints";
 import { formatDate, formatMoney } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { useToastStore } from "@/store/toastStore";
-import type { StudentAnalytics } from "@/types/api";
-
-const periods: Array<{ value: StudentAnalytics["period"]; label: string }> = [
-  { value: "weekly", label: "Weekly" },
-  { value: "monthly", label: "Monthly" },
-  { value: "yearly", label: "Yearly" },
-];
+import { StudentPlanDetails } from "@/components/features/students/StudentPlanDetails";
+import { StudentHistoryGrid } from "@/components/features/students/StudentHistoryGrid";
+import { StudentAnalyticsSection } from "@/components/features/students/StudentAnalyticsSection";
+import { StudentRecentAttendance } from "@/components/features/students/StudentRecentAttendance";
 
 export function StudentDetailClient({ id }: { id: string }) {
   const queryClient = useQueryClient();
@@ -45,27 +40,7 @@ export function StudentDetailClient({ id }: { id: string }) {
   const canAssignPlan = hasPerm("Membership.Create");
 
   const [photo, setPhoto] = useState<File | null>(null);
-  const [period, setPeriod] = useState<StudentAnalytics["period"]>("weekly");
   const student = useQuery({ queryKey: ["student", id], queryFn: () => endpoints.student(id) });
-  const timeline = useQuery({ queryKey: ["student-timeline", id], queryFn: () => endpoints.studentTimeline(id) });
-  const payments = useQuery({ queryKey: ["student-payments", id], queryFn: () => endpoints.studentPayments(id) });
-  const attendance = useQuery({ queryKey: ["student-attendance", id], queryFn: () => endpoints.studentAttendance(id) });
-  const memberships = useQuery({ queryKey: ["student-memberships", id], queryFn: () => endpoints.studentMemberships(Number(id)) });
-  const analytics = useQuery({
-    queryKey: ["student-analytics", id, period],
-    queryFn: () => endpoints.studentAnalytics(id, period),
-  });
-  const allPlans = useQuery({ queryKey: ["admin-plans"], queryFn: () => endpoints.plans() });
-
-  const assignPlan = useMutation({
-    mutationFn: (planId: number) => endpoints.assignMembership({ student_id: Number(id), plan_id: planId }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-memberships", id] });
-      queryClient.invalidateQueries({ queryKey: ["student-payments", id] });
-      pushToast({ kind: "success", title: "Plan assigned successfully" });
-    },
-    onError: (error) => pushToast({ kind: "error", title: "Failed to assign plan", message: getErrorMessage(error) }),
-  });
 
   const update = useMutation({
     mutationFn: (payload: StudentUpdatePayload) => endpoints.updateStudent(id, payload),
@@ -164,10 +139,7 @@ export function StudentDetailClient({ id }: { id: string }) {
               <dt className="text-muted">Date of Birth</dt>
               <dd className="mt-1">{formatDate(student.data.dob)}</dd>
             </div>
-            <div>
-              <dt className="text-muted">Referral Code</dt>
-              <dd className="mt-1">{student.data.referral_code ?? "Not set"}</dd>
-            </div>
+
           </dl>
         </aside>
 
@@ -179,220 +151,13 @@ export function StudentDetailClient({ id }: { id: string }) {
           readOnly={!canEdit}
         />
       </div>
+        <StudentPlanDetails studentId={id} canAssignPlan={canAssignPlan} />
 
-      <section className="surface rounded-lg p-5">
-        <h2 className="mb-4 font-semibold">Plan Details</h2>
-        
-        {(() => {
-          const activePlans = (memberships.data?.data ?? []).filter(m => m.status.toLowerCase() === 'active');
-          if (activePlans.length > 0) {
-            const active = activePlans[0];
-            return (
-              <div className="mb-6 rounded-xl bg-gradient-to-br from-primary to-primary/80 p-6 text-primary-foreground shadow-sm">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-2xl font-bold">{active.plan_name}</h3>
-                    <div className="mt-2 flex items-center gap-2 text-primary-foreground/90">
-                      <Calendar className="h-4 w-4" />
-                      <span>{formatDate(active.start_date)} — {formatDate(active.end_date)}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-full bg-primary-foreground/20 px-3 py-1 font-semibold">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="text-sm">ACTIVE</span>
-                  </div>
-                </div>
-              </div>
-            );
-          } else {
-            return (
-              <div className="mb-6">
-                <p className="mb-4 text-sm text-muted">No active plan found. Select a plan below to assign.</p>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {(allPlans.data ?? []).filter(p => p.is_active !== false).map(plan => (
-                    <div key={plan.id} className="flex flex-col justify-between rounded-xl border border-border bg-panel-strong p-4">
-                      <div>
-                        <h4 className="font-semibold text-foreground">{plan.name}</h4>
-                        <p className="mt-1 text-xs text-muted">{plan.duration_months} Months</p>
-                      </div>
-                      <div className="mt-4 flex items-center justify-between">
-                        <span className="font-bold">{formatMoney(plan.price)}</span>
-                        <Button 
-                          size="sm" 
-                          icon={<Plus className="h-4 w-4" />}
-                          loading={assignPlan.isPending}
-                          disabled={!canAssignPlan}
-                          onClick={() => assignPlan.mutate(plan.id)}
-                          title={!canAssignPlan ? "You do not have permission to assign plans" : undefined}
-                        >
-                          Buy / Assign
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          }
-        })()}
+        <StudentHistoryGrid studentId={id} />
 
-        <h3 className="mb-3 mt-6 font-semibold text-sm text-muted">Membership History</h3>
-        <TableShell className="rounded-none border-0 bg-transparent">
-          <Table>
-            <thead>
-              <tr>
-                <Th>Plan Name</Th>
-                <Th>Status</Th>
-                <Th>Start Date</Th>
-                <Th>Expiry Date</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {(memberships.data?.data ?? []).map((membership) => (
-                <tr key={membership.id}>
-                  <Td className="font-medium">{membership.plan_name}</Td>
-                  <Td><Badge variant={statusVariant(membership.status)}>{membership.status}</Badge></Td>
-                  <Td>{formatDate(membership.start_date)}</Td>
-                  <Td>{formatDate(membership.end_date)}</Td>
-                </tr>
-              ))}
-              {memberships.isSuccess && memberships.data?.data?.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="text-center py-6 text-muted text-sm border-b border-border">No historical plans found for this student.</td>
-                </tr>
-              )}
-              {memberships.isLoading && (
-                <tr>
-                  <td colSpan={4} className="text-center py-6 text-muted text-sm border-b border-border">Loading plan details...</td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </TableShell>
-      </section>
+        <StudentAnalyticsSection studentId={id} joiningDate={student.data?.joining_date ?? undefined} />
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <section className="surface rounded-lg p-5">
-          <h2 className="mb-4 font-semibold">Timeline</h2>
-          <div className="grid gap-3">
-            {(timeline.data ?? []).slice(0, 8).map((item) => (
-              <div key={item.id} className="rounded-lg border border-border bg-panel-strong p-3">
-                <p className="text-sm font-medium">{item.action}</p>
-                <p className="mt-1 text-xs text-muted">{item.description || formatDate(item.created_at)}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="surface rounded-lg p-5 xl:col-span-2">
-          <h2 className="mb-4 font-semibold">Payments</h2>
-          <TableShell className="rounded-none border-0 bg-transparent">
-            <Table>
-              <thead>
-                <tr>
-                  <Th>Plan</Th>
-                  <Th>Amount</Th>
-                  <Th>Status</Th>
-                  <Th>Date</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {(payments.data ?? []).slice(0, 8).map((payment) => {
-                  const isRefunded = payment.status.toLowerCase() === 'refunded';
-                  return (
-                    <tr key={payment.id}>
-                      <Td>{payment.plan_name}</Td>
-                      <Td>
-                        <span className={isRefunded ? "line-through text-muted" : "font-semibold"}>
-                          {formatMoney(payment.amount)}
-                        </span>
-                      </Td>
-                      <Td><Badge variant={statusVariant(payment.status)}>{payment.status}</Badge></Td>
-                      <Td>{formatDate(payment.payment_date)}</Td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          </TableShell>
-        </section>
-      </div>
-
-      <section className="surface rounded-lg p-5">
-        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-semibold">Student Analytics</h2>
-            <p className="mt-1 text-sm text-muted">Attendance and study hours by selected range.</p>
-          </div>
-          <Select
-            className="min-w-36"
-            label="Range"
-            value={period}
-            onChange={(value) => setPeriod(value as StudentAnalytics["period"])}
-            options={periods}
-          />
-        </div>
-
-        {analytics.isLoading ? <LoadingBlock label="Loading analytics" /> : null}
-        {analytics.error ? <ErrorState message="Unable to load student analytics." /> : null}
-        {!analytics.isLoading && !analytics.error ? (
-          <div className="grid gap-4 xl:grid-cols-2">
-            <ChartPanel title="Attendance" icon={<Activity className="h-4 w-4" />}>
-              <div className="h-full">
-                <StudentAttendanceCalendar records={attendance.data ?? []} joiningDate={student.data?.joining_date ?? undefined} />
-              </div>
-            </ChartPanel>
-
-            <ChartPanel title="Study Hours" icon={<Clock className="h-4 w-4" />}>
-              <div className="h-full w-full min-w-0">
-                <SharedAreaChart
-                  data={analytics.data?.study ?? []}
-                  xKey="label"
-                  yKeys={[
-                    { key: "hours", name: "Study hours", color: "var(--primary)" },
-                    { key: "target_hours", name: "Target hours", color: "var(--success)", fillOpacity: 0 },
-                  ]}
-                  height="100%"
-                />
-              </div>
-            </ChartPanel>
-          </div>
-        ) : null}
-      </section>
-
-      <section className="surface rounded-lg p-5">
-        <h2 className="mb-4 font-semibold">Attendance</h2>
-        <TableShell className="rounded-none border-0 bg-transparent">
-          <Table>
-            <thead>
-              <tr>
-                <Th>Date</Th>
-                <Th>Time</Th>
-                <Th>Method</Th>
-                <Th>Status</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {(attendance.data ?? []).slice(0, 12).map((record) => (
-                <tr key={record.id}>
-                  <Td>{formatDate(record.date)}</Td>
-                  <Td>{record.time_in ?? "Not set"}</Td>
-                  <Td>{record.method}</Td>
-                  <Td>
-                    <Badge variant={
-                      record.status === 'Pending' ? 'warning' :
-                        record.status === 'Absent' ? 'danger' :
-                          record.status === 'Arrived Late' ? 'warning' : 'success'
-                    }>
-                      {record.status ?? (record.is_present ? "Present" : "Absent")}
-                    </Badge>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </TableShell>
-      </section>
+        <StudentRecentAttendance studentId={id} />
     </>
   );
 }

@@ -11,6 +11,7 @@ import type {
   AdminInboxNotificationRecord,
   AlertItem,
   ApiResponse,
+  AttendanceAbsentee,
   AttendanceRecord,
   DashboardChart,
   DashboardStats,
@@ -404,7 +405,7 @@ export const endpoints = {
     ),
 
   attendanceAbsentees: (date?: string) =>
-    getData<StudentProfile[]>("/admin/attendance/absentees", { date }),
+    getData<AttendanceAbsentee[]>("/admin/attendance/absentees", { date }),
 
   attendanceStreak: () =>
     getData<Array<{ student: StudentProfile; streak: number }>>("/admin/attendance/streak"),

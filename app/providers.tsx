@@ -25,7 +25,7 @@ export function AppProviders({
           queries: {
             retry: 1,
             refetchOnWindowFocus: false, // Disabled to prevent excessive API calls on tab switch
-            staleTime: 5 * 60 * 1000, // 5 minutes for freshness (mutations invalidate cache)
+            staleTime: 30 * 1000, // 30 seconds for freshness (mutations invalidate cache immediately)
             gcTime: 15 * 60 * 1000, // 15 minutes
           },
         },
@@ -59,6 +59,51 @@ export function AppProviders({
         useAuthStore.getState().clearSession();
       });
     }
+  }, [hydrated, user, access]);
+
+  // Proactive silent token refresh
+  useEffect(() => {
+    if (!hydrated || !user || !access) return;
+
+    const checkAndRefresh = () => {
+      const currentAccess = useAuthStore.getState().access;
+      if (!currentAccess) return;
+
+      try {
+        const payloadStr = atob(currentAccess.split(".")[1]);
+        const payload = JSON.parse(payloadStr);
+        if (payload.exp) {
+          const expiryTime = payload.exp * 1000;
+          const timeUntilExpiry = expiryTime - Date.now();
+          
+          // If token expires in less than 10 minutes, refresh it proactively
+          if (timeUntilExpiry > 0 && timeUntilExpiry < 10 * 60 * 1000) {
+            refreshAccessToken().catch(console.error);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to check token expiry", e);
+      }
+    };
+
+    // Check every minute
+    const intervalId = setInterval(checkAndRefresh, 60 * 1000);
+
+    // Check on tab focus / wake up from sleep
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        checkAndRefresh();
+      }
+    };
+    
+    window.addEventListener("focus", checkAndRefresh);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener("focus", checkAndRefresh);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
   }, [hydrated, user, access]);
 
   return (
