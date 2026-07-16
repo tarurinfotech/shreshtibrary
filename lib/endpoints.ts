@@ -261,7 +261,7 @@ export const endpoints = {
   exportActivityLog: () => downloadFile("/dashboard/activity/export", "activity-log.xlsx"),
 
   dashboardAlerts: () => getData<AlertItem[]>("/dashboard/alerts"),
-  
+
   globalSearch: (query: string) => getData<{ students: StudentProfile[]; seats: Seat[]; payments: PaymentRecord[] }>("/admin/search", { q: query }),
 
   // Students
@@ -367,7 +367,7 @@ export const endpoints = {
   regenerateQr: (payload?: { expiry_duration?: string }) => postData<QRCodeRecord>("/admin/qr/regenerate", payload ?? {}),
 
   expireQr: () => postData<any>("/admin/qr/expire"),
-  
+
   deleteQr: (id: number) => deleteData<any>(`/admin/qr/${id}`),
 
   qrScans: (id: number) => getData<AttendanceRecord[]>(`/admin/qr/${id}/scans`),
@@ -379,7 +379,7 @@ export const endpoints = {
 
   manualAttendance: (payload: {
     student_id?: number;
-    student_mobile?: string;
+    student_mobile?: string; //remove no needed
     date?: string;
     is_present?: boolean;
     note?: string;
@@ -387,7 +387,7 @@ export const endpoints = {
 
   manualAttendanceBulk: (payload: Array<{
     student_id?: number;
-    student_mobile?: string;
+    student_mobile?: string; //remove no needed
     date?: string;
     is_present?: boolean;
     note?: string;
@@ -479,7 +479,7 @@ export const endpoints = {
   seatHistory: (id: number) => getData<SeatHistoryItem[]>(`/admin/seats/${id}/history`),
 
   seatStats: () => getData<SeatReport>("/admin/seats/stats"),
-  
+
   releaseAllSeats: () => postData<any>("/admin/seats/release-all"),
 
   reserveBulkSeats: (payload: { seat_ids: number[]; is_reserved_for_girls: boolean }) =>
@@ -535,44 +535,109 @@ export const endpoints = {
   deleteAdminInbox: (id: number) => deleteData<any>(`/admin/inbox/${id}`),
 
   // Library Content
-  libraryInfo: () => getData<LibraryInfo>("/admin/library/info"),
+  libraryInfo: async () => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("shresht-library-info");
+      if (cached) {
+        try { return JSON.parse(cached) as LibraryInfo; } catch (e) { }
+      }
+    }
+    const data = await getData<LibraryInfo>("/admin/library/info");
+    if (typeof window !== "undefined") localStorage.setItem("shresht-library-info", JSON.stringify(data));
+    return data;
+  },
 
-  updateLibraryInfo: (payload: Partial<LibraryInfo>, logo?: File | null, bannerImage?: File | null) =>
-    putMultipart<LibraryInfo>("/admin/library/info", toFormData(payload, { logo, banner_image: bannerImage })),
+  updateLibraryInfo: async (payload: Partial<LibraryInfo>, logo?: File | null, bannerImage?: File | null) => {
+    const data = await putMultipart<LibraryInfo>("/admin/library/info", toFormData(payload, { logo, banner_image: bannerImage }));
+    if (typeof window !== "undefined") localStorage.setItem("shresht-library-info", JSON.stringify(data));
+    return data;
+  },
 
-  facilities: () => getData<Facility[]>("/admin/library/facilities"),
+  facilities: async () => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("shresht-facilities");
+      if (cached) {
+        try { return JSON.parse(cached) as Facility[]; } catch (e) { }
+      }
+    }
+    const data = await getData<Facility[]>("/admin/library/facilities");
+    if (typeof window !== "undefined") localStorage.setItem("shresht-facilities", JSON.stringify(data));
+    return data;
+  },
 
-  createFacility: (payload: Partial<Facility>, image?: File | null) =>
-    postMultipart<Facility>("/admin/library/facilities", toFormData(payload, { image })),
+  createFacility: async (payload: Partial<Facility>, image?: File | null) => {
+    const data = await postMultipart<Facility>("/admin/library/facilities", toFormData(payload, { image }));
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
+    return data;
+  },
 
-  updateFacility: (id: number, payload: Partial<Facility>, image?: File | null) =>
-    putMultipart<Facility>(`/admin/library/facilities/${id}`, toFormData(payload, { image })),
+  updateFacility: async (id: number, payload: Partial<Facility>, image?: File | null) => {
+    const data = await putMultipart<Facility>(`/admin/library/facilities/${id}`, toFormData(payload, { image }));
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
+    return data;
+  },
 
-  deleteFacility: (id: number) => deleteData<any>(`/admin/library/facilities/${id}`),
+  deleteFacility: async (id: number) => {
+    const data = await deleteData<any>(`/admin/library/facilities/${id}`);
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
+    return data;
+  },
 
-  toggleFacility: (id: number, is_active?: boolean) =>
-    postData<Facility>(`/admin/library/facilities/${id}/toggle`, { is_active }),
+  toggleFacility: async (id: number, is_active?: boolean) => {
+    const data = await postData<Facility>(`/admin/library/facilities/${id}/toggle`, { is_active });
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
+    return data;
+  },
 
-  reorderFacilities: (items: Array<{ id: number; order: number }>) =>
-    patchData<any>("/admin/library/facilities/reorder", { items }),
+  reorderFacilities: async (items: Array<{ id: number; order: number }>) => {
+    const data = await patchData<any>("/admin/library/facilities/reorder", { items });
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
+    return data;
+  },
 
-  achievers: () => getData<Achiever[]>("/admin/library/achievers"),
+  achievers: async () => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("shresht-achievers");
+      if (cached) {
+        try { return JSON.parse(cached) as Achiever[]; } catch (e) { }
+      }
+    }
+    const data = await getData<Achiever[]>("/admin/library/achievers");
+    if (typeof window !== "undefined") localStorage.setItem("shresht-achievers", JSON.stringify(data));
+    return data;
+  },
 
   publicAchievers: () => getData<Achiever[]>("/library/achievers"),
 
-  createAchiever: (payload: Partial<Achiever>, photo?: File | null) =>
-    postMultipart<Achiever>("/admin/library/achievers", toFormData(payload, { photo })),
+  createAchiever: async (payload: Partial<Achiever>, photo?: File | null) => {
+    const data = await postMultipart<Achiever>("/admin/library/achievers", toFormData(payload, { photo }));
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
+    return data;
+  },
 
-  updateAchiever: (id: number, payload: Partial<Achiever>, photo?: File | null) =>
-    putMultipart<Achiever>(`/admin/library/achievers/${id}`, toFormData(payload, { photo })),
+  updateAchiever: async (id: number, payload: Partial<Achiever>, photo?: File | null) => {
+    const data = await putMultipart<Achiever>(`/admin/library/achievers/${id}`, toFormData(payload, { photo }));
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
+    return data;
+  },
 
-  deleteAchiever: (id: number) => deleteData<any>(`/admin/library/achievers/${id}`),
+  deleteAchiever: async (id: number) => {
+    const data = await deleteData<any>(`/admin/library/achievers/${id}`);
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
+    return data;
+  },
 
-  toggleAchiever: (id: number, is_active?: boolean) =>
-    postData<Achiever>(`/admin/library/achievers/${id}/toggle`, { is_active }),
+  toggleAchiever: async (id: number, is_active?: boolean) => {
+    const data = await postData<Achiever>(`/admin/library/achievers/${id}/toggle`, { is_active });
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
+    return data;
+  },
 
-  reorderAchievers: (items: Array<{ id: number; order: number }>) =>
-    patchData<any>("/admin/library/achievers/reorder", { items }),
+  reorderAchievers: async (items: Array<{ id: number; order: number }>) => {
+    const data = await patchData<any>("/admin/library/achievers/reorder", { items });
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
+    return data;
+  },
 
   publicReviews: (params?: ListParams) => getPage<Review>("/admin/library/reviews", params),
 
@@ -593,12 +658,29 @@ export const endpoints = {
   deleteReview: (id: number) => deleteData<any>(`/admin/reviews/${id}/delete`),
 
   // Gallery Endpoints
-  galleryImages: () => getData<GalleryImage[]>("/admin/library/gallery"),
+  galleryImages: async () => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("shresht-gallery");
+      if (cached) {
+        try { return JSON.parse(cached) as GalleryImage[]; } catch (e) { }
+      }
+    }
+    const data = await getData<GalleryImage[]>("/admin/library/gallery");
+    if (typeof window !== "undefined") localStorage.setItem("shresht-gallery", JSON.stringify(data));
+    return data;
+  },
 
-  uploadGalleryImage: (caption?: string, order?: number, image?: File | null) =>
-    postMultipart<GalleryImage>("/admin/library/gallery", toFormData({ caption, order }, { image })),
+  uploadGalleryImage: async (caption?: string, order?: number, image?: File | null) => {
+    const data = await postMultipart<GalleryImage>("/admin/library/gallery", toFormData({ caption, order }, { image }));
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-gallery");
+    return data;
+  },
 
-  deleteGalleryImage: (id: number) => deleteData<any>(`/admin/library/gallery/${id}`),
+  deleteGalleryImage: async (id: number) => {
+    const data = await deleteData<any>(`/admin/library/gallery/${id}`);
+    if (typeof window !== "undefined") localStorage.removeItem("shresht-gallery");
+    return data;
+  },
 
   // Reports
   report: (kind: "attendance" | "payments" | "students" | "memberships", params?: ListParams) =>
@@ -660,7 +742,7 @@ export const endpoints = {
   deleteSlider: async (id: number) => {
     await api.delete(`/admin/sliders/${id}`);
   },
-  
-  studyLeaderboard: (duration?: string, start_date?: string, end_date?: string) => getData<Array<{ rank: number; student: StudentProfile; total_minutes: number; hours_formatted: string; level_info?: {level: number; title: string; badge_color: string}; is_current_user?: boolean }>>("/study/leaderboard", { duration, start_date, end_date }),
+
+  studyLeaderboard: (duration?: string, start_date?: string, end_date?: string) => getData<Array<{ rank: number; student: StudentProfile; total_minutes: number; hours_formatted: string; level_info?: { level: number; title: string; badge_color: string }; is_current_user?: boolean }>>("/study/leaderboard", { duration, start_date, end_date }),
 };
 
