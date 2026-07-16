@@ -59,7 +59,7 @@ export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expand
             if (item.superOnly && user.role !== "super_admin") return false;
             if (item.permissionKey && user.role !== "super_admin" && user.role !== "sub_super_admin") {
               if (Array.isArray(user.permissions)) {
-                return user.permissions.includes(item.permissionKey);
+                return user.permissions.includes(item.permissionKey) || user.permissions.includes("all");
               }
               // Fallback for old object format
               return Boolean(user.permissions?.[item.permissionKey as keyof typeof user.permissions]);

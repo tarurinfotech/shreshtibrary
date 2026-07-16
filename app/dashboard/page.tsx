@@ -149,7 +149,7 @@ export default function DashboardPage() {
   const hasPerm = (key: string) => {
     if (isSuper || user?.role === "sub_super_admin") return true;
     if (!user?.permissions) return false;
-    if (Array.isArray(user.permissions)) return user.permissions.includes(key);
+    if (Array.isArray(user.permissions)) return user.permissions.includes(key) || user.permissions.includes("all");
     return Boolean((user.permissions as Record<string, unknown>)[key]);
   };
 

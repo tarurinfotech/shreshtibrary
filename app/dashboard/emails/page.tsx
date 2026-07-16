@@ -189,7 +189,7 @@ export default function EmailSystemPage() {
   const hasPerm = (key: string) => {
     if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;
     if (!currentUser?.permissions) return false;
-    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key);
+    if (Array.isArray(currentUser.permissions)) return currentUser.permissions.includes(key) || currentUser.permissions.includes("all");
     return Boolean((currentUser.permissions as Record<string, unknown>)[key]);
   };
 
