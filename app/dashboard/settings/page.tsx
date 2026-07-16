@@ -63,6 +63,7 @@ export default function SettingsPage() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   // Brevo Email Settings
+  const [enableEmailSystem, setEnableEmailSystem] = useState(true);
   const [brevoApiKey, setBrevoApiKey] = useState("");
   const [brevoFromName, setBrevoFromName] = useState("");
   const [brevoFromEmail, setBrevoFromEmail] = useState("");
@@ -131,6 +132,7 @@ export default function SettingsPage() {
   const updateBrevoSettings = useMutation({
     mutationFn: () => {
       return endpoints.updateSettings({
+        enable_email_system: enableEmailSystem,
         brevo_api_key: brevoApiKey || undefined,
         brevo_from_name: brevoFromName,
         brevo_from_email: brevoFromEmail,
@@ -199,6 +201,7 @@ export default function SettingsPage() {
         setBrevoApiKey(settings.data.brevo_api_key || "");
         setBrevoFromName(settings.data.brevo_from_name || "");
         setBrevoFromEmail(settings.data.brevo_from_email || "");
+        setEnableEmailSystem(settings.data.enable_email_system ?? true);
 
         setWaBaseUrl(settings.data.wa_base_url || "");
         setWaSessionId(settings.data.wa_session_id || "");
@@ -416,6 +419,11 @@ export default function SettingsPage() {
 
                  <Input label="From Name" value={brevoFromName} onChange={(e) => setBrevoFromName(e.target.value)} placeholder="Shresht Library" error={smtpErrors.brevo_from_name} />
                  <Input label="From Email" value={brevoFromEmail} onChange={(e) => setBrevoFromEmail(e.target.value)} placeholder="no-reply@shreshtlibrary.com" error={smtpErrors.brevo_from_email} />
+                 
+                 <div className="col-span-1 sm:col-span-2 pt-2">
+                   <Switch label="Enable Email System" checked={enableEmailSystem} onChange={(e) => setEnableEmailSystem(e.target.checked)} />
+                   <p className="text-xs text-muted mt-2">When disabled, all emails except password resets are blocked.</p>
+                 </div>
                </div>
                
                <div className="pt-4 border-t border-border mt-6 flex justify-end">
