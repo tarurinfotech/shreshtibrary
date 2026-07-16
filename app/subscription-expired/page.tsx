@@ -96,13 +96,22 @@ export default function SubscriptionExpiredPage() {
       {step === "locked" && (
         <div className="max-w-md w-full bg-neutral-900/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-neutral-800 p-8 text-center space-y-8 relative z-10">
           <div className="mx-auto w-20 h-20 bg-red-500/10 rounded-2xl flex items-center justify-center rotate-12 shadow-inner border border-red-500/20">
-            <Lock className="w-10 h-10 text-red-500 -rotate-12" />
+            {isSubSuperAdmin ? (
+              <Lock className="w-10 h-10 text-red-500 -rotate-12" />
+            ) : (
+              <ShieldCheck className="w-10 h-10 text-amber-500 -rotate-12" />
+            )}
           </div>
           
           <div className="space-y-3">
-            <h1 className="text-3xl font-extrabold text-white tracking-tight">Access Locked</h1>
+            <h1 className="text-3xl font-extrabold text-white tracking-tight">
+              {isSubSuperAdmin ? "Access Locked" : "Technical Issue"}
+            </h1>
             <p className="text-neutral-400 text-sm leading-relaxed">
-              {currentSub?.status === "Pending" ? "Your renewal payment is pending approval by the Super Admin. Please wait." : "Your library's subscription has expired. Platform access is temporarily suspended until the subscription is renewed."}
+              {isSubSuperAdmin 
+                ? (currentSub?.status === "Pending" ? "Your renewal payment is pending approval by the Super Admin. Please wait." : "Your library's subscription has expired. Platform access is temporarily suspended until the subscription is renewed.")
+                : "Your library is facing some technical issue. Please try again later or contact your administrator."
+              }
             </p>
           </div>
 
@@ -125,16 +134,17 @@ export default function SubscriptionExpiredPage() {
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out Securely
             </Button>
+            
+            {!isSubSuperAdmin && (
+              <Button 
+                variant="ghost" 
+                onClick={() => router.push("/dashboard")}
+                className="w-full text-neutral-400 hover:text-white"
+              >
+                Refresh / Retry Connection
+              </Button>
+            )}
           </div>
-          
-          {!isSubSuperAdmin && (
-            <div className="mt-6 p-4 rounded-xl bg-neutral-800/50 border border-neutral-700/50 flex items-start gap-3 text-left">
-              <ShieldCheck className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-              <p className="text-xs text-neutral-400">
-                Please contact your library administrator to renew the subscription and restore access.
-              </p>
-            </div>
-          )}
         </div>
       )}
 
