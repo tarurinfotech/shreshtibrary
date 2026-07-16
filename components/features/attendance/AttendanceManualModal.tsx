@@ -131,13 +131,38 @@ export function AttendanceManualModal({ open, onClose, canEditManual }: Attendan
   const manual = useMutation({
     mutationFn: async () => {
       const rows = manualStudents.data ?? [];
-      const payload = rows.map((student) => ({
-        student_id: student.user_id,
-        date: manualDate,
-        is_present: getManualPresence(student.user_id),
-      }));
-      await endpoints.manualAttendanceBulk(payload);
-      return rows.length;
+      const payload = [];
+
+      for (const student of rows) {
+        const studentId = student.user_id;
+        const currentPresence = getManualPresence(studentId);
+        const existingRecord = manualRecordsByStudent.get(studentId);
+        
+        let isChanged = false;
+        if (existingRecord) {
+          if (existingRecord.is_present !== currentPresence) {
+            isChanged = true;
+          }
+        } else {
+          // For students without an existing record, send if they were explicitly changed
+          if (studentId in manualOverrides) {
+            isChanged = true;
+          }
+        }
+
+        if (isChanged) {
+          payload.push({
+            student_id: studentId,
+            date: manualDate,
+            is_present: currentPresence,
+          });
+        }
+      }
+
+      if (payload.length > 0) {
+        await endpoints.manualAttendanceBulk(payload);
+      }
+      return payload.length;
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["manual-attendance-records", manualDate] });

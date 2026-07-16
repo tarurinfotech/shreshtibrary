@@ -37,7 +37,7 @@ export const navItems: NavItem[] = [
   { href: "/dashboard/attendance", label: "Attendance", icon: CalendarCheck, tone: "text-cyan-600 bg-cyan-500/15 border-cyan-500/25", permissionKey: "Attendance.View" },
   { href: "/dashboard/reviews", label: "Reviews", icon: MessageSquare, tone: "text-rose-600 bg-rose-500/15 border-rose-500/25", permissionKey: "LibraryManagement.Review" },
   { href: "/dashboard/notifications", label: "Notifications", icon: Bell, tone: "text-orange-600 bg-orange-500/15 border-orange-500/25", permissionKey: "NotificationManagement.View" },
-  { href: "/dashboard/emails", label: "Email System", icon: Mail, tone: "text-indigo-500 bg-indigo-500/15 border-indigo-500/25", permissionKey: "NotificationManagement.View" },
+  { href: "/dashboard/emails", label: "Email System", icon: Mail, tone: "text-indigo-500 bg-indigo-500/15 border-indigo-500/25", permissionKey: "NotificationManagement.View", superOnly: true },
   { href: "/dashboard/reports", label: "Reports", icon: BarChart3, tone: "text-lime-700 bg-lime-500/15 border-lime-500/25", permissionKey: "Reports.View" },
   { href: "/dashboard/library", label: "Library", icon: BookOpen, tone: "text-teal-600 bg-teal-500/15 border-teal-500/25", permissionKey: "LibraryManagement.Settings" },
   { href: "/dashboard/sliders", label: "Sliders", icon: Image, tone: "text-indigo-600 bg-indigo-500/15 border-indigo-500/25", permissionKey: "LibraryManagement.Slider" },
@@ -46,4 +46,5 @@ export const navItems: NavItem[] = [
   { href: "/dashboard/leaderboard", label: "Leaderboard", icon: Trophy, tone: "text-yellow-600 bg-yellow-500/15 border-yellow-500/25", permissionKey: "StudentManagement.View" },
   { href: "/dashboard/admins", label: "Admins", icon: KeyRound, tone: "text-fuchsia-600 bg-fuchsia-500/15 border-fuchsia-500/25", permissionKey: "AdminManagement.View" },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, tone: "text-slate-600 bg-slate-500/15 border-slate-500/25", permissionKey: "AppSettings.Manage" },
+  { href: "/dashboard/platform-licensing", label: "Licensing", icon: ShieldCheck, tone: "text-emerald-600 bg-emerald-500/15 border-emerald-500/25", superOnly: true },
 ];

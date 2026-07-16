@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/Button";
 import { Send, Eye, Copy } from "lucide-react";
@@ -172,6 +173,18 @@ export default function EmailSystemPage() {
   const [activeTemplate, setActiveTemplate] = useState(emailTemplates[0]);
   const addToast = useToastStore((state) => state.pushToast);
   const currentUser = useAuthStore((state) => state.user);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (currentUser && currentUser.role !== "super_admin") {
+      router.replace("/dashboard");
+    }
+  }, [currentUser, router]);
+
+  // If not super admin, we can also return null to prevent flashing the UI
+  if (currentUser && currentUser.role !== "super_admin") {
+    return null;
+  }
 
   const hasPerm = (key: string) => {
     if (currentUser?.role === "super_admin" || currentUser?.role === "sub_super_admin") return true;

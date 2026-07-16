@@ -75,6 +75,14 @@ api.interceptors.response.use(
 
     const original = error.config as RetryConfig | undefined;
     const isRefreshRequest = original?.url?.includes("/api/auth/refresh");
+    
+    const payload = error.response?.data as any;
+    if (error.response?.status === 403 && payload?.code === "LIBRARY_SUBSCRIPTION_EXPIRED") {
+        if (typeof window !== "undefined" && window.location.pathname !== "/subscription-expired") {
+            window.location.href = "/subscription-expired";
+        }
+        return Promise.reject(error);
+    }
 
     if (error.response?.status === 401 && original && !original._retry && !isRefreshRequest) {
       original._retry = true;

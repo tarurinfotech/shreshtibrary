@@ -744,5 +744,16 @@ export const endpoints = {
   },
 
   studyLeaderboard: (duration?: string, start_date?: string, end_date?: string) => getData<Array<{ rank: number; student: StudentProfile; total_minutes: number; hours_formatted: string; level_info?: { level: number; title: string; badge_color: string }; is_current_user?: boolean }>>("/study/leaderboard", { duration, start_date, end_date }),
+
+  // ─── Licensing (Super Admin & Sub Super Admin) ─────────────────────────────
+  platformPlans: () => getData<any[]>("/licensing/platform-plans"),
+  createPlatformPlan: (payload: any) => postData<any>("/licensing/platform-plans", payload),
+  platformPaymentSettings: () => getData<any>("/licensing/payment-settings"),
+  updatePlatformPaymentSettings: (payload: any) => putData<any>("/licensing/payment-settings", payload),
+  libraryPayments: () => getData<any[]>("/licensing/library-payments"),
+  approveLibraryPayment: (id: number) => postData<any>(`/licensing/library-payments/${id}/approve`),
+  currentSubscription: () => getData<any>("/licensing/current-subscription"),
+  submitLibraryPayment: (payload: any) => postData<any>("/licensing/submit-payment", payload),
+  publicPaymentSettings: () => getData<any>("/licensing/public-payment-settings"),
 };
 
