@@ -43,6 +43,7 @@ export default function PaymentsPage() {
   const [refundTarget, setRefundTarget] = useState<PaymentRecord | null>(null);
 
   const [page, setPage] = useState(1);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
   const currentUser = useAuthStore((state) => state.user);
 
   const hasPerm = (key: string) => {
@@ -146,6 +147,18 @@ export default function PaymentsPage() {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const filtered = payments.data?.data ?? [];
+
+  const handleDownloadReceipt = async (id: number) => {
+    try {
+      setDownloadingId(id);
+      await endpoints.downloadReceipt(id);
+      pushToast({ kind: "success", title: "Receipt downloaded" });
+    } catch (e: any) {
+      // errors are already handled via toast in downloadFile in api.ts, or we can just ignore here
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const handleStudentChange = (v: string) => {
     setForm((cur) => ({
@@ -262,7 +275,9 @@ export default function PaymentsPage() {
             variant="secondary"
             size="sm"
             icon={<Download className="h-4 w-4" />}
-            onClick={() => endpoints.downloadReceipt(payment.id)}
+            loading={downloadingId === payment.id}
+            disabled={downloadingId !== null && downloadingId !== payment.id}
+            onClick={() => handleDownloadReceipt(payment.id)}
           >
             Receipt
           </Button>
