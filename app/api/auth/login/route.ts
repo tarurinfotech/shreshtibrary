@@ -7,8 +7,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Call the Django backend
-    const res = await fetch(`${API_BASE_URL}/auth/login/admin/`, {
+    // Call the backend
+    const res = await fetch(`${API_BASE_URL}/auth/login/admin`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

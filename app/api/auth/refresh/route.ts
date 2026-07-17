@@ -15,8 +15,8 @@ export async function POST() {
       );
     }
 
-    // Call the Django backend to refresh the token
-    const res = await fetch(`${API_BASE_URL}/auth/token/refresh/`, {
+    // Call the backend to refresh the token
+    const res = await fetch(`${API_BASE_URL}/auth/token/refresh`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),

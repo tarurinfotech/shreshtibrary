@@ -113,6 +113,8 @@ export default function SettingsPage() {
         enable_whatsapp_service: enableWhatsappService,
         ...(user?.role === "super_admin" ? {
           maintenance_mode: maintenanceMode,
+        } : {}),
+        ...((user?.role === "super_admin" || user?.role === "sub_super_admin") ? {
           brevo_api_key: brevoApiKey || undefined,
           brevo_from_name: brevoFromName,
           brevo_from_email: brevoFromEmail,
@@ -196,13 +198,15 @@ export default function SettingsPage() {
       setAllowLibraryInfo(settings.data.allow_non_premium_library_info ?? true);
       setEnableWhatsappService(settings.data.enable_whatsapp_service ?? false);
       
-      if (user?.role === "super_admin") {
-        setMaintenanceMode(settings.data.maintenance_mode ?? false);
+      if (user?.role === "super_admin" || user?.role === "sub_super_admin") {
         setBrevoApiKey(settings.data.brevo_api_key || "");
         setBrevoFromName(settings.data.brevo_from_name || "");
         setBrevoFromEmail(settings.data.brevo_from_email || "");
         setEnableEmailSystem(settings.data.enable_email_system ?? true);
+      }
 
+      if (user?.role === "super_admin") {
+        setMaintenanceMode(settings.data.maintenance_mode ?? false);
         setWaBaseUrl(settings.data.wa_base_url || "");
         setWaSessionId(settings.data.wa_session_id || "");
         setWaApiKey(settings.data.wa_api_key || "");
@@ -388,12 +392,11 @@ export default function SettingsPage() {
           </div>
         </form>
 
-        {user?.role === "super_admin" && (
-          <>
+        {(user?.role === "super_admin" || user?.role === "sub_super_admin") && (
            <form onSubmit={submitBrevoSettings} className="lg:col-span-12">
              <SectionCard 
                title="Brevo Email Settings" 
-               eyebrow="Super Admin Only" 
+               eyebrow="Admin Email System" 
                className="border-purple-500/30"
              >
                <p className="text-sm text-muted mb-5">Configure the global mail server used to send Welcome emails, OTPs, and Password Reset links via Brevo HTTP API.</p>
@@ -433,6 +436,10 @@ export default function SettingsPage() {
                </div>
              </SectionCard>
            </form>
+        )}
+
+        {user?.role === "super_admin" && (
+          <>
            
            <form onSubmit={submitWaSettings} className="lg:col-span-12 mt-6">
              <SectionCard 

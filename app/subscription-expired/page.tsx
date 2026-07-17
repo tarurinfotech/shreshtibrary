@@ -21,8 +21,9 @@ export default function SubscriptionExpiredPage() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [isSubSuperAdmin, setIsSubSuperAdmin] = useState(false);
-  const [step, setStep] = useState<"locked" | "plans" | "payment">("locked");
+  const [step, setStep] = useState<"locked" | "plans" | "payment" | "review">("locked");
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [justSubmitted, setJustSubmitted] = useState(false);
   
   const [utrNumber, setUtrNumber] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
@@ -52,6 +53,12 @@ export default function SubscriptionExpiredPage() {
     }
   }, [userRole]);
 
+  useEffect(() => {
+    if (currentSub && currentSub.status !== "None" && currentSub.isExpired === false) {
+      router.replace("/dashboard");
+    }
+  }, [currentSub, router]);
+
   const submitPayment = useMutation({
     mutationFn: async () => {
       // In a real app we'd upload the screenshot to cloudinary first and get the URL
@@ -67,6 +74,7 @@ export default function SubscriptionExpiredPage() {
     },
     onSuccess: () => {
       pushToast({ kind: "success", title: "Payment submitted", message: "Payment submitted successfully! Waiting for Super Admin approval." });
+      setJustSubmitted(true);
       setStep("locked");
     },
     onError: (err) => {
@@ -105,18 +113,18 @@ export default function SubscriptionExpiredPage() {
           
           <div className="space-y-3">
             <h1 className="text-3xl font-extrabold text-white tracking-tight">
-              {isSubSuperAdmin ? "Access Locked" : "Technical Issue"}
+              {isSubSuperAdmin ? (currentSub?.hasPendingPayment || justSubmitted ? "Payment Under Review" : "Access Locked") : "Technical Issue"}
             </h1>
             <p className="text-neutral-400 text-sm leading-relaxed">
               {isSubSuperAdmin 
-                ? (currentSub?.status === "Pending" ? "Your renewal payment is pending approval by the Super Admin. Please wait." : "Your library's subscription has expired. Platform access is temporarily suspended until the subscription is renewed.")
+                ? (currentSub?.hasPendingPayment || justSubmitted ? "Your renewal payment is currently pending approval by the Super Admin. You will regain platform access once it's verified." : "Your library's subscription has expired. Platform access is temporarily suspended until the subscription is renewed. If you had a previous payment rejected, please renew again.")
                 : "Your library is facing some technical issue. Please try again later or contact your administrator."
               }
             </p>
           </div>
 
           <div className="pt-2 flex flex-col gap-3">
-            {isSubSuperAdmin && currentSub?.status !== "Pending" && (
+            {isSubSuperAdmin && !(currentSub?.hasPendingPayment || justSubmitted) && (
               <Button 
                 onClick={() => setStep("plans")}
                 className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-semibold py-6 rounded-xl transition-all shadow-lg shadow-red-900/20 border border-red-500/50"
@@ -249,7 +257,7 @@ export default function SubscriptionExpiredPage() {
                     <img src={paymentSettings.qrCodePath.startsWith('http') ? paymentSettings.qrCodePath : `/media/${paymentSettings.qrCodePath}`} alt="UPI QR" className="w-full h-full object-contain" />
                   ) : paymentSettings?.upiId ? (
                     <QRCodeSVG 
-                      value={`upi://pay?pa=${paymentSettings.upiId}&pn=${encodeURIComponent(paymentSettings.merchantName || 'Library')}&cu=INR`}
+                      value={`upi://pay?pa=${paymentSettings.upiId}&pn=${encodeURIComponent(paymentSettings.merchantName || 'Library')}&am=${selectedPlan?.monthlyPrice}&cu=INR`}
                       size={160}
                       level={"M"}
                       includeMargin={false}

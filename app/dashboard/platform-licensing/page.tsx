@@ -6,7 +6,7 @@ import { endpoints } from "@/lib/endpoints";
 import { useToastStore } from "@/store/toastStore";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
-import { ShieldCheck, Plus, CheckCircle2, Trash2 } from "lucide-react";
+import { ShieldCheck, Plus, CheckCircle2, Trash2, Eye, EyeOff, Edit3, XCircle } from "lucide-react";
 import { getErrorMessage } from "@/lib/api";
 
 export default function PlatformLicensingPage() {
@@ -15,6 +15,7 @@ export default function PlatformLicensingPage() {
   const [activeTab, setActiveTab] = useState("payments");
 
   const [isCreatePlanOpen, setIsCreatePlanOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any>(null);
 
   // Queries
   const { data: plans, isLoading: plansLoading } = useQuery({
@@ -42,6 +43,15 @@ export default function PlatformLicensingPage() {
     onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
   });
 
+  const rejectPayment = useMutation({
+    mutationFn: (id: number) => endpoints.rejectLibraryPayment(id),
+    onSuccess: () => {
+      pushToast({ kind: "success", title: "Payment Rejected", message: "Payment has been rejected." });
+      queryClient.invalidateQueries({ queryKey: ["libraryPayments"] });
+    },
+    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
+  });
+
   const createPlan = useMutation({
     mutationFn: (payload: any) => endpoints.createPlatformPlan(payload),
     onSuccess: () => {
@@ -61,6 +71,17 @@ export default function PlatformLicensingPage() {
     onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
   });
 
+  const updatePlan = useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: any }) => endpoints.updatePlatformPlan(id, payload),
+    onSuccess: () => {
+      pushToast({ kind: "success", title: "Plan Updated", message: "Plan updated successfully." });
+      setIsCreatePlanOpen(false);
+      setEditingPlan(null);
+      queryClient.invalidateQueries({ queryKey: ["platformPlans"] });
+    },
+    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
+  });
+
   const deletePlan = useMutation({
     mutationFn: (id: number) => endpoints.deletePlatformPlan(id),
     onSuccess: () => {
@@ -70,12 +91,21 @@ export default function PlatformLicensingPage() {
     onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
   });
 
-  const handleCreatePlan = (e: React.FormEvent<HTMLFormElement>) => {
+  const togglePlan = useMutation({
+    mutationFn: ({ id, isActive }: { id: number, isActive: boolean }) => endpoints.togglePlatformPlan(id, isActive),
+    onSuccess: (_, variables) => {
+      pushToast({ kind: "success", title: "Status Updated", message: `Plan is now ${variables.isActive ? 'active' : 'inactive'}.` });
+      queryClient.invalidateQueries({ queryKey: ["platformPlans"] });
+    },
+    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
+  });
+
+  const handleSavePlan = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const featuresList = formData.get("features")?.toString().split(",").map(f => f.trim()).filter(Boolean);
     
-    createPlan.mutate({
+    const payload = {
       name: formData.get("planName"),
       monthlyPrice: Number(formData.get("monthlyPrice")),
       quarterlyPrice: 0,
@@ -85,7 +115,13 @@ export default function PlatformLicensingPage() {
       maxStaff: 5,
       isRecommended: formData.get("isRecommended") === "on",
       features: featuresList
-    });
+    };
+
+    if (editingPlan) {
+      updatePlan.mutate({ id: editingPlan.id, payload });
+    } else {
+      createPlan.mutate(payload);
+    }
   };
 
   const handleSaveSettings = (e: React.FormEvent<HTMLFormElement>) => {
@@ -164,13 +200,23 @@ export default function PlatformLicensingPage() {
                       </td>
                       <td className="px-6 py-4">
                         {payment.status === 'Pending' && (
-                          <Button 
-                            onClick={() => approvePayment.mutate(payment.id)}
-                            loading={approvePayment.isPending}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white !py-1 !px-3 h-8 text-xs"
-                          >
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> Approve
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button 
+                              onClick={() => approvePayment.mutate(payment.id)}
+                              loading={approvePayment.isPending}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white !py-1 !px-3 h-8 text-xs"
+                            >
+                              <CheckCircle2 className="w-3 h-3 mr-1" /> Approve
+                            </Button>
+                            <Button 
+                              onClick={() => rejectPayment.mutate(payment.id)}
+                              loading={rejectPayment.isPending}
+                              variant="danger"
+                              className="!py-1 !px-3 h-8 text-xs"
+                            >
+                              <XCircle className="w-3 h-3 mr-1" /> Reject
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -189,7 +235,10 @@ export default function PlatformLicensingPage() {
         {activeTab === "plans" && (
           <div className="space-y-4">
             <div className="flex justify-end">
-              <Button onClick={() => setIsCreatePlanOpen(true)}>
+              <Button onClick={() => {
+                setEditingPlan(null);
+                setIsCreatePlanOpen(true);
+              }}>
                 <Plus className="w-4 h-4 mr-2" /> Create Plan
               </Button>
             </div>
@@ -198,21 +247,43 @@ export default function PlatformLicensingPage() {
                 <div key={plan.id} className={`p-6 rounded-2xl border ${plan.isRecommended ? 'bg-primary/5 border-primary shadow-lg shadow-primary/10' : 'bg-panel border-border'}`}>
                   <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 className="text-xl font-bold text-foreground">{plan.planName}</h3>
+                      <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
+                        {plan.planName}
+                        {!plan.isActive && <span className="bg-red-500/10 text-red-500 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">Inactive</span>}
+                      </h3>
                       {plan.isRecommended && <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-md font-bold uppercase inline-block mt-1">Pro</span>}
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => {
-                        if (confirm("Are you sure you want to delete this plan?")) {
-                          deletePlan.mutate(plan.id);
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-600 hover:bg-red-500/10 -mt-2 -mr-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center gap-2 -mt-2 -mr-2">
+                      <Button 
+                        variant="secondary" 
+                        size="icon" 
+                        title="Edit Plan"
+                        onClick={() => {
+                          setEditingPlan(plan);
+                          setIsCreatePlanOpen(true);
+                        }}
+                        icon={<Edit3 className="w-4 h-4" />}
+                      />
+                      <Button 
+                        variant="secondary" 
+                        size="icon" 
+                        title={plan.isActive ? "Deactivate Plan" : "Activate Plan"}
+                        onClick={() => togglePlan.mutate({ id: plan.id, isActive: !plan.isActive })}
+                        className="text-muted hover:text-foreground"
+                        icon={plan.isActive ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      />
+                      <Button 
+                        variant="danger" 
+                        size="icon" 
+                        title="Delete Plan"
+                        onClick={() => {
+                          if (confirm("Are you sure you want to delete this plan?")) {
+                            deletePlan.mutate(plan.id);
+                          }
+                        }}
+                        icon={<Trash2 className="w-4 h-4" />}
+                      />
+                    </div>
                   </div>
                   <div className="text-3xl font-extrabold text-foreground mb-6">
                     ₹{plan.monthlyPrice} <span className="text-base text-muted font-normal">/mo</span>
@@ -262,33 +333,33 @@ export default function PlatformLicensingPage() {
         )}
       </div>
 
-      <Modal open={isCreatePlanOpen} onClose={() => setIsCreatePlanOpen(false)} title="Create Subscription Plan">
-        <form id="createPlanForm" onSubmit={handleCreatePlan} className="space-y-4 py-4 min-w-[300px] md:min-w-[400px]">
+      <Modal open={isCreatePlanOpen} onClose={() => { setIsCreatePlanOpen(false); setEditingPlan(null); }} title={editingPlan ? "Edit Subscription Plan" : "Create Subscription Plan"}>
+        <form id="createPlanForm" onSubmit={handleSavePlan} className="space-y-4 py-4 min-w-[300px] md:min-w-[400px]">
           <div>
             <label className="text-sm font-medium text-muted block mb-1">Plan Name</label>
-            <input type="text" name="planName" required placeholder="e.g. Starter Plan" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" />
+            <input type="text" name="planName" required placeholder="e.g. Starter Plan" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={editingPlan?.planName} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium text-muted block mb-1">Monthly Price (₹)</label>
-              <input type="number" name="monthlyPrice" required placeholder="999" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" />
+              <input type="number" name="monthlyPrice" required placeholder="999" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={editingPlan?.monthlyPrice} />
             </div>
             <div>
               <label className="text-sm font-medium text-muted block mb-1">Max Students</label>
-              <input type="number" name="maxStudents" required placeholder="50" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" />
+              <input type="number" name="maxStudents" required placeholder="50" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={editingPlan?.maxStudents} />
             </div>
           </div>
           <div>
             <label className="text-sm font-medium text-muted block mb-1">Features (comma separated)</label>
-            <textarea name="features" placeholder="Unlimited seats, Premium support..." className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none h-24" />
+            <textarea name="features" placeholder="Unlimited seats, Premium support..." className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none h-24" defaultValue={editingPlan?.features?.join(", ")} />
           </div>
           <div className="flex items-center gap-2 mt-2">
-            <input type="checkbox" name="isRecommended" id="isRecommended" className="h-4 w-4 rounded border-border" />
+            <input type="checkbox" name="isRecommended" id="isRecommended" className="h-4 w-4 rounded border-border" defaultChecked={editingPlan?.isRecommended} />
             <label htmlFor="isRecommended" className="text-sm text-foreground">Highlight as Recommended Plan</label>
           </div>
           <div className="pt-4 flex justify-end gap-3">
-            <Button type="button" variant="ghost" onClick={() => setIsCreatePlanOpen(false)}>Cancel</Button>
-            <Button type="submit" loading={createPlan.isPending}>Create Plan</Button>
+            <Button type="button" variant="ghost" onClick={() => { setIsCreatePlanOpen(false); setEditingPlan(null); }}>Cancel</Button>
+            <Button type="submit" loading={createPlan.isPending || updatePlan.isPending}>{editingPlan ? "Update Plan" : "Create Plan"}</Button>
           </div>
         </form>
       </Modal>
