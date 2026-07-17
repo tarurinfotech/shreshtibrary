@@ -748,6 +748,7 @@ export const endpoints = {
   // ─── Licensing (Super Admin & Sub Super Admin) ─────────────────────────────
   platformPlans: () => getData<any[]>("/licensing/platform-plans"),
   createPlatformPlan: (payload: any) => postData<any>("/licensing/platform-plans", payload),
+  deletePlatformPlan: (id: number) => deleteData<any>(`/licensing/platform-plans/${id}`),
   platformPaymentSettings: () => getData<any>("/licensing/payment-settings"),
   updatePlatformPaymentSettings: (payload: any) => putData<any>("/licensing/payment-settings", payload),
   libraryPayments: () => getData<any[]>("/licensing/library-payments"),
