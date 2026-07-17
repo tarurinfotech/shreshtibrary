@@ -47,4 +47,5 @@ export const navItems: NavItem[] = [
   { href: "/dashboard/admins", label: "Admins", icon: KeyRound, tone: "text-fuchsia-600 bg-fuchsia-500/15 border-fuchsia-500/25", permissionKey: "AdminManagement.View" },
   { href: "/dashboard/settings", label: "Settings", icon: Settings, tone: "text-slate-600 bg-slate-500/15 border-slate-500/25", permissionKey: "AppSettings.Manage" },
   { href: "/dashboard/platform-licensing", label: "Licensing", icon: ShieldCheck, tone: "text-emerald-600 bg-emerald-500/15 border-emerald-500/25", superOnly: true },
+  { divider: true }
 ];
