@@ -52,20 +52,20 @@ export default function PlatformLicensingPage() {
     onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
   });
 
-  const deletePlan = useMutation({
-    mutationFn: (id: number) => endpoints.deletePlatformPlan(id),
-    onSuccess: () => {
-      pushToast({ kind: "success", title: "Plan Deleted", message: "Successfully deleted the subscription plan." });
-      queryClient.invalidateQueries({ queryKey: ["platformPlans"] });
-    },
-    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
-  });
-
   const updateSettings = useMutation({
     mutationFn: (payload: any) => endpoints.updatePlatformPaymentSettings(payload),
     onSuccess: () => {
       pushToast({ kind: "success", title: "Settings Saved", message: "Payment settings updated successfully." });
       queryClient.invalidateQueries({ queryKey: ["platformPaymentSettings"] });
+    },
+    onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
+  });
+
+  const deletePlan = useMutation({
+    mutationFn: (id: number) => endpoints.deletePlatformPlan(id),
+    onSuccess: () => {
+      pushToast({ kind: "success", title: "Plan Deleted", message: "Plan removed successfully." });
+      queryClient.invalidateQueries({ queryKey: ["platformPlans"] });
     },
     onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
   });
@@ -197,23 +197,22 @@ export default function PlatformLicensingPage() {
               {plans?.map((plan: any) => (
                 <div key={plan.id} className={`p-6 rounded-2xl border ${plan.isRecommended ? 'bg-primary/5 border-primary shadow-lg shadow-primary/10' : 'bg-panel border-border'}`}>
                   <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-xl font-bold text-foreground">{plan.planName}</h3>
-                    <div className="flex gap-2">
-                      {plan.isRecommended && <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-md font-bold uppercase">Pro</span>}
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => {
-                          if (confirm("Are you sure you want to delete this plan?")) {
-                            deletePlan.mutate(plan.id);
-                          }
-                        }}
-                        loading={deletePlan.isPending && deletePlan.variables === plan.id}
-                        className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                    <div>
+                      <h3 className="text-xl font-bold text-foreground">{plan.planName}</h3>
+                      {plan.isRecommended && <span className="bg-primary text-primary-foreground text-xs px-2 py-1 rounded-md font-bold uppercase inline-block mt-1">Pro</span>}
                     </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this plan?")) {
+                          deletePlan.mutate(plan.id);
+                        }
+                      }}
+                      className="text-red-500 hover:text-red-600 hover:bg-red-500/10 -mt-2 -mr-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </div>
                   <div className="text-3xl font-extrabold text-foreground mb-6">
                     ₹{plan.monthlyPrice} <span className="text-base text-muted font-normal">/mo</span>
