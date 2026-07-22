@@ -7,17 +7,28 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    // Call the backend
-    const res = await fetch(`${API_BASE_URL}/auth/login/admin`, {
+    const targetUrl = `${API_BASE_URL.replace(/\/$/, "")}/auth/login/admin`;
+
+    const res = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
+      cache: "no-store",
     });
 
-    const data = await res.json();
+    const responseText = await res.text();
+    let data: any = {};
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { success: false, message: responseText || "Server returned non-JSON response." };
+    }
 
     if (!res.ok) {
-      return NextResponse.json(data, { status: res.status });
+      return NextResponse.json(
+        typeof data === "object" && data !== null ? data : { success: false, message: "Login failed." },
+        { status: res.status }
+      );
     }
 
     // data.data should contain tokens and user according to ApiResponse format
@@ -43,10 +54,10 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: "Internal server error during login.", error: String(error) },
-      { status: 500 }
+      { success: false, message: "Failed to connect to backend auth service.", error: error?.message || String(error) },
+      { status: 502 }
     );
   }
 }

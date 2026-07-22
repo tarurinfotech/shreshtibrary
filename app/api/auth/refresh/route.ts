@@ -15,24 +15,31 @@ export async function POST() {
       );
     }
 
-    // Call the backend to refresh the token
-    const res = await fetch(`${API_BASE_URL}/auth/token/refresh`, {
+    const targetUrl = `${API_BASE_URL.replace(/\/$/, "")}/auth/token/refresh`;
+
+    const res = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ refresh }),
+      cache: "no-store",
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      // If refresh failed, clear the cookie
-      cookieStore.delete("shresht_refresh_token");
-      return NextResponse.json(data, { status: res.status });
+    const responseText = await res.text();
+    let data: any = {};
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      data = { success: false, message: responseText || "Server returned non-JSON response." };
     }
 
-    // ASP.NET Core returns { access: "..." } directly (not wrapped).
-    // Normalize into { success: true, data: { access } } so that
-    // the frontend api.ts interceptor at response.data.data.access works.
+    if (!res.ok) {
+      cookieStore.delete("shresht_refresh_token");
+      return NextResponse.json(
+        typeof data === "object" && data !== null ? data : { success: false, message: "Token refresh failed." },
+        { status: res.status }
+      );
+    }
+
     const accessToken = data.access ?? data.data?.access;
 
     if (!accessToken) {
@@ -44,10 +51,10 @@ export async function POST() {
     }
 
     return NextResponse.json({ success: true, data: { access: accessToken } });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
-      { success: false, message: "Internal server error during token refresh." },
-      { status: 500 }
+      { success: false, message: "Failed to connect to backend auth service.", error: error?.message || String(error) },
+      { status: 502 }
     );
   }
 }
