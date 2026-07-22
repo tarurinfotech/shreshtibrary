@@ -15,7 +15,12 @@ export async function POST() {
       );
     }
 
-    const targetUrl = `${API_BASE_URL.replace(/\/$/, "")}/auth/token/refresh`;
+    let baseUrl = API_BASE_URL;
+    if (!baseUrl || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1")) {
+      baseUrl = "https://shreshtlibrary.onrender.com/api/v1";
+    }
+
+    const targetUrl = `${baseUrl.replace(/\/$/, "")}/auth/token/refresh`;
 
     const res = await fetch(targetUrl, {
       method: "POST",

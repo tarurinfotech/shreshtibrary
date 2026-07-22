@@ -7,7 +7,12 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
-    const targetUrl = `${API_BASE_URL.replace(/\/$/, "")}/auth/login/admin`;
+    let baseUrl = API_BASE_URL;
+    if (!baseUrl || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1")) {
+      baseUrl = "https://shreshtlibrary.onrender.com/api/v1";
+    }
+
+    const targetUrl = `${baseUrl.replace(/\/$/, "")}/auth/login/admin`;
 
     const res = await fetch(targetUrl, {
       method: "POST",
