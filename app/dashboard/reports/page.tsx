@@ -68,9 +68,9 @@ export default function ReportsPage() {
   const canSeats = hasPerm("LibraryManagement.Seat") || hasPerm("manage_seats");
 
   const stats = useQuery({ queryKey: ["dashboard-stats"], queryFn: () => endpoints.dashboardStats() });
-  const charts = useQuery({ queryKey: ["dashboard-charts", range], queryFn: () => endpoints.dashboardCharts(range === "14" ? "week" : (range === "30" ? "month" : "month")) });
+  const charts = useQuery({ queryKey: ["dashboard-charts", range], queryFn: () => endpoints.dashboardCharts(range === "14" ? "week" : (range === "30" ? "month" : "month")), placeholderData: (prev) => prev });
   const attendance = useQuery({ queryKey: ["report-attendance"], queryFn: () => endpoints.report("attendance", { page_size: 5 }), enabled: canAttendance });
-  const payments = useQuery({ queryKey: ["report-payments"], queryFn: () => endpoints.report("payments", { page_size: 100 }), enabled: canPayments });
+  const payments = useQuery({ queryKey: ["report-payments"], queryFn: () => endpoints.report("payments", { page_size: 20 }), enabled: canPayments });
   const students = useQuery({ queryKey: ["report-students"], queryFn: () => endpoints.report("students", { page_size: 5 }), enabled: canStudents });
   const memberships = useQuery({ queryKey: ["report-memberships"], queryFn: () => endpoints.report("memberships", { page_size: 5 }), enabled: canPlans });
   const seats = useQuery({ queryKey: ["report-seats"], queryFn: endpoints.seatReport, enabled: canSeats });
@@ -125,8 +125,8 @@ export default function ReportsPage() {
     ? Math.round((dashboardStats.seats.occupied / dashboardStats.seats.total) * 100) 
     : 0;
 
-  const loading = attendance.isLoading || payments.isLoading || students.isLoading || memberships.isLoading || seats.isLoading || stats.isLoading || charts.isLoading;
-  const hasError = attendance.error || payments.error || students.error || memberships.error || seats.error || stats.error || charts.error;
+  const loading = (stats.isLoading && !stats.data) || (charts.isLoading && !charts.data);
+  const hasError = stats.isError || charts.isError;
 
   return (
     <>
@@ -318,8 +318,8 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {membershipRows.slice(0, 5).map((membership) => (
-                  <tr key={membership.id}>
+                {membershipRows.slice(0, 5).map((membership, index) => (
+                  <tr key={membership.id ?? index}>
                     <Td className="font-medium">{membership.student_name}</Td>
                     <Td>{membership.plan_name}</Td>
                     <Td className="text-muted">{formatDate(membership.start_date)} - {formatDate(membership.end_date)}</Td>
@@ -343,8 +343,8 @@ export default function ReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {studentRows.slice(0, 5).map((student) => (
-                  <tr key={student.user_id}>
+                {studentRows.slice(0, 5).map((student, index) => (
+                  <tr key={student.id ?? student.user_id ?? student.student_id ?? index}>
                     <Td className="text-muted">{student.student_id}</Td>
                     <Td className="font-medium">{fullName(student.first_name, student.last_name, student.username)}</Td>
                     <Td>{student.goal}</Td>

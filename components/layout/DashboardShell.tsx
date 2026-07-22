@@ -14,7 +14,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { access, hydrated, user } = useAuthStore();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(false);
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true);
+
+  const toggleDesktopSidebar = () => {
+    setDesktopSidebarOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("shresht-sidebar-expanded", String(next));
+      }
+      return next;
+    });
+  };
 
   const isRefreshingSession = hydrated && user && !access;
 
@@ -115,13 +125,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div
         className={`hidden md:flex md:flex-col md:flex-1 w-full min-w-0 transition-[padding-left] duration-300 ease-in-out ${desktopSidebarOpen ? "pl-[256px]" : "pl-[96px]"}`}
       >
-        <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={() => setDesktopSidebarOpen((open) => !open)} />
+        <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={toggleDesktopSidebar} />
         <main id="main-content" tabIndex={-1} className="mx-auto flex w-full max-w-[1760px] flex-col min-w-0 gap-4 px-4 py-4 md:gap-7 md:px-8 md:py-6 focus:outline-none">{children}</main>
       </div>
 
       {/* Mobile: no sidebar offset */}
       <div className="flex flex-col flex-1 min-w-0 md:hidden">
-        <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={() => setDesktopSidebarOpen((open) => !open)} />
+        <Topbar onMenu={() => setMobileOpen(true)} onDesktopMenu={toggleDesktopSidebar} />
         <main id="main-content-mobile" tabIndex={-1} className="mx-auto flex w-full max-w-[1760px] flex-col min-w-0 gap-4 px-4 py-4 md:gap-7 md:px-8 md:py-6 focus:outline-none">{children}</main>
       </div>
     </div>

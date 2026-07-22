@@ -52,3 +52,20 @@ export function getTodayDate(): string {
   const day = String(now.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
+
+export function formatDurationSeconds(seconds: number | null): string {
+  if (seconds === null) return "Calculating";
+  if (seconds <= 0) return "Expired";
+
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+
+  if (hrs > 0) {
+    return `${hrs}h ${mins}m ${secs}s remaining`;
+  }
+  if (mins > 0) {
+    return `${mins}m ${secs}s remaining`;
+  }
+  return `${secs}s remaining`;
+}

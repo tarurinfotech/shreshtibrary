@@ -16,8 +16,15 @@ function syncTheme(theme: ThemeMode) {
     return;
   }
 
+  // Instant 0ms synchronous DOM update
   document.documentElement.dataset.theme = theme;
-  document.cookie = `shresht-admin-theme=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+
+  // Non-blocking cookie write
+  try {
+    document.cookie = `shresht-admin-theme=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+  } catch (e) {
+    // Ignore cookie write errors
+  }
 }
 
 export const useThemeStore = create<ThemeState>()(
@@ -28,12 +35,12 @@ export const useThemeStore = create<ThemeState>()(
         syncTheme(theme);
         set({ theme });
       },
-      toggleTheme: () =>
-        set((state) => {
-          const theme = state.theme === "dark" ? "light" : "dark";
-          syncTheme(theme);
-          return { theme };
-        }),
+      toggleTheme: () => {
+        const current = useThemeStore.getState().theme;
+        const nextTheme = current === "dark" ? "light" : "dark";
+        syncTheme(nextTheme);
+        set({ theme: nextTheme });
+      },
     }),
     {
       name: "shresht-admin-theme",

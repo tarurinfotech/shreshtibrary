@@ -25,32 +25,30 @@ export function AppProviders({
           queries: {
             retry: 1,
             refetchOnWindowFocus: false, // Disabled to prevent excessive API calls on tab switch
-            staleTime: 30 * 1000, // 30 seconds for freshness (mutations invalidate cache immediately)
-            gcTime: 15 * 60 * 1000, // 15 minutes
+            refetchOnReconnect: false,
+            staleTime: 60 * 1000, // 60 seconds stale time for fast instant navigation
+            gcTime: 15 * 60 * 1000, // 15 minutes cache retention
+            placeholderData: (prev: any) => prev,
           },
         },
       }),
   );
 
   useEffect(() => {
-    const root = document.documentElement;
-    root.dataset.theme = theme;
-    root.classList.add("theme-transition");
-    document.cookie = `shresht-admin-theme=${theme}; path=/; max-age=31536000; SameSite=Lax`;
+    document.documentElement.dataset.theme = theme;
   }, [theme]);
 
   useEffect(() => {
-    let nextTheme = initialTheme;
     try {
       const raw = window.localStorage.getItem("shresht-admin-theme");
       const saved = raw ? JSON.parse(raw).state?.theme : null;
-      nextTheme = saved === "light" ? "light" : saved === "dark" ? "dark" : initialTheme;
+      if (saved && (saved === "light" || saved === "dark") && saved !== initialTheme) {
+        setTheme(saved);
+      }
     } catch {
-      nextTheme = initialTheme;
+      // Ignore storage errors
     }
-
-    setTheme(nextTheme);
-  }, [initialTheme, setTheme]);
+  }, []);
 
   // Restore access token on load if user is logged in
   useEffect(() => {

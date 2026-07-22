@@ -12,14 +12,24 @@ export async function POST(request: Request) {
       baseUrl = "https://shreshtlibrary.onrender.com/api/v1";
     }
 
-    const targetUrl = `${baseUrl.replace(/\/$/, "")}/auth/login/admin`;
+    let targetUrl = `${baseUrl.replace(/\/$/, "")}/auth/login/admin`;
 
-    const res = await fetch(targetUrl, {
+    let res = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       cache: "no-store",
     });
+
+    if (res.status === 404) {
+      targetUrl = `${baseUrl.replace(/\/$/, "")}/auth/login`;
+      res = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
+    }
 
     const responseText = await res.text();
     let data: any = {};

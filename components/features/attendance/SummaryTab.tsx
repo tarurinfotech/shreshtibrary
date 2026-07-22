@@ -56,9 +56,9 @@ export function SummaryTab() {
           <h2 className="mb-4 font-semibold">Absentees</h2>
           {absentees.isLoading ? <LoadingBlock label="Loading absentees" /> : (
             <div className="grid gap-2">
-              {(absentees.data ?? []).slice((absenteePage - 1) * absenteePageSize, absenteePage * absenteePageSize).map((student) => (
+              {(absentees.data ?? []).slice((absenteePage - 1) * absenteePageSize, absenteePage * absenteePageSize).map((student, index) => (
                 <EntityListItem
-                  key={student.user_id}
+                  key={student.id ?? student.user_id ?? student.student_id ?? index}
                   title={fullName(student.first_name, student.last_name, student.username)}
                   trailing={
                     <div className="flex flex-col items-end gap-1">

@@ -176,6 +176,7 @@ export default function DashboardPage() {
   const chart = useQuery({
     queryKey: ["dashboard-chart", chartDomain],
     queryFn: () => endpoints.dashboardChart(chartDomain),
+    placeholderData: (prev) => prev,
   });
   const attendanceSummary = useQuery({ queryKey: ["dashboard-attendance-summary"], queryFn: () => endpoints.attendanceDailySummary() });
   const activity = useQuery({

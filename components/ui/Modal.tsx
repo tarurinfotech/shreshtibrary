@@ -111,22 +111,22 @@ export function Modal({
   };
 
   const sizeClasses = {
-    default: "sm:min-w-[32rem] md:min-w-[36rem]",
-    lg: "sm:min-w-[40rem] md:min-w-[48rem]",
-    xl: "sm:min-w-[48rem] md:min-w-[56rem]",
-    "2xl": "sm:min-w-[56rem] md:min-w-[72rem]",
+    default: "w-full max-w-[95vw] sm:max-w-lg md:max-w-xl",
+    lg: "w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl",
+    xl: "w-full max-w-[95vw] sm:max-w-2xl md:max-w-4xl",
+    "2xl": "w-full max-w-[95vw] sm:max-w-4xl md:max-w-6xl",
     full: "w-[95vw] h-[95vh]",
   };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4 transition-all duration-300 animate-in fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-2 sm:p-4 transition-all duration-300 animate-in fade-in"
       role="presentation"
       onClick={onClose}
     >
       <div
         ref={dialogRef}
-        className={`surface max-h-[95vh] flex flex-col w-full sm:w-auto ${sizeClasses[size ?? "default"]} overflow-hidden rounded-2xl shadow-2xl animate-modal-in relative ${className ?? "max-w-[95vw] md:max-w-fit"}`}
+        className={`surface max-h-[92vh] flex flex-col ${sizeClasses[size ?? "default"]} overflow-hidden rounded-2xl shadow-2xl animate-modal-in relative ${className ?? ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
