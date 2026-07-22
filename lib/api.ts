@@ -10,6 +10,27 @@ import type { ApiResponse, PaginatedResponse } from "@/types/api";
 import { API_BASE_URL } from "./baseApi";
 export { API_BASE_URL };
 
+import { ClientCacheManager } from "./cacheManager";
+import { VersionedCacheManager } from "./versionedCacheManager";
+export { VersionedCacheManager };
+
+export async function swrGet<T>(url: string, category: string, params?: Record<string, unknown>): Promise<T> {
+  const response = await api.get<ApiResponse<T>>(url, { params });
+  const serverVersionHeader = response.headers["x-cache-version"];
+  const serverVersion = serverVersionHeader ? parseInt(serverVersionHeader, 10) : 1;
+
+  if (serverVersionHeader && !isNaN(serverVersion)) {
+    const cached = VersionedCacheManager.get<T>(category, serverVersion);
+    if (cached) return cached;
+  }
+
+  const data = unwrap<T>(response);
+  if (serverVersionHeader && !isNaN(serverVersion)) {
+    VersionedCacheManager.set<T>(category, data, serverVersion);
+  }
+  return data;
+}
+
 type RetryConfig = InternalAxiosRequestConfig & { _retry?: boolean };
 
 // Track consecutive network failures to avoid false positives on cold starts
@@ -45,11 +66,31 @@ api.interceptors.response.use(
     if (useNetworkStore.getState().isOffline && typeof window !== "undefined") {
       window.location.reload();
     }
+    // Auto-cache successful GET responses
+    if (response.config.method?.toLowerCase() === "get" && response.config.url) {
+      ClientCacheManager.set(response.config.url, response.data);
+    }
     return response;
   },
   async (error: AxiosError<ApiResponse<any>>) => {
     if (axios.isCancel(error)) {
       return Promise.reject(error);
+    }
+
+    const config = error.config;
+    // Offline stale cache fallback for GET requests
+    if (config?.method?.toLowerCase() === "get" && config.url) {
+      const staleData = ClientCacheManager.getStale(config.url);
+      if (staleData) {
+        return {
+          ...error.response,
+          data: staleData,
+          status: 200,
+          statusText: "OK (Offline Cache)",
+          headers: {},
+          config,
+        } as any;
+      }
     }
 
     const status = error.response?.status;
@@ -129,7 +170,9 @@ export function unwrap<T>(response: { data: ApiResponse<T> }, schema?: z.ZodType
     try {
       return schema.parse(data);
     } catch (error) {
-      // Zod validation failed for response data
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[API] Zod validation failed for response data:', error);
+      }
     }
   }
   return data;
@@ -145,7 +188,9 @@ export function unwrapPage<T>(response: { data: any }, itemSchema?: z.ZodType<T>
       // Validate array of items
       z.array(itemSchema).parse(page.data);
     } catch (error) {
-      // Zod validation failed for paginated data
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('[API] Zod validation failed for paginated data:', error);
+      }
     }
   }
   return page;

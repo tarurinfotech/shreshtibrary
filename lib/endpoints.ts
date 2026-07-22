@@ -3,6 +3,7 @@
 
 import axios from "axios";
 import { api, downloadFile, unwrap, unwrapPage } from "./api";
+import { ClientCacheManager } from "./cacheManager";
 import type {
   ActivityLogItem,
   AdminProfile,
@@ -536,107 +537,106 @@ export const endpoints = {
 
   // Library Content
   libraryInfo: async () => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("shresht-library-info");
-      if (cached) {
-        try { return JSON.parse(cached) as LibraryInfo; } catch (e) { }
-      }
-    }
-    const data = await getData<LibraryInfo>("/admin/library/info");
-    if (typeof window !== "undefined") localStorage.setItem("shresht-library-info", JSON.stringify(data));
-    return data;
+    return await getData<LibraryInfo>("/admin/library/info");
   },
 
   updateLibraryInfo: async (payload: Partial<LibraryInfo>, logo?: File | null, bannerImage?: File | null) => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-library-info");
+      ClientCacheManager.invalidate("library");
+    }
     const data = await putMultipart<LibraryInfo>("/admin/library/info", toFormData(payload, { logo, banner_image: bannerImage }));
-    if (typeof window !== "undefined") localStorage.setItem("shresht-library-info", JSON.stringify(data));
     return data;
   },
 
   facilities: async () => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("shresht-facilities");
-      if (cached) {
-        try { return JSON.parse(cached) as Facility[]; } catch (e) { }
-      }
-    }
-    const data = await getData<Facility[]>("/admin/library/facilities");
-    if (typeof window !== "undefined") localStorage.setItem("shresht-facilities", JSON.stringify(data));
-    return data;
+    return await getData<Facility[]>("/admin/library/facilities");
   },
 
   createFacility: async (payload: Partial<Facility>, image?: File | null) => {
-    const data = await postMultipart<Facility>("/admin/library/facilities", toFormData(payload, { image }));
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-facilities");
+      ClientCacheManager.invalidate("facility");
+    }
+    return await postMultipart<Facility>("/admin/library/facilities", toFormData(payload, { image }));
   },
 
   updateFacility: async (id: number, payload: Partial<Facility>, image?: File | null) => {
-    const data = await putMultipart<Facility>(`/admin/library/facilities/${id}`, toFormData(payload, { image }));
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-facilities");
+      ClientCacheManager.invalidate("facility");
+    }
+    return await putMultipart<Facility>(`/admin/library/facilities/${id}`, toFormData(payload, { image }));
   },
 
   deleteFacility: async (id: number) => {
-    const data = await deleteData<any>(`/admin/library/facilities/${id}`);
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-facilities");
+      ClientCacheManager.invalidate("facility");
+    }
+    return await deleteData<any>(`/admin/library/facilities/${id}`);
   },
 
   toggleFacility: async (id: number, is_active?: boolean) => {
-    const data = await postData<Facility>(`/admin/library/facilities/${id}/toggle`, { is_active });
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-facilities");
+      ClientCacheManager.invalidate("facility");
+    }
+    return await postData<Facility>(`/admin/library/facilities/${id}/toggle`, { is_active });
   },
 
   reorderFacilities: async (items: Array<{ id: number; order: number }>) => {
-    const data = await patchData<any>("/admin/library/facilities/reorder", { items });
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-facilities");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-facilities");
+      ClientCacheManager.invalidate("facility");
+    }
+    return await patchData<any>("/admin/library/facilities/reorder", { items });
   },
 
   achievers: async () => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("shresht-achievers");
-      if (cached) {
-        try { return JSON.parse(cached) as Achiever[]; } catch (e) { }
-      }
-    }
-    const data = await getData<Achiever[]>("/admin/library/achievers");
-    if (typeof window !== "undefined") localStorage.setItem("shresht-achievers", JSON.stringify(data));
-    return data;
+    return await getData<Achiever[]>("/admin/library/achievers");
   },
 
   publicAchievers: () => getData<Achiever[]>("/library/achievers"),
 
   createAchiever: async (payload: Partial<Achiever>, photo?: File | null) => {
-    const data = await postMultipart<Achiever>("/admin/library/achievers", toFormData(payload, { photo }));
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-achievers");
+      ClientCacheManager.invalidate("achiever");
+    }
+    return await postMultipart<Achiever>("/admin/library/achievers", toFormData(payload, { photo }));
   },
 
   updateAchiever: async (id: number, payload: Partial<Achiever>, photo?: File | null) => {
-    const data = await putMultipart<Achiever>(`/admin/library/achievers/${id}`, toFormData(payload, { photo }));
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-achievers");
+      ClientCacheManager.invalidate("achiever");
+    }
+    return await putMultipart<Achiever>(`/admin/library/achievers/${id}`, toFormData(payload, { photo }));
   },
 
   deleteAchiever: async (id: number) => {
-    const data = await deleteData<any>(`/admin/library/achievers/${id}`);
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-achievers");
+      ClientCacheManager.invalidate("achiever");
+    }
+    return await deleteData<any>(`/admin/library/achievers/${id}`);
   },
 
   toggleAchiever: async (id: number, is_active?: boolean) => {
-    const data = await postData<Achiever>(`/admin/library/achievers/${id}/toggle`, { is_active });
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-achievers");
+      ClientCacheManager.invalidate("achiever");
+    }
+    return await postData<Achiever>(`/admin/library/achievers/${id}/toggle`, { is_active });
   },
 
   reorderAchievers: async (items: Array<{ id: number; order: number }>) => {
-    const data = await patchData<any>("/admin/library/achievers/reorder", { items });
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-achievers");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-achievers");
+      ClientCacheManager.invalidate("achiever");
+    }
+    return await patchData<any>("/admin/library/achievers/reorder", { items });
   },
 
   publicReviews: (params?: ListParams) => getPage<Review>("/admin/library/reviews", params),
@@ -659,27 +659,23 @@ export const endpoints = {
 
   // Gallery Endpoints
   galleryImages: async () => {
-    if (typeof window !== "undefined") {
-      const cached = localStorage.getItem("shresht-gallery");
-      if (cached) {
-        try { return JSON.parse(cached) as GalleryImage[]; } catch (e) { }
-      }
-    }
-    const data = await getData<GalleryImage[]>("/admin/library/gallery");
-    if (typeof window !== "undefined") localStorage.setItem("shresht-gallery", JSON.stringify(data));
-    return data;
+    return await getData<GalleryImage[]>("/admin/library/gallery");
   },
 
   uploadGalleryImage: async (caption?: string, order?: number, image?: File | null) => {
-    const data = await postMultipart<GalleryImage>("/admin/library/gallery", toFormData({ caption, order }, { image }));
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-gallery");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-gallery");
+      ClientCacheManager.invalidate("gallery");
+    }
+    return await postMultipart<GalleryImage>("/admin/library/gallery", toFormData({ caption, order }, { image }));
   },
 
   deleteGalleryImage: async (id: number) => {
-    const data = await deleteData<any>(`/admin/library/gallery/${id}`);
-    if (typeof window !== "undefined") localStorage.removeItem("shresht-gallery");
-    return data;
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("shresht-gallery");
+      ClientCacheManager.invalidate("gallery");
+    }
+    return await deleteData<any>(`/admin/library/gallery/${id}`);
   },
 
   // Reports
