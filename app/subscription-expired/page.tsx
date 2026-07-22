@@ -66,7 +66,7 @@ export default function SubscriptionExpiredPage() {
       // For now, let's assume screenshotPath is optional or handled later
       return endpoints.submitLibraryPayment({
         PlanId: selectedPlan.id,
-        DurationDays: 30, // Default to monthly for now
+        DurationDays: selectedPlan.durationDays || 30, 
         Amount: selectedPlan.monthlyPrice,
         UtrNumber: utrNumber,
         ScreenshotPath: "pending_upload.jpg", 
@@ -185,7 +185,7 @@ export default function SubscriptionExpiredPage() {
                 <h3 className="text-xl font-bold text-white">{plan.planName}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold text-white">₹{plan.monthlyPrice}</span>
-                  <span className="text-neutral-500 font-medium">/mo</span>
+                  <span className="text-neutral-500 font-medium">/ {plan.durationMonths === 1 ? "mo" : plan.durationMonths % 12 === 0 ? `${plan.durationMonths / 12} yr` : `${plan.durationMonths} mo`}</span>
                 </div>
                 
                 <div className="mt-8 space-y-4 flex-1">
@@ -233,7 +233,7 @@ export default function SubscriptionExpiredPage() {
                 <span>{selectedPlan?.planName}</span>
                 <span>₹{selectedPlan?.monthlyPrice}</span>
               </div>
-              <p className="text-sm text-indigo-300/70">1 Month Subscription</p>
+              <p className="text-sm text-indigo-300/70">{selectedPlan?.durationMonths === 1 ? "1 Month" : selectedPlan?.durationMonths % 12 === 0 ? `${selectedPlan?.durationMonths / 12} Year` : `${selectedPlan?.durationMonths} Months`} Subscription</p>
             </div>
             
             <div className="mt-8 pt-8 border-t border-neutral-800 flex justify-between items-center text-xl font-bold text-white">

@@ -84,8 +84,13 @@ export default function PlatformLicensingPage() {
 
   const deletePlan = useMutation({
     mutationFn: (id: number) => endpoints.deletePlatformPlan(id),
-    onSuccess: () => {
-      pushToast({ kind: "success", title: "Plan Deleted", message: "Plan removed successfully." });
+    onSuccess: (data) => {
+      const isDeactivated = data?.isDeactivated;
+      pushToast({ 
+        kind: isDeactivated ? "info" : "success", 
+        title: isDeactivated ? "Plan Deactivated" : "Plan Deleted", 
+        message: data?.message || "Plan removed successfully." 
+      });
       queryClient.invalidateQueries({ queryKey: ["platformPlans"] });
     },
     onError: (err) => pushToast({ kind: "error", title: "Action Failed", message: getErrorMessage(err) })
@@ -111,6 +116,14 @@ export default function PlatformLicensingPage() {
       quarterlyPrice: 0,
       halfYearlyPrice: 0,
       yearlyPrice: 0,
+      durationMonths: 
+        formData.get("durationType") === "years" 
+          ? Number(formData.get("durationValue")) * 12 
+          : Number(formData.get("durationValue")),
+      durationDays:
+        formData.get("durationType") === "years" 
+          ? Number(formData.get("durationValue")) * 365 
+          : Number(formData.get("durationValue")) * 30,
       maxStudents: Number(formData.get("maxStudents")),
       maxStaff: 5,
       isRecommended: formData.get("isRecommended") === "on",
@@ -286,7 +299,7 @@ export default function PlatformLicensingPage() {
                     </div>
                   </div>
                   <div className="text-3xl font-extrabold text-foreground mb-6">
-                    ₹{plan.monthlyPrice} <span className="text-base text-muted font-normal">/mo</span>
+                    ₹{plan.monthlyPrice} <span className="text-base text-muted font-normal">/ {plan.durationMonths === 1 ? "mo" : plan.durationMonths % 12 === 0 ? `${plan.durationMonths / 12} yr` : `${plan.durationMonths} mo`}</span>
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -341,12 +354,25 @@ export default function PlatformLicensingPage() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-medium text-muted block mb-1">Monthly Price (₹)</label>
+              <label className="text-sm font-medium text-muted block mb-1">Price (₹)</label>
               <input type="number" name="monthlyPrice" required placeholder="999" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={editingPlan?.monthlyPrice} />
             </div>
             <div>
               <label className="text-sm font-medium text-muted block mb-1">Max Students</label>
               <input type="number" name="maxStudents" required placeholder="50" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={editingPlan?.maxStudents} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted block mb-1">Duration Unit</label>
+              <select name="durationType" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={editingPlan?.durationMonths >= 12 && editingPlan?.durationMonths % 12 === 0 ? "years" : "months"}>
+                <option value="months">Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted block mb-1">Duration Value</label>
+              <input type="number" name="durationValue" required min="1" placeholder="1" className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none" defaultValue={editingPlan?.durationMonths >= 12 && editingPlan?.durationMonths % 12 === 0 ? editingPlan?.durationMonths / 12 : editingPlan?.durationMonths || 1} />
             </div>
           </div>
           <div>
