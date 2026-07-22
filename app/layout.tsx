@@ -8,7 +8,7 @@ export async function generateMetadata(): Promise<Metadata> {
   let libraryName = "Shresht Library Admin";
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:5242";
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "https://shreshtlibrary.onrender.com";
     const res = await fetch(`${baseUrl}/api/v1/library/info`, { next: { revalidate: 3600 } });
     if (res.ok) {
       const result = await res.json();
