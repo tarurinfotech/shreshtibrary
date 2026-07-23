@@ -151,7 +151,7 @@ export function StudentDetailClient({ id }: { id: string }) {
           readOnly={!canEdit}
         />
       </div>
-        <StudentPlanDetails studentId={id} canAssignPlan={canAssignPlan} />
+        <StudentPlanDetails studentId={id} canAssignPlan={canAssignPlan} userId={student.data?.user_id ?? student.data?.id} />
 
         <StudentHistoryGrid studentId={id} />
 

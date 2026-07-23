@@ -85,6 +85,7 @@ export default function StudentsPage() {
         page: page,
         page_size: 20,
       }),
+    placeholderData: (prev) => prev,
   });
   const counts = useQuery({ queryKey: ["student-counts"], queryFn: endpoints.studentCounts });
 

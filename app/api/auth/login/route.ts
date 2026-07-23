@@ -7,14 +7,33 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     
+<<<<<<< HEAD
     const targetUrl = `${API_BASE_URL.replace(/\/$/, "")}/auth/login/admin`;
+=======
+    let baseUrl = API_BASE_URL;
+    if (!baseUrl || baseUrl.includes("localhost") || baseUrl.includes("127.0.0.1")) {
+      baseUrl = "https://shreshtlibrary.onrender.com/api/v1";
+    }
 
-    const res = await fetch(targetUrl, {
+    let targetUrl = `${baseUrl.replace(/\/$/, "")}/auth/login/admin`;
+>>>>>>> ff11e62af0a771cc3104ac934d000cc4cbb1ecca
+
+    let res = await fetch(targetUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       cache: "no-store",
     });
+
+    if (res.status === 404) {
+      targetUrl = `${baseUrl.replace(/\/$/, "")}/auth/login`;
+      res = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        cache: "no-store",
+      });
+    }
 
     const responseText = await res.text();
     let data: any = {};

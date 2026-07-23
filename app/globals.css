@@ -118,7 +118,7 @@ body {
   background: var(--page-sheen), var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-  transition: background-color 180ms ease, color 180ms ease;
+  transition: background-color 100ms ease-out, color 100ms ease-out;
 }
 
 button,

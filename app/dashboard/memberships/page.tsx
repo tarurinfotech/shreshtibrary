@@ -338,9 +338,9 @@ export default function MembershipsPage() {
       <Modal open={Boolean(studentPlanId)} title="Plan Students" onClose={() => setStudentPlanId(null)}>
         <div className="grid gap-3">
           {planStudents.isLoading ? <LoadingBlock label="Loading students" /> : null}
-          {(planStudents.data ?? []).map((student) => (
+          {(planStudents.data ?? []).map((student, index) => (
             <EntityListItem
-              key={student.user_id}
+              key={student.id ?? student.user_id ?? student.student_id ?? index}
               title={fullName(student.first_name, student.last_name, student.username)}
               trailing={<Badge variant={statusVariant(student.status)}>{student.status}</Badge>}
             />

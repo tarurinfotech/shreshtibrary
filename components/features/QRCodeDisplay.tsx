@@ -3,7 +3,7 @@
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect, useMemo, useState } from "react";
 import type { QRCodeRecord } from "@/types/api";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, formatDurationSeconds } from "@/lib/format";
 
 export function QRCodeDisplay({ qr }: { qr: QRCodeRecord }) {
   const [now, setNow] = useState(0);
@@ -29,7 +29,7 @@ export function QRCodeDisplay({ qr }: { qr: QRCodeRecord }) {
         <p className="break-all font-mono text-sm text-foreground">{qr.code}</p>
         <p className="mt-3 text-sm text-muted">Expires: {formatDateTime(qr.expiry_timestamp)}</p>
         <p className="mt-1 text-sm font-medium text-warning">
-          {secondsLeft === null ? "Calculating" : secondsLeft > 0 ? `${secondsLeft}s remaining` : "Expired"}
+          {formatDurationSeconds(secondsLeft)}
         </p>
       </div>
     </div>

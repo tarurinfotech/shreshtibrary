@@ -53,25 +53,23 @@ export function Topbar({ onMenu, onDesktopMenu }: { onMenu: () => void; onDeskto
         <GlobalSearch />
       </div>
 
-      <div className="flex shrink-0 items-center gap-2 md:gap-3">
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2 md:gap-3">
         <Button
           variant="ghost"
           size="icon"
-          className="hidden sm:inline-flex"
+          className="h-11 w-11"
           icon={<RefreshCw className="h-5 w-5" />}
           onClick={() => window.location.reload()}
-        >
-          Refresh
-        </Button>
+          title="Refresh page"
+        />
         <Button
           variant="ghost"
           size="icon"
-          className="hidden sm:inline-flex"
+          className="h-11 w-11"
           icon={theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
           onClick={toggleTheme}
-        >
-          {theme === "dark" ? "Light theme" : "Dark theme"}
-        </Button>
+          title={theme === "dark" ? "Light theme" : "Dark theme"}
+        />
         <Link href="/dashboard/inbox" className="focus-ring relative grid h-11 w-11 place-items-center rounded-lg text-muted transition hover:bg-hover hover:text-foreground" title="Notifications Inbox">
           <Bell className="h-5 w-5" />
           {unreadInboxCount > 0 ? (

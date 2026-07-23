@@ -1,7 +1,8 @@
 /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect, @typescript-eslint/no-explicit-any, react/no-unescaped-entities */
 "use client";
 
-import { FormEvent, useMemo, useState, useEffect } from "react";
+import { FormEvent, useMemo, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Download, Plus, RotateCcw, AlertTriangle, Mail } from "lucide-react";
 import { Badge, statusVariant } from "@/components/ui/Badge";
@@ -9,12 +10,13 @@ import { Button } from "@/components/ui/Button";
 import { PromptDialog } from "@/components/ui/Dialog";
 import { DataTable, type DataTableColumn } from "@/components/ui/DataTable";
 import { FilterBar, FormActions, FormGrid, FormShell } from "@/components/ui/Form";
-import { Input } from "@/components/ui/Input";;
+import { Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { MetricTile } from "@/components/ui/MetricTile";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
 import { Select } from "@/components/ui/Select";
+import { ErrorState, LoadingBlock } from "@/components/ui/StateBlocks";
 import { getErrorMessage, getFieldErrors } from "@/lib/api";
 import { endpoints, type PaymentPayload } from "@/lib/endpoints";
 import { formatDate, formatMoney, fullName } from "@/lib/format";
@@ -32,7 +34,8 @@ const emptyPayment: PaymentPayload = {
   notes: "",
 };
 
-export default function PaymentsPage() {
+function PaymentsContent() {
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const pushToast = useToastStore((state) => state.pushToast);
   const [search, setSearch] = useState("");
@@ -56,6 +59,40 @@ export default function PaymentsPage() {
   const canCreate = hasPerm("Payment.Create");
   const canVerify = hasPerm("Payment.Verify");
   const canRefund = hasPerm("Payment.Refund");
+
+  // Handle URL parameters (e.g. ?student_id=5&plan_id=3&open=true)
+  useEffect(() => {
+    const studentParam = searchParams.get("student_id") || searchParams.get("student");
+    const planParam = searchParams.get("plan_id") || searchParams.get("plan");
+    const openParam = searchParams.get("open");
+
+    if (studentParam || planParam || openParam === "true") {
+      setOpen(true);
+
+      let matchedUserId: number | undefined = undefined;
+      if (studentParam && students.data?.length) {
+        const match = students.data.find(
+          (s) =>
+            String(s.user_id) === studentParam ||
+            String(s.id) === studentParam ||
+            s.student_id === studentParam ||
+            s.username === studentParam
+        );
+        if (match) {
+          matchedUserId = match.user_id ?? match.id;
+        }
+      }
+
+      const parsedPlanId = planParam && !isNaN(Number(planParam)) ? Number(planParam) : undefined;
+      const parsedStudentId = matchedUserId ?? (studentParam && !isNaN(Number(studentParam)) ? Number(studentParam) : undefined);
+
+      setForm((cur) => ({
+        ...cur,
+        student_id: parsedStudentId ?? cur.student_id,
+        plan_id: parsedPlanId ?? cur.plan_id,
+      }));
+    }
+  }, [searchParams, students.data]);
 
   // Reset page when search or status filter changes
   useEffect(() => {
@@ -92,6 +129,19 @@ export default function PaymentsPage() {
       return isStatusActive && isNotExpired;
     }) ?? false;
   }, [membershipQuery.data]);
+
+  // Sync duration_days when plan is selected or pre-filled from URL
+  useEffect(() => {
+    if (form.plan_id && plans.data?.length) {
+      const selectedPlan = plans.data.find((p) => String(p.id) === String(form.plan_id));
+      if (selectedPlan && selectedPlan.duration_days) {
+        setForm((cur) => ({
+          ...cur,
+          duration_days: Number(selectedPlan.duration_days),
+        }));
+      }
+    }
+  }, [form.plan_id, plans.data]);
 
   // ── Invalidation ──────────────────────────────────────────────────────────
   const invalidate = async () => {
@@ -506,6 +556,14 @@ export default function PaymentsPage() {
         onConfirm={(reason) => refundTarget && refund.mutate({ id: refundTarget.id, reason })}
       />
     </>
+  );
+}
+
+export default function PaymentsPage() {
+  return (
+    <Suspense fallback={<LoadingBlock label="Loading payments..." />}>
+      <PaymentsContent />
+    </Suspense>
   );
 }
 

@@ -55,54 +55,54 @@ export function Sidebar({ user, expanded, onNavigate }: { user: AuthUser; expand
       <nav className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar">
         <div className="grid gap-3 pb-4">
           {navItems
-          .filter((item) => {
-            if (item.superOnly && user.role !== "super_admin") return false;
-            if (item.permissionKey && user.role !== "super_admin" && user.role !== "sub_super_admin") {
-              if (Array.isArray(user.permissions)) {
-                return user.permissions.includes(item.permissionKey) || user.permissions.includes("all");
+            .filter((item) => {
+              if (item.superOnly && user.role !== "super_admin") return false;
+              if (item.permissionKey && user.role !== "super_admin" && user.role !== "sub_super_admin") {
+                if (Array.isArray(user.permissions)) {
+                  return user.permissions.includes(item.permissionKey) || user.permissions.includes("all");
+                }
+                // Fallback for old object format
+                return Boolean(user.permissions?.[item.permissionKey as keyof typeof user.permissions]);
               }
-              // Fallback for old object format
-              return Boolean(user.permissions?.[item.permissionKey as keyof typeof user.permissions]);
-            }
-            return true;
-          })
-          .map((item, index) => {
-            if (item.divider) {
-              return <div key={`divider-${index}`} className="my-1 h-px w-full bg-border" />;
-            }
+              return true;
+            })
+            .map((item, index) => {
+              if (item.divider) {
+                return <div key={`divider-${index}`} className="my-1 h-px w-full bg-border" />;
+              }
 
-            const href = item.href as string;
-            const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
-            const Icon = item.icon;
+              const href = item.href as string;
+              const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+              const Icon = item.icon;
 
-            if (!Icon) return null;
+              if (!Icon) return null;
 
-            return (
-              <Link
-                key={href}
-                href={href}
-                onClick={onNavigate}
-                className={clsx(
-                  "focus-ring group relative flex h-11 items-center rounded-lg transition-all duration-300 ease-in-out overflow-hidden",
-                  expanded ? "w-[224px] px-3" : "w-[44px] px-3",
-                  active
-                    ? "bg-primary text-[color:var(--primary-contrast)] shadow-[var(--shadow-soft)]"
-                    : "text-muted hover:bg-[color:var(--primary-soft)] hover:text-primary",
-                )}
-                aria-label={item.label}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                <span className={clsx("font-medium ml-3 transition-opacity duration-300 ease-in-out", expanded ? "opacity-100" : "opacity-0")}>
-                  {item.label}
-                </span>
-                {!expanded && (
-                  <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-lg border border-border bg-panel px-2 py-1 text-xs font-medium text-foreground opacity-0 shadow-[var(--shadow-soft)] transition group-hover:opacity-100">
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={onNavigate}
+                  className={clsx(
+                    "focus-ring group relative flex h-11 items-center rounded-lg transition-all duration-300 ease-in-out overflow-hidden",
+                    expanded ? "w-[224px] px-3" : "w-[44px] px-3",
+                    active
+                      ? "bg-primary text-[color:var(--primary-contrast)] shadow-[var(--shadow-soft)]"
+                      : "text-muted hover:bg-[color:var(--primary-soft)] hover:text-primary",
+                  )}
+                  aria-label={item.label}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  <span className={clsx("font-medium ml-3 transition-opacity duration-300 ease-in-out", expanded ? "opacity-100" : "opacity-0")}>
                     {item.label}
                   </span>
-                )}
-              </Link>
-            );
-          })}
+                  {!expanded && (
+                    <span className="pointer-events-none absolute left-[calc(100%+10px)] top-1/2 z-50 -translate-y-1/2 whitespace-nowrap rounded-lg border border-border bg-panel px-2 py-1 text-xs font-medium text-foreground opacity-0 shadow-[var(--shadow-soft)] transition group-hover:opacity-100">
+                      {item.label}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
         </div>
       </nav>
 
