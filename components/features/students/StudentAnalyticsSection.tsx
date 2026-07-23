@@ -50,16 +50,43 @@ export function StudentAnalyticsSection({ studentId, joiningDate }: { studentId:
           </ChartPanel>
 
           <ChartPanel title="Study Hours" icon={<Clock className="h-4 w-4" />}>
-            <div className="h-full w-full min-w-0">
-              <SharedAreaChart
-                data={analytics.data?.study ?? []}
-                xKey="label"
-                yKeys={[
-                  { key: "hours", name: "Study hours", color: "var(--primary)" },
-                  { key: "target_hours", name: "Target hours", color: "var(--success)", fillOpacity: 0 },
-                ]}
-                height="100%"
-              />
+            <div className="flex flex-col h-full w-full min-w-0">
+              {(() => {
+                const studyData = analytics.data?.study ?? [];
+                const totalHours = studyData.reduce((acc, curr) => acc + (Number(curr.hours) || 0), 0);
+                const avgHours = studyData.length > 0 ? totalHours / studyData.length : 0;
+                const targetHours = studyData[0]?.target_hours ?? 6;
+
+                return (
+                  <>
+                    <div className="mb-3 grid grid-cols-3 gap-2 rounded-lg bg-panel p-2.5 text-xs">
+                      <div>
+                        <p className="text-muted font-medium">Total Study</p>
+                        <p className="mt-0.5 text-sm font-semibold text-primary">{totalHours.toFixed(1)} hrs</p>
+                      </div>
+                      <div>
+                        <p className="text-muted font-medium">Average</p>
+                        <p className="mt-0.5 text-sm font-semibold text-foreground">{avgHours.toFixed(1)} hrs</p>
+                      </div>
+                      <div>
+                        <p className="text-muted font-medium">Target</p>
+                        <p className="mt-0.5 text-sm font-semibold text-success">{targetHours} hrs</p>
+                      </div>
+                    </div>
+                    <div className="flex-1 w-full min-w-0 min-h-[220px]">
+                      <SharedAreaChart
+                        data={studyData}
+                        xKey="label"
+                        yKeys={[
+                          { key: "hours", name: "Study hours", color: "var(--primary)" },
+                          { key: "target_hours", name: "Target hours", color: "var(--success)", fillOpacity: 0 },
+                        ]}
+                        height="100%"
+                      />
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </ChartPanel>
         </div>

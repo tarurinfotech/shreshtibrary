@@ -58,7 +58,7 @@ export function SummaryTab() {
             <div className="grid gap-2">
               {(absentees.data ?? []).slice((absenteePage - 1) * absenteePageSize, absenteePage * absenteePageSize).map((student, index) => (
                 <EntityListItem
-                  key={student.id ?? student.user_id ?? student.student_id ?? index}
+                  key={student.user_id ?? student.student_id ?? index}
                   title={fullName(student.first_name, student.last_name, student.username)}
                   trailing={
                     <div className="flex flex-col items-end gap-1">

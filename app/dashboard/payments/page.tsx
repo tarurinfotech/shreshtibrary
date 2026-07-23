@@ -60,6 +60,12 @@ function PaymentsContent() {
   const canVerify = hasPerm("Payment.Verify");
   const canRefund = hasPerm("Payment.Refund");
 
+  // Student dropdown — load all students once
+  const students = useQuery({
+    queryKey: ["payment-student-options"],
+    queryFn: () => endpoints.allStudents({ page_size: 200 }),
+  });
+
   // Handle URL parameters (e.g. ?student_id=5&plan_id=3&open=true)
   useEffect(() => {
     const studentParam = searchParams.get("student_id") || searchParams.get("student");
@@ -108,12 +114,6 @@ function PaymentsContent() {
   const pending = useQuery({ queryKey: ["pending-payments"], queryFn: endpoints.pendingPayments });
   const overdue = useQuery({ queryKey: ["overdue-payments"], queryFn: endpoints.overduePayments });
   const plans = useQuery({ queryKey: ["public-plans"], queryFn: endpoints.publicPlans });
-
-  // Student dropdown — load all students once
-  const students = useQuery({
-    queryKey: ["payment-student-options"],
-    queryFn: () => endpoints.allStudents({ page_size: 200 }),
-  });
 
   // Membership dropdown — only fetched after a student is selected
   const membershipQuery = useQuery({
