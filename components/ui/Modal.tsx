@@ -118,6 +118,11 @@ export function Modal({
     full: "w-[95vw] h-[95vh]",
   };
 
+  const hasCustomMaxW = className?.includes("max-w-");
+  const widthClass = hasCustomMaxW
+    ? "w-full max-w-[95vw]"
+    : sizeClasses[size ?? "default"];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-2 sm:p-4 transition-all duration-300 animate-in fade-in"
@@ -126,7 +131,7 @@ export function Modal({
     >
       <div
         ref={dialogRef}
-        className={`surface max-h-[92vh] flex flex-col ${sizeClasses[size ?? "default"]} overflow-hidden rounded-2xl shadow-2xl animate-modal-in relative ${className ?? ""}`}
+        className={`surface max-h-[92vh] flex flex-col ${widthClass} overflow-hidden rounded-2xl shadow-2xl animate-modal-in relative ${className ?? ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

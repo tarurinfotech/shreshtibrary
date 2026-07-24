@@ -233,7 +233,7 @@ export function AttendanceManualModal({ open, onClose, canEditManual }: Attendan
   };
 
   return (
-    <Modal open={open} title="Manual Attendance" onClose={onClose} className="max-w-5xl">
+    <Modal open={open} title="Manual Attendance" onClose={onClose} size="2xl" className="max-w-5xl">
       <form className="grid gap-4" onSubmit={submitManual}>
         <div className="grid gap-3 lg:grid-cols-[180px_1fr_auto] lg:items-end">
           <DateInput
